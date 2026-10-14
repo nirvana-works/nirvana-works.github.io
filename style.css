@@ -2,21 +2,23 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --paper:       #FBF6EC;   /* 여행 노트 종이색 */
-  --sand:        #F2E8D5;
-  --ink:         #1F2A44;   /* 짙은 남색 잉크 */
-  --muted:       #6E6A60;
-  --accent:      #E2603A;   /* 노을빛 테라코타 */
-  --accent-dark: #B8452A;
-  --accent-soft: #F8D9C9;
-  --sea:         #2E7D86;   /* 바다색 */
-  --sea-soft:    #CFE5E3;
-  --land:        #F6EFE2;
-  --border:      #E6D9C1;
-  --card:        #FFFDF8;
-  --radius:      14px;
-  --max:         760px;
-  --shadow:      0 10px 30px rgba(31, 42, 68, 0.10);
+  /* 노을 지는 하늘 — 비행기 창가 테마 */
+  --paper:       #FFF7EF;   /* 구름 크림 */
+  --sand:        #FBE6D2;
+  --ink:         #2C2640;   /* 해 질 녘 남보라 */
+  --muted:       #7B6B68;
+  --accent:      #EE7A35;   /* 노을 주황 */
+  --accent-dark: #C8561E;
+  --accent-soft: #FDDCC2;
+  --sea:         #5A5F8C;   /* 저녁 하늘 보라빛 파랑 */
+  --sea-soft:    #DDE2EE;   /* 지도 바다: 옅은 하늘색 */
+  --land:        #FFF9F2;
+  --border:      #F1DCC6;
+  --card:        #FFFCF8;
+  --radius:      16px;
+  --max:         780px;
+  --shadow:      0 14px 34px rgba(120, 60, 30, 0.14);
+  --sunset:      linear-gradient(90deg, #2C2640 0%, #5A4A6E 45%, #C46A4A 80%, #EE9A4C 100%);
 
   /* 하위 호환 */
   --text:        var(--ink);
@@ -28,7 +30,10 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif;
-  background: var(--paper);
+  background:
+    linear-gradient(180deg,
+      #F3C9A6 0px, #F9DCC2 260px, #FDEEE0 560px, var(--paper) 900px) no-repeat,
+    var(--paper);
   color: var(--ink);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
@@ -39,10 +44,10 @@ body {
 nav {
   position: sticky;
   top: 0;
-  background: rgba(251, 246, 236, 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 244, 232, 0.72);
+  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px solid rgba(238, 122, 53, 0.18);
   z-index: 200;
 }
 .nav-inner {
@@ -89,6 +94,96 @@ nav a:hover, nav a.active { color: var(--accent); }
 /* ─── Hero : 보딩패스 ───────────────────────────────── */
 .hero {
   padding: 3rem 0 1rem;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 1.8rem;
+  align-items: center;
+}
+
+/* ─── 비행기 창문 (CSS/SVG로 그린 노을) ─────────────── */
+.plane-window {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  padding: 13px;
+  border-radius: 46% / 33%;
+  background: linear-gradient(160deg, #FFF8F0 0%, #EFE3D6 55%, #D8C8B8 100%);
+  box-shadow:
+    0 22px 40px rgba(120, 60, 30, 0.28),
+    inset 0 2px 3px rgba(255, 255, 255, 0.9),
+    inset 0 -8px 14px rgba(90, 60, 40, 0.18);
+}
+.window-sky {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 43% / 31%;
+  overflow: hidden;
+  background: linear-gradient(180deg,
+    #8890AE 0%, #B8A2A8 18%, #E6AE8C 30%, #FFCF8A 38%,
+    #F8A257 44%, #E99266 52%, #D99A7C 64%, #A97264 100%);
+  box-shadow:
+    inset 0 0 0 3px rgba(60, 35, 25, 0.25),
+    inset 0 10px 22px rgba(40, 20, 20, 0.35);
+}
+.window-sky .sun {
+  position: absolute;
+  left: -2%;
+  top: 27%;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    #FFF8DE 0 14%, rgba(255, 214, 140, 0.95) 28%,
+    rgba(255, 170, 90, 0.55) 48%, rgba(255, 150, 80, 0) 70%);
+}
+/* 위쪽 노을 구름 줄기 */
+.window-sky .clouds-high {
+  position: absolute;
+  inset: 0 -20% 45% -20%;
+  background:
+    radial-gradient(38% 7% at 30% 30%, rgba(120, 72, 78, 0.55), transparent 70%),
+    radial-gradient(30% 6% at 70% 22%, rgba(150, 88, 84, 0.5), transparent 70%),
+    radial-gradient(45% 6% at 55% 45%, rgba(180, 100, 80, 0.45), transparent 70%),
+    radial-gradient(28% 5% at 20% 60%, rgba(190, 110, 80, 0.4), transparent 70%),
+    radial-gradient(34% 5% at 80% 70%, rgba(200, 120, 85, 0.35), transparent 70%);
+  animation: drift 18s ease-in-out infinite alternate;
+}
+/* 아래쪽 구름 바다 */
+.window-sky .clouds-low {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  bottom: -2%;
+  height: 54%;
+  filter: blur(2.5px);
+  background:
+    /* 밝은 구름 윗면 */
+    radial-gradient(30% 20% at 20% 28%, rgba(255, 238, 220, 0.95), rgba(255, 238, 220, 0) 70%),
+    radial-gradient(34% 22% at 52% 22%, rgba(255, 228, 204, 0.9), rgba(255, 228, 204, 0) 70%),
+    radial-gradient(30% 20% at 84% 30%, rgba(255, 236, 216, 0.9), rgba(255, 236, 216, 0) 70%),
+    radial-gradient(40% 26% at 34% 60%, rgba(255, 243, 232, 1), rgba(255, 243, 232, 0) 70%),
+    radial-gradient(38% 26% at 74% 66%, rgba(255, 240, 226, 1), rgba(255, 240, 226, 0) 70%),
+    radial-gradient(44% 28% at 50% 96%, rgba(255, 246, 238, 1), rgba(255, 246, 238, 0) 70%),
+    /* 구름 사이 그림자 */
+    radial-gradient(30% 14% at 60% 44%, rgba(200, 132, 104, 0.55), rgba(200, 132, 104, 0) 70%),
+    radial-gradient(26% 12% at 18% 76%, rgba(196, 128, 100, 0.5), rgba(196, 128, 100, 0) 70%),
+    /* 바탕 */
+    linear-gradient(180deg, rgba(240, 180, 140, 0) 0%, rgba(238, 186, 150, 0.95) 22%, rgba(226, 170, 140, 1) 100%);
+  animation: drift 14s ease-in-out infinite alternate-reverse;
+}
+.window-sky .wing {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+@keyframes drift {
+  from { transform: translateX(-4%); }
+  to   { transform: translateX(4%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .window-sky .clouds-high, .window-sky .clouds-low { animation: none; }
 }
 .boarding-pass {
   position: relative;
@@ -106,13 +201,13 @@ nav a:hover, nav a.active { color: var(--accent); }
   justify-content: space-between;
   gap: 1rem;
   padding: 0.7rem 1.4rem;
-  background: var(--ink);
+  background: var(--sunset);
   color: #fff;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.22em;
 }
-.bp-head svg { width: 16px; height: 16px; color: var(--accent); }
+.bp-head svg { width: 16px; height: 16px; color: #FFE2BF; }
 .bp-main {
   padding: 1.6rem 1.4rem 1.5rem;
 }
@@ -139,9 +234,9 @@ nav a:hover, nav a.active { color: var(--accent); }
 }
 .bp-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem 1.5rem;
-  margin-top: 1.4rem;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
 }
 .bp-field-value {
   font-size: 0.9rem;
@@ -151,8 +246,8 @@ nav a:hover, nav a.active { color: var(--accent); }
 }
 .bp-stub {
   position: relative;
-  width: 150px;
-  padding: 1.6rem 1.2rem 1.5rem;
+  width: 138px;
+  padding: 1.6rem 1.1rem 1.5rem;
   border-left: 2px dashed var(--border);
   display: flex;
   flex-direction: column;
@@ -454,8 +549,8 @@ section { margin-top: 4rem; }
 .trip-inner {
   min-height: 0;
   overflow: hidden;
-  padding: 0 0.4rem;          /* 엽서 그림자/기울기가 잘리지 않도록 */
-  margin: 0 -0.4rem;
+  padding: 0.5rem 0.8rem 0;   /* 엽서 그림자·도장 애니메이션이 잘리지 않도록 */
+  margin: -0.5rem -0.8rem 0;
 }
 .trip-inner .photo-grid { padding-bottom: 0.8rem; }
 .trip-close {
@@ -672,10 +767,16 @@ footer {
 }
 .footer-credit a { color: #a8a092; text-decoration: underline; }
 
+/* ─── Tablet ────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 160px 1fr; gap: 1.2rem; }
+}
+
 /* ─── Mobile ────────────────────────────────────────── */
 @media (max-width: 600px) {
   nav ul { gap: 1rem; }
-  .hero { padding-top: 1.8rem; }
+  .hero { padding-top: 1.8rem; grid-template-columns: 1fr; gap: 1.6rem; }
+  .plane-window { width: 170px; margin: 0 auto; }
   .hero h1 { font-size: 1.75rem; }
   .boarding-pass { grid-template-columns: 1fr; }
   .bp-stub {

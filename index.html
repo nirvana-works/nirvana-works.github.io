@@ -21,6 +21,33 @@
 
   <!-- Hero : 보딩패스 -->
   <div class="hero">
+    <!-- 비행기 창가에서 본 노을 (CSS/SVG 일러스트) -->
+    <div class="plane-window" aria-hidden="true">
+      <div class="window-sky">
+        <span class="sun"></span>
+        <span class="clouds-high"></span>
+        <span class="clouds-low"></span>
+        <svg class="wing" viewBox="0 0 100 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="wingFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#FFF4EA"/>
+              <stop offset="0.6" stop-color="#E9D6C8"/>
+              <stop offset="1" stop-color="#B99A8A"/>
+            </linearGradient>
+          </defs>
+          <!-- 날개 -->
+          <path d="M-2 82 L72 57 L79 54 L81 60 L-2 102 Z" fill="url(#wingFill)"/>
+          <path d="M-2 98 L81 60 L80 63 L-2 104 Z" fill="#9C7E70" opacity="0.6"/>
+          <!-- 윙렛 (주황 끝) -->
+          <path d="M72 57 L84 33 L89 33 L79 54 Z" fill="#E0582A"/>
+          <path d="M79 54 L89 33 L90 35 L81 57 Z" fill="#A83E1E"/>
+          <!-- 플랩/엔진 -->
+          <path d="M30 80 L50 73 L52 78 L34 85 Z" fill="#D2BBAB"/>
+          <path d="M4 94 L22 87 L24 94 L8 99 Z" fill="#BFA393"/>
+        </svg>
+      </div>
+    </div>
+
     <div class="boarding-pass">
       <div class="bp-head">
         <span>BOARDING PASS</span>
