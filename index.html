@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIM JINHYUN</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      KIM JINHYUN
+    </a>
+  </div>
+</nav>
+
+<main class="page">
+
+  <!-- Hero : 보딩패스 -->
+  <div class="hero">
+    <div class="boarding-pass">
+      <div class="bp-head">
+        <span>BOARDING PASS</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      </div>
+      <div class="bp-main">
+        <p class="bp-field-label">Passenger</p>
+        <h1>김진현</h1>
+        <p class="name-en">KIM JINHYUN</p>
+        <div class="bp-fields">
+          <div>
+            <p class="bp-field-label">About</p>
+            <p class="bp-field-value tagline">KAIST PMBA 14기<br>새로운 일을 해보고 싶은 직장인</p>
+          </div>
+          <div>
+            <p class="bp-field-label">Now</p>
+            <p class="bp-field-value">14년차 직장인 + 영세 임대사업자</p>
+          </div>
+        </div>
+      </div>
+      <div class="bp-stub">
+        <div class="stamp" aria-label="방문한 나라 수">
+          <span class="stamp-label">VISITED</span>
+          <span class="stamp-num" id="visitedCount">–</span>
+          <span class="stamp-label">COUNTRIES</span>
+        </div>
+        <div class="barcode" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 관심사 -->
+  <section>
+    <p class="section-label">Interests</p>
+    <div class="tags">
+      <span class="tag">여행사진 찍기</span>
+      <span class="tag">요리하기</span>
+      <span class="tag">임대사업</span>
+      <span class="tag">재테크</span>
+      <span class="tag">야구</span>
+      <span class="tag">KAIST MBA</span>
+      <span class="tag">글쓰기</span>
+      <span class="tag">일본어</span>
+      <span class="tag">중국어</span>
+      <span class="tag">강연</span>
+      <span class="tag">잡지식</span>
+      <span class="tag">종교</span>
+      <span class="tag">철학</span>
+      <span class="tag">역사</span>
+      <span class="tag">AI</span>
+    </div>
+  </section>
+
+  <!-- 여행 -->
+  <section id="travel">
+    <p class="section-label">Travel</p>
+    <h2 class="section-title">사진을 통해서 여행을 이야기 합니다.</h2>
+
+    <div class="map-section">
+      <div class="map-wrap">
+        <div class="map-container" id="mapContainer">
+          <div class="map-loading" id="mapLoading">지도 불러오는 중…</div>
+        </div>
+        <div class="map-tooltip hidden" id="mapTooltip"></div>
+      </div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-dot legend-dot--has"></span>사진 있음</span>
+        <span class="legend-item"><span class="legend-dot legend-dot--none"></span>아직 못 가본 곳</span>
+      </div>
+    </div>
+
+    <!-- 나라 도장 버튼 -->
+    <p class="stamps-hint">지도나 도장을 누르면 그 나라의 사진이 펼쳐집니다.</p>
+    <div class="country-stamps" id="countryStamps"></div>
+
+    <!-- 나라별 사진 -->
+    <div id="trips"></div>
+  </section>
+
+  <!-- 꿈 -->
+  <section>
+    <p class="section-label">Next Destination</p>
+    <div class="dream-grid">
+
+      <!-- 세계 여행자 -->
+      <div class="dream-card">
+        <div class="dream-img dream-img--1" role="img" aria-label="세계 여행자 - 카메라를 들고 여행하는 소년 일러스트"></div>
+        <p class="dream-title">세계 여행자</p>
+        <p class="dream-desc">지도를 들고 세상을 걷는 사람</p>
+      </div>
+
+      <!-- 에세이 작가 -->
+      <div class="dream-card">
+        <div class="dream-img dream-img--2" role="img" aria-label="에세이 작가 - 책상에서 글을 쓰는 소년 일러스트"></div>
+        <p class="dream-title">에세이 작가</p>
+        <p class="dream-desc">생각을 글로 쌓아가는 사람</p>
+      </div>
+
+      <!-- 강연자 -->
+      <div class="dream-card">
+        <div class="dream-img dream-img--3" role="img" aria-label="강연자 - 마이크를 들고 무대에서 강연하는 소년 일러스트"></div>
+        <p class="dream-title">강연자</p>
+        <p class="dream-desc">무대에서 이야기를 나누는 사람</p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- 라이트박스 -->
+<div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+  <button class="lightbox-close" id="lightboxClose" aria-label="닫기">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="이전">&#8249;</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="다음">&#8250;</button>
+  <p class="lightbox-caption" id="lightboxCaption"></p>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span>&copy; 2024 KIM JINHYUN</span>
+    <span class="footer-credit">
+      세계 지도:
+      <a href="https://github.com/flekschas/simple-world-map" target="_blank" rel="noopener">simple-world-map</a>
+      by F. Lekschas —
+      <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>
+    </span>
+  </div>
+</footer>
+
+<!-- update.sh가 생성: 파일을 직접 열어도(file://) 동작하도록 <script>로 로드 -->
+<script src="photos.js"></script>
+<script src="images/map/world.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  let photosData = {};   // { code: { name, photos: [...] } }
+  let lbList     = [];   // 라이트박스: 현재 나라의 사진 목록
+  let lbCode     = null;
+  let lbIndex    = 0;
+  let mapSvg     = null; // 세계 지도 SVG
+
+  const mapContainer    = document.getElementById('mapContainer');
+  const mapLoading      = document.getElementById('mapLoading');
+  const mapTooltip      = document.getElementById('mapTooltip');
+  const countryStamps   = document.getElementById('countryStamps');
+  const trips           = document.getElementById('trips');
+  const visitedCount    = document.getElementById('visitedCount');
+  const lightbox        = document.getElementById('lightbox');
+  const lightboxImg     = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxClose   = document.getElementById('lightboxClose');
+  const lightboxPrev    = document.getElementById('lightboxPrev');
+  const lightboxNext    = document.getElementById('lightboxNext');
+
+  /* ── 데이터 로드 (없으면 fetch로 대체) ──── */
+  function loadData() {
+    if (window.PHOTOS_DATA) return Promise.resolve(window.PHOTOS_DATA);
+    return fetch('photos.json').then(r => r.json());
+  }
+  function loadSvg() {
+    if (window.WORLD_SVG) return Promise.resolve(window.WORLD_SVG);
+    return fetch('images/map/world.svg').then(r => r.text());
+  }
+
+  loadData()
+    .then(data => {
+      photosData = data.countries || {};
+      renderTrips();
+      return loadSvg().catch(() => { throw new Error('map'); });
+    })
+    .then(svgText => {
+      mapLoading.remove();
+      mapContainer.insertAdjacentHTML('afterbegin', svgText.slice(svgText.indexOf('<svg')));
+      initMap(mapContainer.querySelector('svg'));
+    })
+    .catch(err => {
+      mapLoading.textContent = (err && err.message === 'map')
+        ? '지도를 불러오지 못했습니다.'
+        : '사진 목록(photos.js)을 불러오지 못했습니다. update.sh를 실행해 주세요.';
+    });
+
+  function countriesWithPhotos() {
+    return Object.keys(photosData).filter(c => photosData[c].photos && photosData[c].photos.length);
+  }
+
+  function photoSrc(code, file) {
+    return `images/photos/${encodeURIComponent(code)}/${encodeURIComponent(file)}`;
+  }
+
+  /* ── 나라 도장 버튼 + 나라별 사진 ───────── */
+  function renderTrips() {
+    const codes = countriesWithPhotos();
+    visitedCount.textContent = codes.length;
+
+    codes.forEach(code => {
+      const info = photosData[code];
+
+      const btn = document.createElement('button');
+      btn.className = 'country-stamp';
+      btn.innerHTML = `<span class="code"></span><span class="name"></span><span class="count"></span>`;
+      btn.querySelector('.code').textContent  = code.toUpperCase();
+      btn.querySelector('.name').textContent  = info.name;
+      btn.querySelector('.count').textContent = `${info.photos.length}장`;
+      btn.dataset.code = code;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-controls', `trip-${code}`);
+      btn.addEventListener('click', () => toggleTrip(code));
+      countryStamps.appendChild(btn);
+
+      // 펼쳐질 사진 영역 (처음엔 접혀 있음)
+      const trip = document.createElement('div');
+      trip.className = 'trip';
+      trip.id = `trip-${code}`;
+      trip.innerHTML = `
+        <div class="trip-inner">
+          <div class="trip-head">
+            <span class="trip-code"></span>
+            <div><div class="trip-name"></div><div class="trip-count"></div></div>
+            <span class="trip-line"></span>
+            <button class="trip-close" aria-label="접기">접기 ▴</button>
+          </div>
+          <div class="photo-grid"></div>
+        </div>`;
+      trip.querySelector('.trip-code').textContent  = code.toUpperCase();
+      trip.querySelector('.trip-name').textContent  = info.name;
+      trip.querySelector('.trip-count').textContent = `${info.photos.length}장의 기록`;
+      trip.querySelector('.trip-close').addEventListener('click', () => toggleTrip(code));
+      trips.appendChild(trip);
+    });
+  }
+
+  // 사진은 처음 펼칠 때 불러옴 (페이지 첫 로딩을 가볍게)
+  function fillPhotos(code, trip) {
+    if (trip.dataset.loaded) return;
+    trip.dataset.loaded = '1';
+    const info = photosData[code];
+    const grid = trip.querySelector('.photo-grid');
+    info.photos.forEach((file, i) => {
+      const item = document.createElement('div');
+      item.className = 'photo-item';
+      item.style.animationDelay = `${Math.min(i, 12) * 40}ms`;
+      const img = document.createElement('img');
+      img.src     = photoSrc(code, file);
+      img.alt     = `${info.name} 사진 ${i + 1}`;
+      img.loading = 'lazy';
+      img.addEventListener('error', () => item.remove());
+      item.addEventListener('click', () => openLightbox(code, i));
+      item.appendChild(img);
+      grid.appendChild(item);
+    });
+  }
+
+  let openCode = null;
+
+  function toggleTrip(code) {
+    const next = openCode === code ? null : code;
+
+    // 열려 있던 것 접기 — 다른 나라로 바꿀 때는 즉시 접어서 스크롤 위치가 어긋나지 않게
+    if (openCode) {
+      const prev = document.getElementById(`trip-${openCode}`);
+      if (next && prev) {
+        prev.style.transition = 'none';
+        setTripState(openCode, false);
+        void prev.offsetHeight;
+        prev.style.transition = '';
+      } else {
+        setTripState(openCode, false);
+      }
+    }
+    openCode = next;
+    if (!next) return;
+
+    const trip = document.getElementById(`trip-${next}`);
+    fillPhotos(next, trip);
+    setTripState(next, true);
+
+    // 펼쳐지기 시작하면 해당 위치로 이동
+    setTimeout(() => {
+      trip.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+
+  function setTripState(code, open) {
+    const trip = document.getElementById(`trip-${code}`);
+    if (trip) trip.classList.toggle('open', open);
+    const btn = countryStamps.querySelector(`[data-code="${code}"]`);
+    if (btn) {
+      btn.classList.toggle('is-active', open);
+      btn.setAttribute('aria-expanded', String(open));
+    }
+    if (mapSvg) {
+      const el = mapSvg.querySelector(`#${code}`);
+      if (el) el.classList.toggle('selected', open);
+    }
+  }
+
+  /* ── 지도 ───────────────────────────────── */
+  function initMap(svg) {
+    mapSvg = svg;
+    svg.setAttribute('width', '100%');
+    svg.removeAttribute('height');
+
+    const has = new Set(countriesWithPhotos());
+    svg.querySelectorAll('[id]').forEach(el => {
+      const code = el.id.toLowerCase();
+      if (has.has(code)) el.classList.add('has-photos');
+    });
+
+    svg.addEventListener('mouseover', e => {
+      const el = getCountryEl(e);
+      if (!el) return;
+      el.classList.add('hovered');
+      const info = photosData[el.id.toLowerCase()];
+      mapTooltip.textContent = `${info.name} · ${info.photos.length}장`;
+      mapTooltip.classList.remove('hidden');
+    });
+    svg.addEventListener('mouseout', e => {
+      const el = getCountryEl(e);
+      if (el) el.classList.remove('hovered');
+      mapTooltip.classList.add('hidden');
+    });
+    svg.addEventListener('mousemove', e => {
+      const rect = mapContainer.getBoundingClientRect();
+      mapTooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+      mapTooltip.style.top  = (e.clientY - rect.top  - 30) + 'px';
+    });
+    svg.addEventListener('click', e => {
+      const el = getCountryEl(e);
+      if (el) toggleTrip(el.id.toLowerCase());
+    });
+  }
+
+  // 사진 있는 나라 요소만 반환 (그룹 안의 path면 상위 g[id]로)
+  function getCountryEl(e) {
+    let el = e.target;
+    while (el && el.tagName !== 'svg') {
+      if (el.id && el.classList.contains('has-photos')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /* ── 라이트박스 ─────────────────────────── */
+  function openLightbox(code, index) {
+    lbCode  = code;
+    lbList  = photosData[code].photos;
+    lbIndex = index;
+    showLb();
+    lightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function showLb() {
+    const name = photosData[lbCode].name;
+    lightboxImg.src = photoSrc(lbCode, lbList[lbIndex]);
+    lightboxImg.alt = `${name} 사진 ${lbIndex + 1}`;
+    lightboxCaption.textContent = `${name} · ${lbIndex + 1} / ${lbList.length}`;
+    lightboxPrev.style.display = lbIndex > 0 ? '' : 'none';
+    lightboxNext.style.display = lbIndex < lbList.length - 1 ? '' : 'none';
+  }
+  function closeLightbox() {
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = '';
+    lightboxImg.src = '';
+  }
+  function step(d) {
+    const n = lbIndex + d;
+    if (n >= 0 && n < lbList.length) { lbIndex = n; showLb(); }
+  }
+
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  lightboxPrev.addEventListener('click', () => step(-1));
+  lightboxNext.addEventListener('click', () => step(1));
+  document.addEventListener('keydown', e => {
+    if (lightbox.classList.contains('hidden')) return;
+    if (e.key === 'Escape')     closeLightbox();
+    if (e.key === 'ArrowLeft')  step(-1);
+    if (e.key === 'ArrowRight') step(1);
+  });
+})();
+</script>
+</body>
+</html>

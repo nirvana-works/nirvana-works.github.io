@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>요리 — KIM JINHYUN</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">KIM JINHYUN</a>
+    <ul>
+      <li><a href="index.html">홈</a></li>
+      <li><a href="index.html#travel">사진</a></li>
+      <li><a href="cooking.html" class="active">요리</a></li>
+      <li><a href="writing.html">글</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="page-header">
+    <h1>요리</h1>
+    <p>Cooking</p>
+  </div>
+
+  <div class="photo-grid" id="photoGrid">
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_0997%202.jpg')">
+      <img src="images/cooking/IMG_0997%202.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_1985.jpg')">
+      <img src="images/cooking/IMG_1985.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_2141.jpg')">
+      <img src="images/cooking/IMG_2141.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_2179.jpg')">
+      <img src="images/cooking/IMG_2179.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_2505.JPG')">
+      <img src="images/cooking/IMG_2505.JPG" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_7959.jpg')">
+      <img src="images/cooking/IMG_7959.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+    <div class="photo-item" onclick="openLight('images/cooking/IMG_9969.jpg')">
+      <img src="images/cooking/IMG_9969.jpg" alt="" loading="lazy"
+           onerror="this.closest('.photo-item').style.display='none'">
+    </div>
+  </div>
+</main>
+
+<!-- Lightbox -->
+<div class="lightbox hidden" id="lightbox" onclick="closeLight()">
+  <button class="lightbox-close" onclick="closeLight()" aria-label="닫기">&times;</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="">
+</div>
+
+<footer>
+  &copy; 2024 KIM JINHYUN
+</footer>
+
+<script>
+  function openLight(src) {
+    var lb = document.getElementById('lightbox');
+    var img = document.getElementById('lightboxImg');
+    img.src = src;
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLight() {
+    var lb = document.getElementById('lightbox');
+    lb.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('lightboxImg').src = '';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLight();
+  });
+  // Stop click on image from bubbling to close
+  document.getElementById('lightboxImg').addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+</script>
+
+</body>
+</html>

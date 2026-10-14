@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# HEIC 원본 (웹에서는 JPG만 사용)
+*.heic
+*.HEIC
