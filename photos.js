@@ -255,6 +255,23 @@ window.PHOTOS_DATA = {
         "IMG_20240114_212351_713_Original.jpg",
         "IMG_20240114_212351_746_Original.jpg"
       ]
+    },
+    "vn": {
+      "name": "베트남",
+      "photos": [
+        "IMG_3024.jpg",
+        "IMG_3155.jpg",
+        "IMG_3462.jpg",
+        "IMG_3516.jpg",
+        "IMG_3593.jpg",
+        "IMG_3749.jpg",
+        "IMG_3750.jpg",
+        "IMG_3830.jpg",
+        "IMG_4015.jpg",
+        "IMG_4047.jpg",
+        "IMG_4113.jpg",
+        "IMG_4168.jpg"
+      ]
     }
   }
 };
