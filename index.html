@@ -357,8 +357,9 @@
 
     // 지도에 모양이 없는 작은 섬: 점으로 표시 (지도 좌표)
     const ISLAND_MARKERS = {
-      mp: [763, 487],   // 사이판 (북마리아나 제도)
-      gu: [761, 492],   // 괌
+      // 실제로는 약 200km 거리라 겹치지 않도록 방향은 유지하고 살짝 벌림
+      mp: [764, 485],   // 사이판 (북마리아나 제도)
+      gu: [760, 494],   // 괌
     };
     Object.entries(ISLAND_MARKERS).forEach(([code, [cx, cy]]) => {
       if (!has.has(code) || svg.querySelector(`#${code}`)) return;
@@ -367,7 +368,7 @@
       dot.setAttribute('class', 'island-marker');
       dot.setAttribute('cx', cx);
       dot.setAttribute('cy', cy);
-      dot.setAttribute('r', 4.5);
+      dot.setAttribute('r', 4);
       svg.appendChild(dot);
     });
 
