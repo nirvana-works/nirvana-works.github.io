@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import QRCode from 'react-qr-code';
-import { QRFrame } from '@/components/QRFrame';
+import Link from 'next/link';
 import { AttendanceRow } from '@/components/AttendanceRow';
 import { formatPerPerson } from '@/lib/settlement';
 
@@ -286,13 +285,19 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* QR Code */}
-      <section className="bg-bgAlt border border-cream/10 rounded-2xl p-6 flex flex-col items-center gap-3">
-        <h2 className="text-xs tracking-widest uppercase text-cream/50">출석체크 QR코드</h2>
-        <QRFrame>
-          <QRCode value={checkinUrl} size={180} />
-        </QRFrame>
-        <p className="text-xs text-cream/30 break-all text-center">{checkinUrl}</p>
+      {/* QR 화면 링크 */}
+      <section className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs tracking-widest uppercase text-cream/50">출석체크 QR</h2>
+          <Link
+            href={`/qr/${sessionId}`}
+            target="_blank"
+            className="border border-neon/50 text-neon font-bold px-4 py-2 rounded-lg text-sm hover:bg-neon/10 transition-colors"
+          >
+            QR 화면 열기 ↗
+          </Link>
+        </div>
+        <p className="text-xs text-cream/30 break-all">{checkinUrl}</p>
       </section>
 
       {/* Round Control */}
