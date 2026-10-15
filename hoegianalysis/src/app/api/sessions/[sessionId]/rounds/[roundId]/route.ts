@@ -47,6 +47,21 @@ export async function PATCH(
 
     const round = roundResult.rows[0] as unknown as Round;
 
+    // 사람별 조정 합계보다 총액이 작아지면 나머지 사람들의 금액이 음수가 됨
+    if (totalAmount > 0) {
+      const adjResult = await db.execute({
+        sql: 'SELECT COALESCE(SUM(adjustment), 0) AS adjustment_sum FROM checkins WHERE round_id = ?',
+        args: [roundId],
+      });
+      const adjustmentSum = Number((adjResult.rows[0] as unknown as { adjustment_sum: number }).adjustment_sum);
+      if (totalAmount < adjustmentSum) {
+        return NextResponse.json(
+          { error: `총액은 사람별 조정 합계(${adjustmentSum.toLocaleString()}원)보다 작을 수 없어요.` },
+          { status: 400 }
+        );
+      }
+    }
+
     await db.execute({
       sql: 'UPDATE rounds SET total_amount = ? WHERE id = ?',
       args: [totalAmount, roundId],

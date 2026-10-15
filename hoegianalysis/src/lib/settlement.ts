@@ -7,6 +7,15 @@ export function splitAmount(total: number, count: number): number[] {
   return Array.from({ length: count }, (_, i) => base + (i < remainder ? 1 : 0));
 }
 
+// 사람별 조정 금액을 반영한 분배. 조정 합계를 뺀 나머지를 똑같이 나누고 각자 조정액을 더하므로
+// 합계는 항상 총액과 같다. adjustments 순서 = 출석 순서
+export function splitWithAdjustments(total: number, adjustments: number[]): number[] {
+  if (total <= 0) return adjustments.map(() => 0);
+  const adjustmentSum = adjustments.reduce((a, b) => a + b, 0);
+  const base = splitAmount(total - adjustmentSum, adjustments.length);
+  return base.map((b, i) => b + adjustments[i]);
+}
+
 // 화면 표시용 인당 금액: "33,333원" 또는 "33,333~33,334원"
 export function formatPerPerson(total: number, count: number): string {
   const shares = splitAmount(total, count);

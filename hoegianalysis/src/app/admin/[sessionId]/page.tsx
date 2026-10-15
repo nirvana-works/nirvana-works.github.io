@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { AttendanceRow } from '@/components/AttendanceRow';
 import { formatPerPerson } from '@/lib/settlement';
+import { AdjustmentPanel } from '@/components/AdjustmentPanel';
 
 interface Round {
   id: string;
   round_number: number;
   started_at: string;
   total_amount: number;
-  checkins: { id: string; name: string; checked_in_at: string }[];
+  checkins: { id: string; name: string; checked_in_at: string; adjustment: number }[];
 }
 
 interface SessionDetail {
@@ -56,6 +57,7 @@ export default function AdminDashboard({
   const [accountLoaded, setAccountLoaded] = useState(false);
   const [accountSaved, setAccountSaved] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
+  const [adjustRoundId, setAdjustRoundId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -140,11 +142,14 @@ export default function AdminDashboard({
     return () => clearInterval(id);
   }, [authed, fetchSession]);
 
-  async function handleNextRound() {
+  async function handleChangeRound(direction: 'next' | 'previous') {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/sessions/${sessionId}/rounds`, {
+      const url = direction === 'next'
+        ? `/api/sessions/${sessionId}/rounds`
+        : `/api/sessions/${sessionId}/rounds/previous`;
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'x-admin-password': password },
       });
@@ -153,7 +158,7 @@ export default function AdminDashboard({
         if (result.data) setSession(result.data);
       } else {
         const d = await res.json() as { error?: string };
-        setError(d.error ?? '차수 시작 실패');
+        setError(d.error ?? '차수 변경 실패');
       }
     } catch {
       setError('네트워크 오류');
@@ -256,6 +261,10 @@ export default function AdminDashboard({
       setShowSettlement(false);
       return;
     }
+    await loadSettlement();
+  }
+
+  async function loadSettlement() {
     setLoading(true);
     try {
       const res = await fetch(`/api/sessions/${sessionId}/settlement`, {
@@ -318,6 +327,13 @@ export default function AdminDashboard({
     );
   }
 
+  // 이전 차수로 돌아간 상태면 다음 차수가 이미 있음 → "시작" 대신 "이동"
+  const nextRoundExists = session.rounds.some(
+    (r) => r.round_number === session.current_round_number + 1
+  );
+
+  const adjustRound = session.rounds.find((r) => r.id === adjustRoundId) ?? null;
+
   const visibleRounds = activeTab === 0
     ? session.rounds
     : session.rounds.filter((r) => r.round_number === activeTab);
@@ -357,15 +373,28 @@ export default function AdminDashboard({
       </section>
 
       {/* Round Control */}
-      <section className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex items-center justify-between">
+      <section className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex items-center justify-between gap-2">
         <h2 className="text-xs tracking-widest uppercase text-cream/50">차수 관리</h2>
-        <button
-          onClick={handleNextRound}
-          disabled={loading}
-          className="bg-neon text-bg font-bold px-5 py-2 rounded-lg text-sm disabled:opacity-40 transition-opacity"
-        >
-          {session.current_round_number === 0 ? '1차 시작' : `${session.current_round_number + 1}차 시작`}
-        </button>
+        <div className="flex items-center gap-2">
+          {session.current_round_number > 1 && (
+            <button
+              onClick={() => handleChangeRound('previous')}
+              disabled={loading}
+              className="border border-cream/20 text-cream/70 font-bold px-3 py-2 rounded-lg text-sm hover:border-cream/40 disabled:opacity-40 transition-colors"
+            >
+              ← {session.current_round_number - 1}차로
+            </button>
+          )}
+          <button
+            onClick={() => handleChangeRound('next')}
+            disabled={loading}
+            className="bg-neon text-bg font-bold px-5 py-2 rounded-lg text-sm disabled:opacity-40 transition-opacity"
+          >
+            {nextRoundExists
+              ? `${session.current_round_number + 1}차로 →`
+              : `${session.current_round_number + 1}차 시작`}
+          </button>
+        </div>
       </section>
 
       {/* Tabs */}
@@ -389,14 +418,22 @@ export default function AdminDashboard({
 
           <div className="divide-y divide-cream/5">
             {visibleRounds.map((round) => {
+              const adjustedCount = round.checkins.filter((c) => Number(c.adjustment) !== 0).length;
+              const adjustmentSum = round.checkins.reduce((sum, c) => sum + Number(c.adjustment), 0);
+              // 조정이 있으면 조정 안 한 사람 기준 금액을 보여줌
               const perPerson = round.total_amount > 0 && round.checkins.length > 0
-                ? formatPerPerson(round.total_amount, round.checkins.length)
+                ? formatPerPerson(round.total_amount - adjustmentSum, round.checkins.length)
                 : null;
 
               return (
                 <div key={round.id} className="p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-display text-neon text-lg">{round.round_number}차</span>
+                    <span className="font-display text-neon text-lg">
+                      {round.round_number}차
+                      {round.round_number === session.current_round_number && (
+                        <span className="ml-2 align-middle font-body text-[10px] font-bold text-bg bg-neon px-1.5 py-0.5 rounded">진행 중</span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-cream/40">참석 {round.checkins.length}명</span>
                       {resetConfirm === round.id ? (
@@ -459,9 +496,20 @@ export default function AdminDashboard({
                   </div>
 
                   {perPerson !== null && (
-                    <p className="text-sm text-neon font-medium">
-                      인당 분담금: {perPerson}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm text-neon font-medium">
+                        인당 분담금: {perPerson}
+                        {adjustedCount > 0 && (
+                          <span className="ml-1 text-xs text-cream/50">(조정 {adjustedCount}명 제외 기준)</span>
+                        )}
+                      </p>
+                      <button
+                        onClick={() => setAdjustRoundId(round.id)}
+                        className="shrink-0 border border-neon/50 text-neon text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-neon/10"
+                      >
+                        사람별 조정{adjustedCount > 0 ? ` (${adjustedCount})` : ''}
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -530,6 +578,22 @@ export default function AdminDashboard({
       >
         {showSettlement ? '정산표 닫기' : '정산표 보기'}
       </button>
+
+      {adjustRound && (
+        <AdjustmentPanel
+          key={adjustRound.id}
+          sessionId={sessionId}
+          password={password}
+          round={adjustRound}
+          onClose={() => setAdjustRoundId(null)}
+          onSaved={async () => {
+            const result = await fetchSession();
+            if (result.data) setSession(result.data);
+            // 열려 있는 정산표도 새 금액으로 갱신
+            if (showSettlement) await loadSettlement();
+          }}
+        />
+      )}
 
       {showSettlement && settlement && (
         <section className="bg-bgAlt border border-cream/10 rounded-2xl overflow-auto">

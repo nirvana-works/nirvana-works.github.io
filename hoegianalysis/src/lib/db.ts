@@ -68,6 +68,13 @@ async function runInit(): Promise<void> {
   if (!names.has('account_holder')) {
     await db.execute('ALTER TABLE sessions ADD COLUMN account_holder TEXT');
   }
+
+  // 사람별 조정 금액 (기본 0, 양수면 더 내고 음수면 덜 냄)
+  const checkinColumns = await db.execute('PRAGMA table_info(checkins)');
+  const checkinNames = new Set(checkinColumns.rows.map((r) => (r as unknown as { name: string }).name));
+  if (!checkinNames.has('adjustment')) {
+    await db.execute('ALTER TABLE checkins ADD COLUMN adjustment INTEGER NOT NULL DEFAULT 0');
+  }
 }
 
 export default getDb;

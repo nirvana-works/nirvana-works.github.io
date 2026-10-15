@@ -7,6 +7,7 @@ interface ReportRound {
   round_number: number;
   attended: boolean;
   amount: number | null;
+  adjustment: number;
   total_amount: number;
   count: number;
 }
@@ -150,6 +151,11 @@ export default function ReportPage({
                   </td>
                   <td className="py-2 text-right">
                     {r.amount !== null ? `${r.amount.toLocaleString()}원` : '-'}
+                    {r.adjustment !== 0 && r.total_amount > 0 && (
+                      <span className="block text-[10px] text-bg/50">
+                        (조정 {r.adjustment > 0 ? '+' : '−'}{Math.abs(r.adjustment).toLocaleString()}원)
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,5 @@
 import { getDb } from './db';
-import { splitAmount } from './settlement';
+import { splitWithAdjustments } from './settlement';
 
 interface Round {
   id: string;
@@ -11,11 +11,14 @@ interface Round {
 interface CheckIn {
   round_id: string;
   name: string;
+  adjustment: number;
 }
 
 export interface SettlementParticipant {
   name: string;
   rounds: Record<number, number | null>;
+  // 차수별 조정 금액 (출석한 차수만, 조정 없으면 0)
+  adjustments: Record<number, number>;
   total: number;
 }
 
@@ -41,7 +44,7 @@ export async function computeSettlement(
 
   const checkinsResult = await db.execute({
     sql: `
-      SELECT c.round_id, c.name
+      SELECT c.round_id, c.name, c.adjustment
       FROM checkins c
       JOIN rounds r ON c.round_id = r.id
       WHERE r.session_id = ?
@@ -52,24 +55,28 @@ export async function computeSettlement(
 
   const allCheckins = checkinsResult.rows as unknown as CheckIn[];
 
-  // round_id -> 출석 순서대로 정렬된 참가자 이름
-  const namesByRound: Record<string, string[]> = {};
+  // round_id -> 출석 순서대로 정렬된 출석 기록
+  const checkinsByRound: Record<string, CheckIn[]> = {};
   for (const c of allCheckins) {
-    (namesByRound[c.round_id] ??= []).push(c.name);
+    (checkinsByRound[c.round_id] ??= []).push(c);
   }
 
-  // round_id -> (이름 -> 분담금). 합계가 총액과 정확히 일치하도록 분배
+  // round_id -> (이름 -> 분담금). 사람별 조정을 반영하고 합계가 총액과 정확히 일치하도록 분배
   const shareByRound: Record<string, Map<string, number>> = {};
+  const adjustmentByRound: Record<string, Map<string, number>> = {};
   for (const round of rounds) {
-    const names = namesByRound[round.id] ?? [];
-    const shares = splitAmount(round.total_amount, names.length);
-    shareByRound[round.id] = new Map(names.map((name, i) => [name, shares[i]]));
+    const checkins = checkinsByRound[round.id] ?? [];
+    const adjustments = checkins.map((c) => Number(c.adjustment));
+    const shares = splitWithAdjustments(round.total_amount, adjustments);
+    shareByRound[round.id] = new Map(checkins.map((c, i) => [c.name, shares[i]]));
+    adjustmentByRound[round.id] = new Map(checkins.map((c, i) => [c.name, adjustments[i]]));
   }
 
   const participantNames = [...new Set(allCheckins.map((c) => c.name))].sort();
 
   const participants = participantNames.map((name) => {
     const roundAmounts: Record<number, number | null> = {};
+    const roundAdjustments: Record<number, number> = {};
     let total = 0;
 
     for (const round of rounds) {
@@ -78,15 +85,16 @@ export async function computeSettlement(
         roundAmounts[round.round_number] = null;
       } else {
         roundAmounts[round.round_number] = share;
+        roundAdjustments[round.round_number] = adjustmentByRound[round.id].get(name) ?? 0;
         total += share;
       }
     }
 
-    return { name, rounds: roundAmounts, total };
+    return { name, rounds: roundAmounts, adjustments: roundAdjustments, total };
   });
 
   const roundSummary = rounds.map((r) => {
-    const count = namesByRound[r.id]?.length ?? 0;
+    const count = checkinsByRound[r.id]?.length ?? 0;
     return {
       round_number: r.round_number,
       total_amount: r.total_amount,

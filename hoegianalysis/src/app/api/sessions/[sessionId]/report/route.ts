@@ -71,10 +71,12 @@ export async function GET(
       const amounts = matches
         .map((m) => m.rounds[r.round_number])
         .filter((a): a is number => a !== null);
+      const adjustment = matches.reduce((sum, m) => sum + (m.adjustments[r.round_number] ?? 0), 0);
       return {
         round_number: r.round_number,
         attended: amounts.length > 0,
         amount: amounts.length > 0 ? amounts.reduce((a, b) => a + b, 0) : null,
+        adjustment,
         total_amount: r.total_amount,
         count: r.count,
       };

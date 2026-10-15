@@ -37,13 +37,29 @@ export async function POST(
 
     const session = sessionResult.rows[0] as unknown as Session;
     const newRoundNumber = session.current_round_number + 1;
-    const roundId = generateRoundId();
-    const startedAt = new Date().toISOString();
 
-    await db.execute({
-      sql: 'INSERT INTO rounds (id, session_id, round_number, started_at, total_amount) VALUES (?, ?, ?, ?, 0)',
-      args: [roundId, sessionId, newRoundNumber, startedAt],
+    // 이전 차수로 돌아갔다가 다시 넘어오는 경우: 남아 있는 차수를 다시 활성화
+    const existing = await db.execute({
+      sql: 'SELECT id, started_at FROM rounds WHERE session_id = ? AND round_number = ?',
+      args: [sessionId, newRoundNumber],
     });
+
+    let roundId: string;
+    let startedAt: string;
+    let created = false;
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0] as unknown as { id: string; started_at: string };
+      roundId = row.id;
+      startedAt = row.started_at;
+    } else {
+      roundId = generateRoundId();
+      startedAt = new Date().toISOString();
+      created = true;
+      await db.execute({
+        sql: 'INSERT INTO rounds (id, session_id, round_number, started_at, total_amount) VALUES (?, ?, ?, ?, 0)',
+        args: [roundId, sessionId, newRoundNumber, startedAt],
+      });
+    }
 
     await db.execute({
       sql: 'UPDATE sessions SET current_round_number = ? WHERE id = ?',
@@ -52,7 +68,7 @@ export async function POST(
 
     return NextResponse.json(
       { id: roundId, sessionId, roundNumber: newRoundNumber, startedAt },
-      { status: 201 }
+      { status: created ? 201 : 200 }
     );
   } catch (error) {
     console.error('POST /api/sessions/[sessionId]/rounds error:', error);
