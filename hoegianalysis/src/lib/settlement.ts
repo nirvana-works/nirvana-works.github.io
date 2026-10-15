@@ -23,8 +23,9 @@ export function normalizeName(name: string): string {
   return name.replace(/\s+/g, '');
 }
 
-// 모든 차수 참석 A+, 한 차수 빠질 때마다 한 등급씩 하락, D+ 아래는 F
-const GRADES = ['A+', 'B+', 'C+', 'D+'];
-export function gradeFor(missed: number): string {
-  return GRADES[missed] ?? 'F';
+// 모든 차수 참석 A+, 한 차수 빠지면 B+, 두 차수 이상 빠지면 C+ (최저 등급)
+const GRADES = ['A+', 'B+', 'C+'] as const;
+export type Grade = (typeof GRADES)[number];
+export function gradeFor(missed: number): Grade {
+  return GRADES[Math.min(missed, GRADES.length - 1)];
 }

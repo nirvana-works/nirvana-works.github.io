@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { Grade } from '@/lib/settlement';
 
 interface ReportRound {
   round_number: number;
@@ -14,7 +15,7 @@ interface Report {
   found: true;
   name: string;
   date: string;
-  grade: string;
+  grade: Grade;
   attended: number;
   totalRounds: number;
   rounds: ReportRound[];
@@ -24,12 +25,16 @@ interface Report {
 
 type LookupResult = Report | { found: false; suggestions: string[] };
 
-const COMMENTS: Record<string, string> = {
+const COMMENTS: Record<Grade, string> = {
   'A+': '개근! 진정한 회기분석러입니다 🏆',
   'B+': '아쉽게 한 차수를 놓쳤어요. 다음엔 개근 도전!',
   'C+': '중간에 빠져나간 흔적이 보입니다 👀',
-  'D+': '출석이 많이 부족해요...',
-  F: '다음 회기분석엔 끝까지 함께해요 🙏',
+};
+
+const GRADE_IMAGES: Record<Grade, string> = {
+  'A+': '/grade-a.webp',
+  'B+': '/grade-b.webp',
+  'C+': '/grade-c.webp',
 };
 
 export default function ReportPage({
@@ -101,24 +106,26 @@ export default function ReportPage({
 
   if (report) {
     return (
-      <main className="min-h-screen bg-bg text-cream flex flex-col items-center px-4 py-10 font-body">
+      <main className="min-h-screen bg-bg text-cream flex flex-col items-center px-4 pt-20 pb-10 font-body">
         <article className="relative w-full max-w-sm bg-cream text-bg rounded-2xl p-6 shadow-[0_0_24px_var(--color-neon-soft)]">
-          <header className="border-b-2 border-bg/80 pb-3">
-            <p className="text-xs tracking-widest text-bg/50">{report.date}</p>
-            <h1 className="font-display text-3xl">회기분석 성적표</h1>
-            <p className="mt-1 text-lg font-bold">{report.name}</p>
-          </header>
+          {/* 학점별 넙죽이 - 카드 오른쪽 위에 걸쳐서 표시 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={GRADE_IMAGES[report.grade]}
+            alt={`학점 ${report.grade}`}
+            className="absolute -top-14 -right-2 w-32 pointer-events-none select-none drop-shadow-[0_6px_10px_rgba(0,0,0,0.25)]"
+          />
 
-          {/* 학점 도장 */}
-          <div
-            className="absolute top-5 right-5 w-24 h-24 rounded-full border-[5px] border-stamp text-stamp flex flex-col items-center justify-center -rotate-12"
-            aria-label={`학점 ${report.grade}`}
-          >
-            <span className="font-display text-4xl leading-none">{report.grade}</span>
-            <span className="text-[10px] font-bold tracking-widest mt-1">
-              {report.attended}/{report.totalRounds} 출석
-            </span>
-          </div>
+          <header className="border-b-2 border-bg/80 pb-3 pr-28">
+            <p className="text-xs tracking-widest text-bg/50">{report.date}</p>
+            <h1 className="font-display text-2xl">회기분석 성적표</h1>
+            <p className="mt-1 text-lg font-bold">
+              {report.name}
+              <span className="ml-2 text-xs font-bold text-stamp">
+                {report.attended}/{report.totalRounds} 출석
+              </span>
+            </p>
+          </header>
 
           <p className="mt-4 text-sm text-bg/70">{COMMENTS[report.grade]}</p>
 
