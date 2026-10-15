@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #12142b;
+  --color-bg-alt: #1b1e3d;
+  --color-neon: #ffb347;
+  --color-neon-soft: rgba(255, 179, 71, 0.35);
+  --color-stamp: #e63946;
+  --color-cream: #f5f0e6;
+  --color-line: rgba(245, 240, 230, 0.12);
+}
+
+@keyframes stamp-down {
+  0% {
+    transform: scale(2.2) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.92) rotate(-8deg);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1.05) rotate(-8deg);
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 22%, 24%, 55% { opacity: 0.4; }
+}
+
+.neon-text {
+  color: var(--color-neon);
+  text-shadow:
+    0 0 4px var(--color-neon-soft),
+    0 0 12px var(--color-neon-soft),
+    0 0 28px var(--color-neon-soft);
+}
+
+.stamp {
+  animation: stamp-down 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
