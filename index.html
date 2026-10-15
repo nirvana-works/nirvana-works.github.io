@@ -354,6 +354,23 @@
     svg.removeAttribute('height');
 
     const has = new Set(countriesWithPhotos());
+
+    // 지도에 모양이 없는 작은 섬: 점으로 표시 (지도 좌표)
+    const ISLAND_MARKERS = {
+      mp: [763, 487],   // 사이판 (북마리아나 제도)
+      gu: [761, 492],   // 괌
+    };
+    Object.entries(ISLAND_MARKERS).forEach(([code, [cx, cy]]) => {
+      if (!has.has(code) || svg.querySelector(`#${code}`)) return;
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('id', code);
+      dot.setAttribute('class', 'island-marker');
+      dot.setAttribute('cx', cx);
+      dot.setAttribute('cy', cy);
+      dot.setAttribute('r', 4.5);
+      svg.appendChild(dot);
+    });
+
     svg.querySelectorAll('[id]').forEach(el => {
       const code = el.id.toLowerCase();
       if (has.has(code)) el.classList.add('has-photos');

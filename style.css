@@ -437,6 +437,12 @@ section { margin-top: 4rem; }
   stroke-width: 0.8;
 }
 
+/* 작은 섬 표시 점 (사이판·괌 등) */
+.map-container svg .island-marker {
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
 /* 툴팁 */
 .map-tooltip {
   position: absolute;
