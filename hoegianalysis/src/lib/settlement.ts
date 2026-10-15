@@ -17,3 +17,14 @@ export function formatPerPerson(total: number, count: number): string {
     ? `${min.toLocaleString()}원`
     : `${min.toLocaleString()}~${max.toLocaleString()}원`;
 }
+
+// 이름 비교용: 띄어쓰기를 무시
+export function normalizeName(name: string): string {
+  return name.replace(/\s+/g, '');
+}
+
+// 모든 차수 참석 A+, 한 차수 빠질 때마다 한 등급씩 하락, D+ 아래는 F
+const GRADES = ['A+', 'B+', 'C+', 'D+'];
+export function gradeFor(missed: number): string {
+  return GRADES[missed] ?? 'F';
+}

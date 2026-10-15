@@ -7,6 +7,8 @@ interface Session {
   date: string;
   current_round_number: number;
   created_at: string;
+  account_number: string | null;
+  account_holder: string | null;
 }
 
 interface Round {
@@ -40,7 +42,7 @@ export async function GET(
     const db = getDb();
 
     const sessionResult = await db.execute({
-      sql: 'SELECT id, date, current_round_number, created_at FROM sessions WHERE id = ?',
+      sql: 'SELECT id, date, current_round_number, created_at, account_number, account_holder FROM sessions WHERE id = ?',
       args: [sessionId],
     });
 
@@ -75,6 +77,44 @@ export async function GET(
     return NextResponse.json({ ...session, rounds: roundsWithCheckins });
   } catch (error) {
     console.error('GET /api/sessions/[sessionId] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// 엔빵 계좌 정보 저장
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { sessionId: string } }
+) {
+  try {
+    await initDb();
+    const { sessionId } = params;
+    const adminPassword = request.headers.get('x-admin-password');
+
+    if (!adminPassword) {
+      return NextResponse.json({ error: 'Admin password required' }, { status: 401 });
+    }
+
+    if (!(await validateAdminPassword(sessionId, adminPassword))) {
+      return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { accountNumber, accountHolder } = body as { accountNumber?: unknown; accountHolder?: unknown };
+
+    if (typeof accountNumber !== 'string' || typeof accountHolder !== 'string') {
+      return NextResponse.json({ error: 'accountNumber and accountHolder must be strings' }, { status: 400 });
+    }
+
+    const db = getDb();
+    await db.execute({
+      sql: 'UPDATE sessions SET account_number = ?, account_holder = ? WHERE id = ?',
+      args: [accountNumber.trim() || null, accountHolder.trim() || null, sessionId],
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('PATCH /api/sessions/[sessionId] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

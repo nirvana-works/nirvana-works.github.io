@@ -40,6 +40,16 @@ export async function initDb(): Promise<void> {
       FOREIGN KEY (round_id) REFERENCES rounds(id)
     );
   `);
+
+  // 기존 DB에 엔빵 계좌 컬럼이 없으면 추가
+  const columns = await db.execute('PRAGMA table_info(sessions)');
+  const names = new Set(columns.rows.map((r) => (r as unknown as { name: string }).name));
+  if (!names.has('account_number')) {
+    await db.execute('ALTER TABLE sessions ADD COLUMN account_number TEXT');
+  }
+  if (!names.has('account_holder')) {
+    await db.execute('ALTER TABLE sessions ADD COLUMN account_holder TEXT');
+  }
 }
 
 export default getDb;

@@ -17,6 +17,8 @@ interface SessionDetail {
   id: string;
   date: string;
   current_round_number: number;
+  account_number: string | null;
+  account_holder: string | null;
   rounds: Round[];
 }
 
@@ -49,12 +51,31 @@ export default function AdminDashboard({
   const [resetConfirm, setResetConfirm] = useState<string | null>(null); // roundId
   const [settlement, setSettlement] = useState<Settlement | null>(null);
   const [showSettlement, setShowSettlement] = useState(false);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolder, setAccountHolder] = useState('');
+  const [accountLoaded, setAccountLoaded] = useState(false);
+  const [accountSaved, setAccountSaved] = useState(false);
+  const [reportCopied, setReportCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const checkinUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/checkin/${sessionId}`
     : `http://localhost:3000/checkin/${sessionId}`;
+
+  const reportUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/report/${sessionId}`
+    : `http://localhost:3000/report/${sessionId}`;
+
+  async function copyReportLink() {
+    try {
+      await navigator.clipboard.writeText(reportUrl);
+      setReportCopied(true);
+      setTimeout(() => setReportCopied(false), 1500);
+    } catch {
+      setError('링크 복사에 실패했어요. 아래 주소를 직접 복사하세요.');
+    }
+  }
 
   const fetchSession = useCallback(async (pw?: string) => {
     const usedPw = pw ?? password;
@@ -80,6 +101,14 @@ export default function AdminDashboard({
       setAuthError('비밀번호가 올바르지 않습니다.');
     }
   }
+
+  // 계좌 입력칸은 처음 불러올 때만 채움 (5초 갱신이 입력 중인 값을 덮어쓰지 않도록)
+  useEffect(() => {
+    if (!session || accountLoaded) return;
+    setAccountNumber(session.account_number ?? '');
+    setAccountHolder(session.account_holder ?? '');
+    setAccountLoaded(true);
+  }, [session, accountLoaded]);
 
   // 세션 생성 직후 또는 새로고침 시 저장된 비밀번호로 자동 인증
   useEffect(() => {
@@ -187,6 +216,33 @@ export default function AdminDashboard({
       } else {
         const d = await res.json() as { error?: string };
         setError(d.error ?? '리셋 실패');
+      }
+    } catch {
+      setError('네트워크 오류');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSaveAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setAccountSaved(false);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password,
+        },
+        body: JSON.stringify({ accountNumber, accountHolder }),
+      });
+      if (res.ok) {
+        setAccountSaved(true);
+      } else {
+        const d = await res.json() as { error?: string };
+        setError(d.error ?? '계좌 저장 실패');
       }
     } catch {
       setError('네트워크 오류');
@@ -413,6 +469,58 @@ export default function AdminDashboard({
           </div>
         </section>
       )}
+
+      {/* 엔빵 계좌 */}
+      <form
+        onSubmit={handleSaveAccount}
+        className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex flex-col gap-3"
+      >
+        <h2 className="text-xs tracking-widest uppercase text-cream/50">엔빵 계좌</h2>
+        <input
+          value={accountNumber}
+          onChange={(e) => { setAccountNumber(e.target.value); setAccountSaved(false); }}
+          placeholder="계좌번호 (예: 국민 123456-78-901234)"
+          className="bg-bg border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-neon"
+        />
+        <div className="flex items-center gap-2">
+          <input
+            value={accountHolder}
+            onChange={(e) => { setAccountHolder(e.target.value); setAccountSaved(false); }}
+            placeholder="계좌명 (예금주)"
+            className="flex-1 bg-bg border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-neon"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-neon text-bg text-sm font-bold px-3 py-2 rounded-lg disabled:opacity-40"
+          >
+            {accountSaved ? '저장됨' : '저장'}
+          </button>
+        </div>
+      </form>
+
+      {/* 성적표 링크 */}
+      <section className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs tracking-widest uppercase text-cream/50">성적표 (단톡방 공유용)</h2>
+          <div className="flex gap-2">
+            <Link
+              href={`/report/${sessionId}`}
+              target="_blank"
+              className="border border-cream/20 text-cream/70 px-3 py-2 rounded-lg text-sm hover:border-cream/40"
+            >
+              열기 ↗
+            </Link>
+            <button
+              onClick={copyReportLink}
+              className="border border-neon/50 text-neon font-bold px-3 py-2 rounded-lg text-sm hover:bg-neon/10 transition-colors"
+            >
+              {reportCopied ? '복사됨' : '링크 복사'}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-cream/30 break-all">{reportUrl}</p>
+      </section>
 
       {/* Settlement */}
       <button
