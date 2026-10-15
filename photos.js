@@ -16,6 +16,30 @@ window.PHOTOS_DATA = {
         "IMG_8658.JPG"
       ]
     },
+    "cn": {
+      "name": "중국",
+      "photos": [
+        "20240427_104541_Original.jpg",
+        "20240427_114138_Original.jpg",
+        "IMG_0786.jpg",
+        "IMG_1006.jpg",
+        "IMG_1009.jpg",
+        "IMG_1145.jpg",
+        "IMG_1307 2.jpg",
+        "IMG_3271.jpg",
+        "IMG_3448.jpg",
+        "IMG_3466.JPG",
+        "IMG_5602.jpg",
+        "IMG_5653.jpg",
+        "IMG_5658.jpg",
+        "IMG_5802.jpg",
+        "IMG_8768.jpg",
+        "IMG_8919.jpg",
+        "IMG_9022.jpg",
+        "IMG_9662.jpg",
+        "IMG_9921.jpg"
+      ]
+    },
     "cz": {
       "name": "체코",
       "photos": [
