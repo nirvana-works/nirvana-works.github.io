@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { StampMark } from "@/components/StampMark";
+import { useEffect, useRef, useState } from "react";
+import { CheckinVideo, type CheckinVideoHandle } from "@/components/CheckinVideo";
 
 export default function AttendancePage({
   params,
@@ -13,6 +13,7 @@ export default function AttendancePage({
   const [name, setName] = useState("");
   const [submittedName, setSubmittedName] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const videoRef = useRef<CheckinVideoHandle>(null);
   const [status, setStatus] = useState<
     "idle" | "loading" | "done" | "duplicate" | "error"
   >("idle");
@@ -70,16 +71,11 @@ export default function AttendancePage({
       const data = (await res.json()) as { roundNumber: number };
       setRound(data.roundNumber);
       setSubmittedName(name.trim());
+      videoRef.current?.play();
       setStatus("done");
     } catch {
       setStatus("error");
     }
-  }
-
-  function handleNext() {
-    setName("");
-    setSubmittedName("");
-    setStatus("idle");
   }
 
   if (notFound) {
@@ -95,9 +91,7 @@ export default function AttendancePage({
 
   return (
     <main className="min-h-screen bg-bg text-cream flex flex-col items-center justify-center px-6 font-body">
-      {status === "done" && (
-        <StampMark label="출석체크" name={submittedName} onNext={handleNext} />
-      )}
+      <CheckinVideo ref={videoRef} visible={status === "done"} name={submittedName} />
 
       {status !== "done" && (
         <>
