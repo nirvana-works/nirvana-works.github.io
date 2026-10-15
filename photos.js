@@ -113,6 +113,25 @@ window.PHOTOS_DATA = {
         "IMG_7888.JPG"
       ]
     },
+    "in": {
+      "name": "인도",
+      "photos": [
+        "0C1FBFDC-342A-4BC6-963C-A36E7EF5B1CA.JPG",
+        "11082E2E-3B84-440F-B941-32BE7853D0DE.JPG",
+        "1B6A5AB2-F619-4688-BF2D-6F5C35751410.JPG",
+        "3A6E5E7D-B596-4FB7-B7CE-2025A11BC679.JPG",
+        "3AF47165-881D-4A4D-A076-FC8A965ED7EF.JPG",
+        "4B46B676-9D18-4C52-8B23-B1DD1D2F0AAD.JPG",
+        "5503DD49-94D7-4E6C-A19E-1F7EB5864F10.JPG",
+        "68257F9B-4A69-4399-AF28-8D3422E90582.JPG",
+        "787429F9-2415-48F6-8E3E-393BC3E60419.JPG",
+        "92BD499D-102E-46F7-B6EE-AFA061A67057.JPG",
+        "9FD7CB79-7406-4644-B11C-C37D2B549598.JPG",
+        "A955B33F-0F93-4C6A-BBFD-711A4D6C4A72.JPG",
+        "E8B558E3-C49B-4957-9BA5-C3D0A72BCEB9.JPG",
+        "EFB5D6C5-2FE4-4016-9696-60AB9ED741B9.JPG"
+      ]
+    },
     "it": {
       "name": "이탈리아",
       "photos": [
@@ -163,6 +182,26 @@ window.PHOTOS_DATA = {
         "IMG_0954.jpg"
       ]
     },
+    "ph": {
+      "name": "필리핀",
+      "photos": [
+        "IMG_20240204_201246_302_Original.jpg",
+        "IMG_20240204_201246_436_Original.jpg",
+        "IMG_20240204_201246_614_Original.jpg",
+        "IMG_20240204_201246_687_Original.jpg",
+        "IMG_20240205_103701_712_Original.jpg",
+        "IMG_20240205_230106_075_Original.jpg",
+        "IMG_20240205_230106_385_Original.jpg",
+        "IMG_20240207_180935_992_Original.jpg",
+        "IMG_20240207_180936_053_Original.jpg",
+        "IMG_20240207_180936_098_Original.jpg",
+        "IMG_20240207_180936_178_Original.jpg",
+        "IMG_20240209_213515_374_Original.jpg",
+        "IMG_20240209_213515_447_Original.jpg",
+        "IMG_20240209_213515_681_Original.jpg",
+        "IMG_20240214_172631_066_Original.jpg"
+      ]
+    },
     "th": {
       "name": "태국",
       "photos": [
@@ -172,6 +211,30 @@ window.PHOTOS_DATA = {
         "IMG_8768.jpg",
         "IMG_8794.jpg",
         "IMG_8814.jpg"
+      ]
+    },
+    "us": {
+      "name": "미국",
+      "photos": [
+        "IMG_20211006_190245_177_Original.jpg",
+        "IMG_20211006_190245_545_Original.jpg",
+        "IMG_20211024_192743_255_Original.jpg",
+        "IMG_20211027_213756_993_Original.jpg",
+        "IMG_20230104_231513_105_Original.jpg",
+        "IMG_20230104_231513_172_Original.jpg",
+        "IMG_20230108_172305_532_Original.jpg",
+        "IMG_20230108_172305_687_Original.jpg",
+        "IMG_20230911_023739_116_Original.jpg",
+        "IMG_20230917_082425_297_Original.jpg",
+        "IMG_20230917_222407_916_Original.jpg",
+        "IMG_20240108_221118_392_Original.jpg",
+        "IMG_20240108_221118_482_Original.jpg",
+        "IMG_20240114_212351_402_Original.jpg",
+        "IMG_20240114_212351_437_Original.jpg",
+        "IMG_20240114_212351_500_Original.jpg",
+        "IMG_20240114_212351_599_Original.jpg",
+        "IMG_20240114_212351_713_Original.jpg",
+        "IMG_20240114_212351_746_Original.jpg"
       ]
     }
   }
