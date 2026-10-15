@@ -3,15 +3,33 @@ import path from 'path';
 
 let client: Client | null = null;
 
+// 배포 환경: TURSO_DATABASE_URL / TURSO_AUTH_TOKEN 으로 Turso에 연결
+// 로컬 개발: 환경변수가 없으면 프로젝트 폴더의 hoesik.db 파일 사용
 export function getDb(): Client {
   if (client) return client;
 
-  const dbPath = path.join(process.cwd(), 'hoesik.db');
-  client = createClient({ url: `file:${dbPath}` });
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  if (tursoUrl) {
+    client = createClient({ url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN });
+  } else {
+    const dbPath = path.join(process.cwd(), 'hoesik.db');
+    client = createClient({ url: `file:${dbPath}` });
+  }
   return client;
 }
 
-export async function initDb(): Promise<void> {
+// 테이블 생성·마이그레이션은 서버 프로세스당 한 번만 (원격 DB 왕복을 줄이기 위해)
+let initPromise: Promise<void> | null = null;
+
+export function initDb(): Promise<void> {
+  initPromise ??= runInit().catch((err) => {
+    initPromise = null; // 실패하면 다음 요청에서 재시도
+    throw err;
+  });
+  return initPromise;
+}
+
+async function runInit(): Promise<void> {
   const db = getDb();
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS sessions (
