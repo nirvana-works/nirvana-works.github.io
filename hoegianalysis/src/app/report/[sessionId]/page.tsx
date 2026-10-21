@@ -24,7 +24,14 @@ interface Report {
   account: { number: string | null; holder: string | null };
 }
 
-type LookupResult = Report | { found: false; suggestions: string[] };
+type LookupResult = Report | { found: false; date: string; suggestions: string[] };
+
+// 출석 명단에 없는 이름으로 조회했을 때의 F 성적표
+interface Missing {
+  name: string;
+  date: string;
+  suggestions: string[];
+}
 
 const COMMENTS: Record<Grade, string> = {
   'A+': '개근! 진정한 회기분석러입니다 🏆',
@@ -46,15 +53,14 @@ export default function ReportPage({
   const { sessionId } = params;
   const [name, setName] = useState('');
   const [report, setReport] = useState<Report | null>(null);
-  const [suggestions, setSuggestions] = useState<string[] | null>(null);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'notFound' | 'noSession' | 'error'>('idle');
+  const [missing, setMissing] = useState<Missing | null>(null);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'noSession' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
 
   async function lookup(target: string) {
     const trimmed = target.trim();
     if (!trimmed || status === 'loading') return;
     setStatus('loading');
-    setSuggestions(null);
     try {
       const res = await fetch(`/api/sessions/${sessionId}/report?name=${encodeURIComponent(trimmed)}`);
       if (res.status === 404) {
@@ -64,12 +70,12 @@ export default function ReportPage({
       if (!res.ok) throw new Error();
       const data = (await res.json()) as LookupResult;
       if (data.found) {
+        setMissing(null);
         setReport(data);
-        setStatus('idle');
       } else {
-        setSuggestions(data.suggestions);
-        setStatus('notFound');
+        setMissing({ name: trimmed, date: data.date, suggestions: data.suggestions });
       }
+      setStatus('idle');
     } catch {
       setStatus('error');
     }
@@ -101,6 +107,60 @@ export default function ReportPage({
       <main className="min-h-screen bg-bg text-cream flex flex-col items-center justify-center px-6 font-body text-center">
         <p className="text-stamp">존재하지 않는 세션이에요.</p>
         <p className="mt-2 text-sm text-cream/40">링크를 다시 확인해주세요</p>
+      </main>
+    );
+  }
+
+  if (missing) {
+    return (
+      <main className="min-h-screen bg-bg text-cream flex flex-col items-center px-4 py-10 font-body">
+        <article className="w-full max-w-sm bg-cream text-bg rounded-2xl p-6 shadow-[0_0_24px_rgba(230,57,70,0.35)]">
+          <header className="border-b-2 border-bg/80 pb-3">
+            <p className="text-xs tracking-widest text-bg/50">{missing.date}</p>
+            <h1 className="font-display text-2xl">회기분석 성적표</h1>
+            <p className="mt-1 text-lg font-bold break-all">
+              {missing.name}
+              <span className="ml-2 text-xs font-bold text-stamp">출석 기록 없음</span>
+            </p>
+          </header>
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/grade-f.webp"
+            alt="학점 F"
+            className="mx-auto mt-4 w-56 pointer-events-none select-none"
+          />
+
+          <p className="mt-4 text-center font-display text-xl text-stamp leading-relaxed">
+            회기분석 불참은 죄악입니다.
+            <br />
+            재수강 바랍니다.
+          </p>
+
+          {missing.suggestions.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-bg/10 flex flex-col items-center gap-2 text-center">
+              <p className="text-bg/50 text-sm">혹시 이 이름으로 출석했나요?</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {missing.suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => { setName(s); lookup(s); }}
+                    className="border border-bg/30 text-bg text-sm font-bold px-3 py-1 rounded-full hover:bg-bg/5"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </article>
+
+        <button
+          onClick={() => { setMissing(null); setName(''); }}
+          className="mt-6 text-sm text-cream/40 underline"
+        >
+          다른 이름 조회
+        </button>
       </main>
     );
   }
@@ -222,27 +282,6 @@ export default function ReportPage({
         </button>
       </form>
 
-      {status === 'notFound' && (
-        <div className="mt-6 flex flex-col items-center gap-3 text-center">
-          <p className="text-stamp text-sm">출석 기록에서 이 이름을 찾지 못했어요</p>
-          {suggestions && suggestions.length > 0 && (
-            <>
-              <p className="text-cream/50 text-sm">혹시 이 이름인가요?</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => { setName(s); lookup(s); }}
-                    className="border border-neon/50 text-neon text-sm px-3 py-1 rounded-full hover:bg-neon/10"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
       {status === 'error' && (
         <p className="mt-6 text-stamp text-sm">조회에 실패했어요. 다시 시도해주세요</p>
       )}

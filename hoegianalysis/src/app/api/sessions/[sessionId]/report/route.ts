@@ -61,7 +61,7 @@ export async function GET(
           const n = normalizeName(name);
           return n.includes(query) || query.includes(n) || editDistance(n, query) <= 1;
         });
-      return NextResponse.json({ found: false, suggestions });
+      return NextResponse.json({ found: false, date: session.date, suggestions });
     }
 
     // 아무도 출석하지 않은 차수(실수로 시작한 차수 등)는 학점 계산에서 제외

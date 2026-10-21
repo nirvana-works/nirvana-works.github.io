@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { todayLocal } from '@/lib/date';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayLocal);
   const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

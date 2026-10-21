@@ -15,6 +15,12 @@ export default function Home() {
         >
           관리자로 시작하기
         </Link>
+        <Link
+          href="/admin/load"
+          className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-4 px-6 rounded-xl text-lg transition-colors"
+        >
+          정산 중인 출석 불러오기
+        </Link>
       </div>
     </main>
   );
