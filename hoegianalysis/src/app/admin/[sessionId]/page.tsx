@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { AttendanceRow } from '@/components/AttendanceRow';
-import { formatPerPerson } from '@/lib/settlement';
+import { formatPerPerson, isBalanced, splitShares, UNBALANCED_MESSAGE } from '@/lib/settlement';
 import { AdjustmentPanel } from '@/components/AdjustmentPanel';
 import { ManualCheckinForm } from '@/components/ManualCheckinForm';
 
@@ -12,7 +12,7 @@ interface Round {
   round_number: number;
   started_at: string;
   total_amount: number;
-  checkins: { id: string; name: string; checked_in_at: string; adjustment: number }[];
+  checkins: { id: string; name: string; checked_in_at: string; adjustment: number; fixed_amount: number | null }[];
 }
 
 interface SessionDetail {
@@ -472,11 +472,18 @@ export default function AdminDashboard({
 
           <div className="divide-y divide-cream/5">
             {visibleRounds.map((round) => {
-              const adjustedCount = round.checkins.filter((c) => Number(c.adjustment) !== 0).length;
-              const adjustmentSum = round.checkins.reduce((sum, c) => sum + Number(c.adjustment), 0);
-              // 조정이 있으면 조정 안 한 사람 기준 금액을 보여줌
-              const perPerson = round.total_amount > 0 && round.checkins.length > 0
-                ? formatPerPerson(round.total_amount - adjustmentSum, round.checkins.length)
+              const inputs = round.checkins.map((c) => ({
+                adjustment: Number(c.adjustment),
+                fixed: c.fixed_amount === null ? null : Number(c.fixed_amount),
+              }));
+              const adjustedCount = inputs.filter((i) => i.fixed !== null || i.adjustment !== 0).length;
+              const flexible = inputs.filter((i) => i.fixed === null);
+              const fixedSum = inputs.reduce((sum, i) => sum + (i.fixed ?? 0), 0);
+              const adjustmentSum = flexible.reduce((sum, i) => sum + i.adjustment, 0);
+              const balanced = isBalanced(round.total_amount, splitShares(round.total_amount, inputs));
+              // 조정이 있으면 조정·지정 안 한 사람 기준 금액을 보여줌
+              const perPerson = round.total_amount > 0 && flexible.length > 0
+                ? formatPerPerson(round.total_amount - fixedSum - adjustmentSum, flexible.length)
                 : null;
 
               return (
@@ -556,10 +563,16 @@ export default function AdminDashboard({
                     </button>
                   </div>
 
-                  {perPerson !== null && (
+                  {round.total_amount > 0 && !balanced && (
+                    <p className="text-xs text-stamp font-bold border border-stamp/40 bg-stamp/10 rounded-lg px-3 py-2">
+                      {UNBALANCED_MESSAGE}
+                    </p>
+                  )}
+
+                  {round.total_amount > 0 && round.checkins.length > 0 && (
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm text-neon font-medium">
-                        인당 분담금: {perPerson}
+                        인당 분담금: {perPerson ?? '-'}
                         {adjustedCount > 0 && (
                           <span className="ml-1 text-xs text-cream/50">(조정 {adjustedCount}명 제외 기준)</span>
                         )}

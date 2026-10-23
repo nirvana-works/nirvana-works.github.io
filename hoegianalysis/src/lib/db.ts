@@ -79,6 +79,10 @@ async function runInit(): Promise<void> {
   if (!checkinNames.has('adjustment')) {
     await db.execute('ALTER TABLE checkins ADD COLUMN adjustment INTEGER NOT NULL DEFAULT 0');
   }
+  // 사람별 금액 직접 지정 (NULL이면 지정 안 함, 0이면 엔빵에서 제외)
+  if (!checkinNames.has('fixed_amount')) {
+    await db.execute('ALTER TABLE checkins ADD COLUMN fixed_amount INTEGER');
+  }
 }
 
 export default getDb;

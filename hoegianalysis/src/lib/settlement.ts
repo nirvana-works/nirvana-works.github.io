@@ -7,14 +7,33 @@ export function splitAmount(total: number, count: number): number[] {
   return Array.from({ length: count }, (_, i) => base + (i < remainder ? 1 : 0));
 }
 
-// 사람별 조정 금액을 반영한 분배. 조정 합계를 뺀 나머지를 똑같이 나누고 각자 조정액을 더하므로
-// 합계는 항상 총액과 같다. adjustments 순서 = 출석 순서
-export function splitWithAdjustments(total: number, adjustments: number[]): number[] {
-  if (total <= 0) return adjustments.map(() => 0);
-  const adjustmentSum = adjustments.reduce((a, b) => a + b, 0);
-  const base = splitAmount(total - adjustmentSum, adjustments.length);
-  return base.map((b, i) => b + adjustments[i]);
+// 사람별 분담 입력: 금액 지정(fixed)이 있으면 그 금액을 그대로 내고,
+// 없으면 ± 조정(adjustment)을 반영해 나머지 사람끼리 나눈다
+export interface ShareInput {
+  adjustment: number;
+  fixed: number | null;
 }
+
+// 금액 지정한 사람은 그 금액, 나머지는 (총액 − 지정 합계 − 조정 합계)를 똑같이 나누고 각자 조정액을 더함.
+// 지정 금액이 총액을 넘거나 모두 지정하면 합계가 총액과 달라질 수 있음 → isBalanced로 확인. 순서 = 출석 순서
+export function splitShares(total: number, inputs: ShareInput[]): number[] {
+  if (total <= 0) return inputs.map((i) => i.fixed ?? 0);
+  const fixedSum = inputs.reduce((sum, i) => sum + (i.fixed ?? 0), 0);
+  const flexible = inputs.filter((i) => i.fixed === null);
+  const adjustmentSum = flexible.reduce((sum, i) => sum + i.adjustment, 0);
+  const base = splitAmount(total - fixedSum - adjustmentSum, flexible.length);
+  let k = 0;
+  return inputs.map((i) => (i.fixed !== null ? i.fixed : base[k++] + i.adjustment));
+}
+
+// 사람별 금액 합계가 총액과 같고 음수인 사람이 없는지
+export function isBalanced(total: number, shares: number[]): boolean {
+  if (total <= 0) return true;
+  return shares.reduce((a, b) => a + b, 0) === total && shares.every((s) => s >= 0);
+}
+
+// 정산이 맞지 않을 때 보여줄 안내 문구
+export const UNBALANCED_MESSAGE = '정산 총액이 넘어가거나 부족합니다. 다른 인원에서 조정 바랍니다.';
 
 // 화면 표시용 인당 금액: "33,333원" 또는 "33,333~33,334원"
 export function formatPerPerson(total: number, count: number): string {
