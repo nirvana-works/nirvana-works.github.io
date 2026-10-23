@@ -9,6 +9,7 @@ interface Session {
   created_at: string;
   account_number: string | null;
   account_holder: string | null;
+  kakaopay_available: number;
 }
 
 interface Round {
@@ -42,7 +43,7 @@ export async function GET(
     const db = getDb();
 
     const sessionResult = await db.execute({
-      sql: 'SELECT id, date, current_round_number, created_at, account_number, account_holder FROM sessions WHERE id = ?',
+      sql: 'SELECT id, date, current_round_number, created_at, account_number, account_holder, kakaopay_available FROM sessions WHERE id = ?',
       args: [sessionId],
     });
 
@@ -100,7 +101,11 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { accountNumber, accountHolder } = body as { accountNumber?: unknown; accountHolder?: unknown };
+    const { accountNumber, accountHolder, kakaopayAvailable } = body as {
+      accountNumber?: unknown;
+      accountHolder?: unknown;
+      kakaopayAvailable?: unknown;
+    };
 
     if (typeof accountNumber !== 'string' || typeof accountHolder !== 'string') {
       return NextResponse.json({ error: 'accountNumber and accountHolder must be strings' }, { status: 400 });
@@ -108,8 +113,8 @@ export async function PATCH(
 
     const db = getDb();
     await db.execute({
-      sql: 'UPDATE sessions SET account_number = ?, account_holder = ? WHERE id = ?',
-      args: [accountNumber.trim() || null, accountHolder.trim() || null, sessionId],
+      sql: 'UPDATE sessions SET account_number = ?, account_holder = ?, kakaopay_available = ? WHERE id = ?',
+      args: [accountNumber.trim() || null, accountHolder.trim() || null, kakaopayAvailable === true ? 1 : 0, sessionId],
     });
 
     return NextResponse.json({ success: true });

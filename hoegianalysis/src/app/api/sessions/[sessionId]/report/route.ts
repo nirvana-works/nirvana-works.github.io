@@ -8,6 +8,7 @@ interface Session {
   date: string;
   account_number: string | null;
   account_holder: string | null;
+  kakaopay_available: number;
 }
 
 // 오타 한 글자 정도는 비슷한 이름으로 추천하기 위한 편집 거리
@@ -40,7 +41,7 @@ export async function GET(
 
     const db = getDb();
     const sessionResult = await db.execute({
-      sql: 'SELECT date, account_number, account_holder FROM sessions WHERE id = ?',
+      sql: 'SELECT date, account_number, account_holder, kakaopay_available FROM sessions WHERE id = ?',
       args: [sessionId],
     });
 
@@ -96,6 +97,7 @@ export async function GET(
       account: {
         number: session.account_number,
         holder: session.account_holder,
+        kakaopay: Number(session.kakaopay_available) === 1,
       },
     });
   } catch (error) {

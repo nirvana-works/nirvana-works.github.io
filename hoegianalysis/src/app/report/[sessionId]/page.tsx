@@ -21,7 +21,7 @@ interface Report {
   totalRounds: number;
   rounds: ReportRound[];
   total: number;
-  account: { number: string | null; holder: string | null };
+  account: { number: string | null; holder: string | null; kakaopay: boolean };
 }
 
 type LookupResult = Report | { found: false; date: string; suggestions: string[] };
@@ -231,6 +231,11 @@ export default function ReportPage({
             <div className="mt-4 rounded-xl bg-bg/5 p-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-bold break-all">{report.account.number}</p>
+                {report.account.kakaopay && (
+                  <span className="inline-block mt-1 text-[11px] font-bold bg-[#FEE500] text-[#191919] px-1.5 py-0.5 rounded">
+                    카카오페이 가능
+                  </span>
+                )}
                 {report.account.holder && (
                   <p className="text-xs text-bg/60">예금주 {report.account.holder}</p>
                 )}

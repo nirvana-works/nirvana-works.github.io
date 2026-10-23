@@ -21,6 +21,7 @@ interface SessionDetail {
   current_round_number: number;
   account_number: string | null;
   account_holder: string | null;
+  kakaopay_available: number;
   rounds: Round[];
 }
 
@@ -55,6 +56,7 @@ export default function AdminDashboard({
   const [showSettlement, setShowSettlement] = useState(false);
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
+  const [kakaopayAvailable, setKakaopayAvailable] = useState(false);
   const [accountLoaded, setAccountLoaded] = useState(false);
   const [accountSaved, setAccountSaved] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
@@ -110,6 +112,7 @@ export default function AdminDashboard({
     if (!session || accountLoaded) return;
     setAccountNumber(session.account_number ?? '');
     setAccountHolder(session.account_holder ?? '');
+    setKakaopayAvailable(Number(session.kakaopay_available) === 1);
     setAccountLoaded(true);
   }, [session, accountLoaded]);
 
@@ -242,7 +245,7 @@ export default function AdminDashboard({
           'Content-Type': 'application/json',
           'x-admin-password': password,
         },
-        body: JSON.stringify({ accountNumber, accountHolder }),
+        body: JSON.stringify({ accountNumber, accountHolder, kakaopayAvailable }),
       });
       if (res.ok) {
         setAccountSaved(true);
@@ -582,12 +585,23 @@ export default function AdminDashboard({
         className="bg-bgAlt border border-cream/10 rounded-2xl p-4 flex flex-col gap-3"
       >
         <h2 className="text-xs tracking-widest uppercase text-cream/50">엔빵 계좌</h2>
-        <input
-          value={accountNumber}
-          onChange={(e) => { setAccountNumber(e.target.value); setAccountSaved(false); }}
-          placeholder="계좌번호 (예: 국민 123456-78-901234)"
-          className="bg-bg border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-neon"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            value={accountNumber}
+            onChange={(e) => { setAccountNumber(e.target.value); setAccountSaved(false); }}
+            placeholder="계좌번호 (예: 국민 123456-78-901234)"
+            className="flex-1 min-w-0 bg-bg border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-neon"
+          />
+          <label className="shrink-0 flex items-center gap-1.5 text-xs text-cream/70 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={kakaopayAvailable}
+              onChange={(e) => { setKakaopayAvailable(e.target.checked); setAccountSaved(false); }}
+              className="w-4 h-4 accent-[#FEE500]"
+            />
+            카카오페이 가능
+          </label>
+        </div>
         <div className="flex items-center gap-2">
           <input
             value={accountHolder}

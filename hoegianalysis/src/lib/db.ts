@@ -68,6 +68,10 @@ async function runInit(): Promise<void> {
   if (!names.has('account_holder')) {
     await db.execute('ALTER TABLE sessions ADD COLUMN account_holder TEXT');
   }
+  // 엔빵 계좌로 카카오페이 송금 가능 여부 (0/1)
+  if (!names.has('kakaopay_available')) {
+    await db.execute('ALTER TABLE sessions ADD COLUMN kakaopay_available INTEGER NOT NULL DEFAULT 0');
+  }
 
   // 사람별 조정 금액 (기본 0, 양수면 더 내고 음수면 덜 냄)
   const checkinColumns = await db.execute('PRAGMA table_info(checkins)');
