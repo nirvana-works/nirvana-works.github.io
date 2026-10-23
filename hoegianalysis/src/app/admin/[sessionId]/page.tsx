@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AttendanceRow } from '@/components/AttendanceRow';
 import { formatPerPerson } from '@/lib/settlement';
 import { AdjustmentPanel } from '@/components/AdjustmentPanel';
+import { ManualCheckinForm } from '@/components/ManualCheckinForm';
 
 interface Round {
   id: string;
@@ -253,6 +254,27 @@ export default function AdminDashboard({
       setError('네트워크 오류');
     } finally {
       setLoading(false);
+    }
+  }
+
+  // QR을 못 찍은 참가자를 관리자가 직접 출석 처리. 실패하면 오류 메시지를 돌려줌
+  async function handleManualCheckin(roundId: string, name: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/rounds/${roundId}/checkins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        return d.error ?? '출석 추가 실패';
+      }
+      const result = await fetchSession();
+      if (result.data) setSession(result.data);
+      if (showSettlement) await loadSettlement();
+      return null;
+    } catch {
+      return '네트워크 오류';
     }
   }
 
@@ -508,6 +530,11 @@ export default function AdminDashboard({
                       ))}
                     </ul>
                   )}
+
+                  <ManualCheckinForm
+                    onAdd={(name) => handleManualCheckin(round.id, name)}
+                    suggestionsListId="session-names"
+                  />
 
                   <div className="flex items-center gap-2 mt-1">
                     <input
