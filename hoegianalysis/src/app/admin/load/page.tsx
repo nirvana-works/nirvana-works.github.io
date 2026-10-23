@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { todayLocal } from '@/lib/date';
+import { SessionPicker } from '@/components/SessionPicker';
+import type { SessionMatch } from '@/lib/sessionLookup';
 
 // 날짜 + 관리자 비밀번호로 진행 중인 정산(세션)을 다시 여는 화면
 export default function LoadSessionPage() {
@@ -12,6 +14,7 @@ export default function LoadSessionPage() {
   const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [matches, setMatches] = useState<SessionMatch[] | null>(null);
 
   async function handleLoad(e: React.FormEvent) {
     e.preventDefault();
@@ -19,6 +22,7 @@ export default function LoadSessionPage() {
 
     setLoading(true);
     setError('');
+    setMatches(null);
 
     try {
       const res = await fetch('/api/sessions/find', {
@@ -27,12 +31,17 @@ export default function LoadSessionPage() {
         body: JSON.stringify({ date, adminPassword }),
       });
 
-      const data = await res.json() as { sessionId?: string; error?: string };
+      const data = await res.json() as { sessions?: SessionMatch[]; error?: string };
+      const sessions = data.sessions ?? [];
 
-      if (res.ok && data.sessionId) {
+      if (res.ok && sessions.length === 1) {
         // 대시보드가 비밀번호를 다시 묻지 않도록 저장 (세션 생성 때와 같은 방식)
-        sessionStorage.setItem(`admin_pw_${data.sessionId}`, adminPassword);
-        router.push(`/admin/${data.sessionId}`);
+        sessionStorage.setItem(`admin_pw_${sessions[0].id}`, adminPassword);
+        router.push(`/admin/${sessions[0].id}`);
+      } else if (res.ok && sessions.length > 1) {
+        // 같은 날짜·비밀번호로 여러 번 만든 경우: 목록에서 고르게 함
+        setMatches(sessions);
+        setLoading(false);
       } else {
         setError(data.error ?? '정산을 불러오지 못했어요.');
         setLoading(false);
@@ -61,7 +70,7 @@ export default function LoadSessionPage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => { setDate(e.target.value); setMatches(null); }}
             className="w-full bg-bg border border-cream/20 rounded-xl px-4 py-3 text-cream text-base focus:outline-none focus:border-neon"
             required
           />
@@ -74,7 +83,7 @@ export default function LoadSessionPage() {
           <input
             type="password"
             value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
+            onChange={(e) => { setAdminPassword(e.target.value); setMatches(null); }}
             placeholder="세션 만들 때 정한 비밀번호"
             className="w-full bg-bg border border-cream/20 rounded-xl px-4 py-3 text-cream text-base placeholder:text-cream/30 focus:outline-none focus:border-neon"
             required
@@ -83,6 +92,15 @@ export default function LoadSessionPage() {
         </div>
 
         {error && <p className="text-stamp text-sm">{error}</p>}
+
+        {matches && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-neon">
+              이 날짜·비밀번호로 만든 정산이 {matches.length}개 있어요. 열 정산을 고르세요.
+            </p>
+            <SessionPicker sessions={matches} password={adminPassword} />
+          </div>
+        )}
 
         <button
           type="submit"

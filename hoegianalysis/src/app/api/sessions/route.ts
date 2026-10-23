@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, initDb } from '@/lib/db';
 import { generateSessionId, hashPassword } from '@/lib/auth';
+import { findSessionsByDateAndPassword } from '@/lib/sessionLookup';
 
 export async function POST(request: NextRequest) {
   try {
     await initDb();
     const body = await request.json();
-    const { adminPassword, date } = body as { adminPassword?: string; date?: string };
+    const { adminPassword, date, force } = body as { adminPassword?: string; date?: string; force?: boolean };
 
     if (!adminPassword || !date) {
       return NextResponse.json(
         { error: 'adminPassword and date are required' },
         { status: 400 }
       );
+    }
+
+    // 같은 날짜·비밀번호의 세션이 이미 있으면, 실수로 새로 만들어 기존 정산을 못 찾는 일이 없도록 먼저 알림
+    if (!force) {
+      const existing = await findSessionsByDateAndPassword(date, adminPassword);
+      if (existing.length > 0) {
+        return NextResponse.json(
+          { error: 'duplicate', existing },
+          { status: 409 }
+        );
+      }
     }
 
     const db = getDb();

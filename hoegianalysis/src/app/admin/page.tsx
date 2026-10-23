@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { todayLocal } from '@/lib/date';
+import { SessionPicker } from '@/components/SessionPicker';
+import type { SessionMatch } from '@/lib/sessionLookup';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -10,9 +12,14 @@ export default function AdminPage() {
   const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [existing, setExisting] = useState<SessionMatch[] | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    await create(false);
+  }
+
+  async function create(force: boolean) {
     if (!date || !adminPassword) return;
 
     setLoading(true);
@@ -22,10 +29,17 @@ export default function AdminPage() {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, adminPassword }),
+        body: JSON.stringify({ date, adminPassword, force }),
       });
 
-      const data = await res.json() as { sessionId?: string; error?: string };
+      const data = await res.json() as { sessionId?: string; error?: string; existing?: SessionMatch[] };
+
+      // 같은 날짜·비밀번호의 정산이 이미 있음 → 기존 정산을 열지, 그래도 새로 만들지 고르게 함
+      if (res.status === 409 && data.existing) {
+        setExisting(data.existing);
+        setLoading(false);
+        return;
+      }
 
       if (res.ok && data.sessionId) {
         sessionStorage.setItem(`admin_pw_${data.sessionId}`, adminPassword);
@@ -58,7 +72,7 @@ export default function AdminPage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => { setDate(e.target.value); setExisting(null); }}
             className="w-full bg-bg border border-cream/20 rounded-xl px-4 py-3 text-cream text-base focus:outline-none focus:border-neon"
             required
           />
@@ -71,7 +85,7 @@ export default function AdminPage() {
           <input
             type="password"
             value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
+            onChange={(e) => { setAdminPassword(e.target.value); setExisting(null); }}
             placeholder="비밀번호 설정"
             className="w-full bg-bg border border-cream/20 rounded-xl px-4 py-3 text-cream text-base placeholder:text-cream/30 focus:outline-none focus:border-neon"
             required
@@ -79,6 +93,23 @@ export default function AdminPage() {
         </div>
 
         {error && <p className="text-stamp text-sm">{error}</p>}
+
+        {existing && (
+          <div className="flex flex-col gap-2 border border-neon/30 rounded-xl p-3">
+            <p className="text-sm text-neon">
+              이 날짜·비밀번호로 만든 정산이 이미 있어요. 이어서 하려면 아래에서 고르세요.
+            </p>
+            <SessionPicker sessions={existing} password={adminPassword} />
+            <button
+              type="button"
+              onClick={() => create(true)}
+              disabled={loading}
+              className="mt-1 text-sm text-cream/50 underline disabled:opacity-40"
+            >
+              그래도 새로 만들기
+            </button>
+          </div>
+        )}
 
         <button
           type="submit"

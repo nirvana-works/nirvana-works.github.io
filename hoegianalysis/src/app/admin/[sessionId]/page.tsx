@@ -256,6 +256,28 @@ export default function AdminDashboard({
     }
   }
 
+  // 출석자 이름 수정. 실패하면 오류 메시지를 돌려줌
+  async function handleRename(checkinId: string, name: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/checkins/${checkinId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        return d.error ?? '이름 수정 실패';
+      }
+      const result = await fetchSession();
+      if (result.data) setSession(result.data);
+      // 열려 있는 정산표도 바뀐 이름으로 갱신
+      if (showSettlement) await loadSettlement();
+      return null;
+    } catch {
+      return '네트워크 오류';
+    }
+  }
+
   async function handleSettlement() {
     if (showSettlement && settlement) {
       setShowSettlement(false);
@@ -397,6 +419,13 @@ export default function AdminDashboard({
         </div>
       </section>
 
+      {/* 이름 수정할 때 자동완성: 이 세션의 출석자 이름 전체 */}
+      <datalist id="session-names">
+        {[...new Set(session.rounds.flatMap((r) => r.checkins.map((c) => c.name)))].sort().map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
+
       {/* Tabs */}
       {session.rounds.length > 0 && (
         <section className="bg-bgAlt border border-cream/10 rounded-2xl overflow-hidden">
@@ -473,6 +502,8 @@ export default function AdminDashboard({
                           key={c.id}
                           name={c.name}
                           time={new Date(c.checked_in_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                          onRename={(newName) => handleRename(c.id, newName)}
+                          suggestionsListId="session-names"
                         />
                       ))}
                     </ul>
