@@ -57,6 +57,7 @@ export default function ReportPage({
   const [missing, setMissing] = useState<Missing | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'noSession' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
+  const [kakaoNoteOpen, setKakaoNoteOpen] = useState(false);
 
   async function lookup(target: string) {
     const trimmed = target.trim();
@@ -237,11 +238,6 @@ export default function ReportPage({
             <div className="mt-4 rounded-xl bg-bg/5 p-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-bold break-all">{report.account.number}</p>
-                {report.account.kakaopay && (
-                  <span className="inline-block mt-1 text-[11px] font-bold bg-[#FEE500] text-[#191919] px-1.5 py-0.5 rounded">
-                    카카오페이 가능
-                  </span>
-                )}
                 {report.account.holder && (
                   <p className="text-xs text-bg/60">예금주 {report.account.holder}</p>
                 )}
@@ -256,10 +252,31 @@ export default function ReportPage({
           ) : (
             <p className="mt-4 text-xs text-bg/40">입금 계좌가 아직 등록되지 않았어요</p>
           )}
+
+          {/* 카카오페이 정산하기: 앱 링크를 받을 수 없어서 별도로 보낸 엔빵 요청을 보라고 안내 */}
+          {report.account.kakaopay && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setKakaoNoteOpen((open) => !open)}
+                aria-expanded={kakaoNoteOpen}
+                className="w-full bg-[#FEE500] text-[#191919] font-bold py-3 rounded-xl"
+              >
+                카카오페이 정산하기
+              </button>
+              {kakaoNoteOpen && (
+                <p className="mt-2 rounded-xl bg-[#FEE500]/25 px-3 py-2 text-sm text-[#191919] text-center leading-relaxed break-keep">
+                  별도로 보낸 <b>카카오페이 엔빵 요청</b>을 참조해 주세요.
+                  <br />
+                  카카오톡에서 정산 요청 메시지를 확인하세요.
+                </p>
+              )}
+            </div>
+          )}
         </article>
 
         <button
-          onClick={() => { setReport(null); setName(''); }}
+          onClick={() => { setReport(null); setName(''); setKakaoNoteOpen(false); }}
           className="mt-6 text-sm text-cream/40 underline"
         >
           다른 이름 조회

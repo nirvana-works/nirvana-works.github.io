@@ -57,6 +57,7 @@ export default function AdminDashboard({
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [kakaopayAvailable, setKakaopayAvailable] = useState(false);
+  const [accountError, setAccountError] = useState('');
   const [accountLoaded, setAccountLoaded] = useState(false);
   const [accountSaved, setAccountSaved] = useState(false);
   const [reportCopied, setReportCopied] = useState(false);
@@ -236,7 +237,7 @@ export default function AdminDashboard({
   async function handleSaveAccount(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setAccountError('');
     setAccountSaved(false);
     try {
       const res = await fetch(`/api/sessions/${sessionId}`, {
@@ -251,10 +252,10 @@ export default function AdminDashboard({
         setAccountSaved(true);
       } else {
         const d = await res.json() as { error?: string };
-        setError(d.error ?? '계좌 저장 실패');
+        setAccountError(d.error ?? '계좌 저장 실패');
       }
     } catch {
-      setError('네트워크 오류');
+      setAccountError('네트워크 오류');
     } finally {
       setLoading(false);
     }
@@ -271,6 +272,26 @@ export default function AdminDashboard({
       if (!res.ok) {
         const d = await res.json() as { error?: string };
         return d.error ?? '출석 추가 실패';
+      }
+      const result = await fetchSession();
+      if (result.data) setSession(result.data);
+      if (showSettlement) await loadSettlement();
+      return null;
+    } catch {
+      return '네트워크 오류';
+    }
+  }
+
+  // 출석 기록 삭제. 실패하면 오류 메시지를 돌려줌
+  async function handleDeleteCheckin(checkinId: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/checkins/${checkinId}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': password },
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        return d.error ?? '삭제 실패';
       }
       const result = await fetchSession();
       if (result.data) setSession(result.data);
@@ -535,6 +556,7 @@ export default function AdminDashboard({
                           name={c.name}
                           time={new Date(c.checked_in_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                           onRename={(newName) => handleRename(c.id, newName)}
+                          onDelete={() => handleDeleteCheckin(c.id)}
                           suggestionsListId="session-names"
                         />
                       ))}
@@ -630,6 +652,7 @@ export default function AdminDashboard({
             {accountSaved ? '저장됨' : '저장'}
           </button>
         </div>
+        {accountError && <p className="text-xs text-stamp">{accountError}</p>}
       </form>
 
       {/* 성적표 링크 */}

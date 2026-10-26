@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 
-// 출석자 한 줄. onRename을 주면 이름을 눌러 수정할 수 있음 (관리자 대시보드)
+// 출석자 한 줄. onRename을 주면 이름을 눌러 수정, onDelete를 주면 ✕로 삭제할 수 있음 (관리자 대시보드)
 export function AttendanceRow({
   name,
   time,
   onRename,
+  onDelete,
   suggestionsListId,
 }: {
   name: string;
   time: string;
   // 실패하면 오류 메시지, 성공하면 null
   onRename?: (newName: string) => Promise<string | null>;
+  // 실패하면 오류 메시지, 성공하면 null
+  onDelete?: () => Promise<string | null>;
   // 자동완성에 쓸 <datalist> id (세션의 다른 출석자 이름)
   suggestionsListId?: string;
 }) {
@@ -20,6 +23,7 @@ export function AttendanceRow({
   const [draft, setDraft] = useState(name);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function startEdit() {
     setDraft(name);
@@ -41,6 +45,17 @@ export function AttendanceRow({
       setError(err);
     } else {
       setEditing(false);
+    }
+  }
+
+  async function remove() {
+    if (!onDelete) return;
+    setSaving(true);
+    const err = await onDelete();
+    setSaving(false);
+    if (err) {
+      setError(err);
+      setConfirmingDelete(false);
     }
   }
 
@@ -98,8 +113,39 @@ export function AttendanceRow({
               취소
             </button>
           </div>
+        ) : confirmingDelete ? (
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-xs text-stamp">삭제할까요?</span>
+            <button
+              type="button"
+              onClick={remove}
+              disabled={saving}
+              className="text-xs text-stamp border border-stamp/50 px-2 py-0.5 rounded disabled:opacity-40"
+            >
+              {saving ? '...' : '삭제'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              className="text-xs text-cream/40 px-2 py-0.5"
+            >
+              취소
+            </button>
+          </div>
         ) : (
-          <span className="text-cream/40 text-sm shrink-0">{time}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-cream/40 text-sm">{time}</span>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => { setError(''); setConfirmingDelete(true); }}
+                aria-label={`${name} 출석 삭제`}
+                className="w-6 h-6 rounded text-cream/30 hover:text-stamp hover:bg-stamp/10 text-sm leading-none"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         )}
       </div>
       {error && <p className="mt-1 ml-9 text-xs text-stamp">{error}</p>}

@@ -66,3 +66,43 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// 관리자가 출석 기록 삭제 (잘못 들어간 이름, 중복 출석 등)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { sessionId: string; checkinId: string } }
+) {
+  try {
+    await initDb();
+    const { sessionId, checkinId } = params;
+    const adminPassword = request.headers.get('x-admin-password');
+
+    if (!adminPassword) {
+      return NextResponse.json({ error: 'Admin password required' }, { status: 401 });
+    }
+
+    if (!(await validateAdminPassword(sessionId, adminPassword))) {
+      return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+
+    const db = getDb();
+
+    // 이 세션의 출석 기록만 삭제
+    const result = await db.execute({
+      sql: `
+        DELETE FROM checkins
+        WHERE id = ? AND round_id IN (SELECT id FROM rounds WHERE session_id = ?)
+      `,
+      args: [checkinId, sessionId],
+    });
+
+    if (result.rowsAffected === 0) {
+      return NextResponse.json({ error: 'Check-in not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('DELETE /api/sessions/[sessionId]/checkins/[checkinId] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
