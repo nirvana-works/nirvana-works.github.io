@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { deviceId } from '@/lib/deviceId';
 import type { WallPost } from '@/lib/wallPosts';
+import { AdminLogin } from '../AdminLogin';
 import { fieldClass, stickerButtonClass } from '../formStyles';
 import { WALL, WallBackdrop } from './WallBackdrop';
-import { inkShadow, placeGraffiti, wallHeight } from './graffiti';
+import { PER_SHEET, inkShadow, placeGraffiti, sheetHeight } from './graffiti';
 
 const LIMITS = { nickname: 12, content: 140 };
 
@@ -33,91 +34,182 @@ function useColumns(): number {
   return cols;
 }
 
+// 오래된 순 낙서를 PER_SHEET개씩 낙서장으로 나눈다. 마지막 장이 꽉 찼으면 빈 새 장을 붙인다
+function toSheets(posts: WallPost[]): WallPost[][] {
+  const sheets: WallPost[][] = [];
+  for (let i = 0; i < posts.length; i += PER_SHEET) sheets.push(posts.slice(i, i + PER_SHEET));
+  if (sheets.length === 0 || sheets[sheets.length - 1].length === PER_SHEET) sheets.push([]);
+  return sheets;
+}
+
 export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[]; canDelete: boolean }) {
   const router = useRouter();
   const cols = useColumns();
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState(initialPosts); // 오래된 순
   const [fresh, setFresh] = useState<string | null>(null);
   const [opened, setOpened] = useState<{ post: WallPost; color: string } | null>(null);
+  const [erasing, setErasing] = useState(false);
+  const [current, setCurrent] = useState(0);
   const composeRef = useRef<HTMLDialogElement>(null);
   const viewRef = useRef<HTMLDialogElement>(null);
+  const loginRef = useRef<HTMLDialogElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   // 새로고침으로 서버 목록이 바뀌면 따라간다
   useEffect(() => setPosts(initialPosts), [initialPosts]);
 
-  const height = wallHeight(posts.length, cols);
+  const sheets = toSheets(posts);
+  const height = sheetHeight(cols);
+  const last = sheets.length - 1;
 
-  // 벽에 쓰인 그 색 그대로 크게 보여준다
+  function scrollToSheet(i: number, smooth = true) {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: i * el.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  // 처음엔 가장 최근 낙서장을 보여준다 (이전 장은 왼쪽으로)
+  useEffect(() => {
+    scrollToSheet(last, false);
+    setCurrent(last);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cols]);
+
+  // 벽에 쓰인 그 색 그대로 크게 보여준다 (지우기 모드면 바로 지울지 묻는다)
   function open(post: WallPost, color: string) {
     setOpened({ post, color });
     viewRef.current?.showModal();
   }
 
+  function startErasing() {
+    if (erasing) return setErasing(false);
+    if (canDelete) return setErasing(true);
+    loginRef.current?.showModal();
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <section
-        aria-label="낙서 벽"
-        className="relative -mx-4 overflow-hidden sm:mx-0 sm:rounded-[14px]"
-        style={{ height }}
-      >
-        <WallBackdrop />
-
-        {posts.length === 0 && (
-          <p className="absolute inset-x-0 top-24 text-center font-pen text-[34px] text-white/80">
-            아직 깨끗한 벽이에요. 첫 낙서를 남겨 보세요
-          </p>
-        )}
-
-        {posts.map((post, i) => {
-          const p = placeGraffiti(post.id, i, cols, height);
-          return (
-            <button
-              key={post.id}
-              type="button"
-              onClick={() => open(post, p.color)}
-              aria-label={`${post.nickname}의 낙서: ${post.content}`}
-              className={`absolute text-left font-pen leading-[1.05] ${post.id === fresh ? 'graffiti-fresh' : ''}`}
-              style={{
-                left: `${p.left}%`,
-                width: `${p.width}%`,
-                top: p.top,
-                color: p.color,
-                // 진한 펜은 시멘트 결이 비치게 곱하기로, 흰 분필은 그대로
-                mixBlendMode: p.color === '#FFFFFF' ? undefined : 'multiply',
-                transform: `rotate(${p.rotate}deg)`,
-                ['--r' as string]: `${p.rotate}deg`,
-              }}
+    <div className="flex flex-col gap-3">
+      {/* 낙서장들을 가로로 이어 붙이고 한 장씩 넘긴다. 양옆 가운데 < > 로도 넘긴다 */}
+      <div className="relative -mx-4 sm:mx-0">
+        <div
+          ref={scrollerRef}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setCurrent(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+          className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] sm:rounded-[14px] [&::-webkit-scrollbar]:hidden"
+        >
+          {sheets.map((sheet, s) => (
+            <section
+              key={s}
+              aria-label={`낙서장 ${s + 1}`}
+              className="relative w-full shrink-0 snap-center overflow-hidden"
+              style={{ height }}
             >
-              <span className="line-clamp-3 break-words text-[25px]">{post.content}</span>
-              <span className="mt-0.5 block text-[17px] opacity-80">- {post.nickname}</span>
-            </button>
-          );
-        })}
+              <WallBackdrop />
 
-        {/* 왼쪽 아래: 스프레이로 '왔다감'을 쓰다 들킨 넙죽이 */}
-        <div aria-hidden className="pointer-events-none absolute bottom-[6px] left-0 h-[320px] w-[300px]">
-          <span
-            className="spray-tag absolute bottom-[300px] left-[16px] whitespace-nowrap font-pen text-[38px] leading-none mix-blend-multiply"
-            style={{ transform: 'rotate(-7deg)' }}
-          >
-            넙죽이 왔다감
-            {/* 흘러내린 페인트 */}
-            <span className="absolute left-[18px] top-[30px] h-[22px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
-            <span className="absolute left-[86px] top-[28px] h-[34px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
-            <span className="absolute left-[150px] top-[30px] h-[16px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
-          </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/hoegilab/nupjuk-graffiti.webp"
-            alt=""
-            width={250}
-            height={283}
-            className="absolute bottom-0 left-[40px] max-w-none drop-shadow-[0_4px_3px_rgba(0,0,0,0.25)]"
-          />
+              {sheet.length === 0 && (
+                <p className="absolute inset-x-0 top-24 px-4 text-center font-pen text-[34px] text-white/80">
+                  {s === 0 ? '아직 깨끗한 벽이에요. 첫 낙서를 남겨 보세요' : '새 낙서장이에요. 여기부터 채워 주세요'}
+                </p>
+              )}
+
+              {sheet.map((post, i) => {
+                const p = placeGraffiti(post.id, i, cols, height);
+                return (
+                  <button
+                    key={post.id}
+                    type="button"
+                    onClick={() => open(post, p.color)}
+                    aria-label={`${erasing ? '지우기: ' : ''}${post.nickname}의 낙서: ${post.content}`}
+                    className={`absolute text-left font-pen leading-[1.05] ${post.id === fresh ? 'graffiti-fresh' : ''}`}
+                    style={{
+                      left: `${p.left}%`,
+                      width: `${p.width}%`,
+                      top: p.top,
+                      color: p.color,
+                      // 진한 펜은 시멘트 결이 비치게 곱하기로, 흰 분필은 그대로
+                      mixBlendMode: p.color === '#FFFFFF' || erasing ? undefined : 'multiply',
+                      transform: `rotate(${p.rotate}deg)`,
+                      ['--r' as string]: `${p.rotate}deg`,
+                    }}
+                  >
+                    {erasing && (
+                      <span
+                        aria-hidden
+                        className="absolute -right-1 -top-4 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-seal font-sign text-[15px] font-black leading-none text-white"
+                      >
+                        ✕
+                      </span>
+                    )}
+                    <span className="line-clamp-3 break-words text-[25px]">{post.content}</span>
+                    <span className="mt-0.5 block text-[17px] opacity-80">- {post.nickname}</span>
+                  </button>
+                );
+              })}
+
+              {/* 왼쪽 아래: 스프레이로 '왔다감'을 쓰다 들킨 넙죽이 */}
+              <div aria-hidden className="pointer-events-none absolute bottom-[6px] left-0 h-[320px] w-[300px]">
+                <span
+                  className="spray-tag absolute bottom-[300px] left-[16px] whitespace-nowrap font-pen text-[38px] leading-none mix-blend-multiply"
+                  style={{ transform: 'rotate(-7deg)' }}
+                >
+                  넙죽이 왔다감
+                  {/* 흘러내린 페인트 */}
+                  <span className="absolute left-[18px] top-[30px] h-[22px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
+                  <span className="absolute left-[86px] top-[28px] h-[34px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
+                  <span className="absolute left-[150px] top-[30px] h-[16px] w-[3px] rounded-b-full bg-gradient-to-b from-[#c8322b] to-transparent" />
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/hoegilab/nupjuk-graffiti.webp"
+                  alt=""
+                  width={250}
+                  height={283}
+                  loading={s === last ? 'eager' : 'lazy'}
+                  className="absolute bottom-0 left-[40px] max-w-none drop-shadow-[0_4px_3px_rgba(0,0,0,0.25)]"
+                />
+              </div>
+            </section>
+          ))}
         </div>
-      </section>
+        {current > 0 && (
+          <button
+            type="button"
+            onClick={() => scrollToSheet(current - 1)}
+            aria-label={`이전 낙서장 (${current} / ${sheets.length})`}
+            className="absolute left-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border-2 border-ink bg-white/85 text-[24px] leading-none"
+          >
+            ‹
+          </button>
+        )}
+        {current < last && (
+          <button
+            type="button"
+            onClick={() => scrollToSheet(current + 1)}
+            aria-label={`다음 낙서장 (${current + 2} / ${sheets.length})`}
+            className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border-2 border-ink bg-white/85 text-[24px] leading-none"
+          >
+            ›
+          </button>
+        )}
+      </div>
 
-      <div className="flex justify-end">
+      {erasing && (
+        <p role="status" className="rounded-[8px] bg-seal px-4 py-2.5 text-[14px] font-bold text-white">
+          지우기 모드예요. 지울 낙서를 누르세요.
+        </p>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={startErasing}
+          aria-pressed={erasing}
+          className={`h-11 rounded-[10px] border-2 border-ink px-4 text-[15px] font-bold ${erasing ? 'bg-ink text-white' : ''}`}
+        >
+          {erasing ? '지우기 끝내기' : '낙서 지우기'}
+        </button>
         <button type="button" onClick={() => composeRef.current?.showModal()} className={stickerButtonClass}>
           <span aria-hidden>✎</span>
           낙서하기
@@ -127,11 +219,45 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
       <ComposeDialog
         dialogRef={composeRef}
         onPosted={(post) => {
-          setPosts((list) => [post, ...list.filter((p) => p.id !== post.id)]);
+          setPosts((list) => [...list.filter((p) => p.id !== post.id), post]);
           setFresh(post.id);
+          setErasing(false);
+          // 새 낙서가 붙은 (가장 최근) 낙서장으로 이동
+          requestAnimationFrame(() => {
+            const el = scrollerRef.current;
+            if (el) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+          });
           router.refresh();
         }}
       />
+
+      {/* 낙서 지우기: 운영자 비밀번호 확인 */}
+      <dialog
+        ref={loginRef}
+        onClick={(e) => e.target === loginRef.current && loginRef.current?.close()}
+        className="m-auto w-[min(92vw,380px)] rounded-[14px] border-2 border-ink bg-lime p-0 backdrop:bg-ink/55"
+      >
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[20px] font-black">낙서 지우기</h2>
+            <button
+              type="button"
+              onClick={() => loginRef.current?.close()}
+              aria-label="닫기"
+              className="grid h-11 w-11 place-items-center rounded-full text-[22px]"
+            >
+              ×
+            </button>
+          </div>
+          <p className="text-[14px] text-inkMuted">운영자 비밀번호를 넣으면 낙서를 지울 수 있어요.</p>
+          <AdminLogin
+            onSuccess={() => {
+              loginRef.current?.close();
+              setErasing(true);
+            }}
+          />
+        </div>
+      </dialog>
 
       <dialog
         ref={viewRef}
@@ -141,9 +267,11 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
       >
         {opened && (
           <ViewGraffiti
+            key={opened.post.id}
             post={opened.post}
             color={opened.color}
-            canDelete={canDelete}
+            canDelete={canDelete || erasing}
+            askFirst={erasing}
             onClose={() => viewRef.current?.close()}
             onDeleted={() => {
               setPosts((list) => list.filter((p) => p.id !== opened.post.id));
@@ -161,16 +289,18 @@ function ViewGraffiti({
   post,
   color,
   canDelete,
+  askFirst,
   onClose,
   onDeleted,
 }: {
   post: WallPost;
   color: string;
   canDelete: boolean;
+  askFirst: boolean; // 지우기 모드에서 열면 바로 '정말 지우기'
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState(askFirst);
   const [error, setError] = useState('');
 
   async function remove() {

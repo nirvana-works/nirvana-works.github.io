@@ -18,9 +18,12 @@ export const TOP_PAD = 48; // 갓돌 아래부터
 export const BOTTOM_ZONE = 360; // 넙죽이·스프레이 글씨·바닥 자리
 export const MIN_WALL = 640;
 
-export function wallHeight(count: number, cols: number): number {
-  const rows = Math.ceil(count / cols);
-  return Math.max(MIN_WALL, TOP_PAD + rows * ROW_HEIGHT + BOTTOM_ZONE);
+// 낙서장 한 장에 붙는 낙서 수. 가득 차면 새 장이 생긴다
+export const PER_SHEET = 10;
+
+// 낙서장 높이는 장마다 같다 (가득 찼을 때 기준)
+export function sheetHeight(cols: number): number {
+  return Math.max(MIN_WALL, TOP_PAD + Math.ceil(PER_SHEET / cols) * ROW_HEIGHT + BOTTOM_ZONE);
 }
 
 export interface Placement {
@@ -31,7 +34,7 @@ export interface Placement {
   color: string;
 }
 
-// 최신 글부터 위쪽 칸에. 칸 안에서만 조금씩 흔들어 겹치지 않게 한다
+// 낙서장 안에서 먼저 쓴 글부터 위쪽 칸에. 칸 안에서만 조금씩 흔들어 겹치지 않게 한다
 export function placeGraffiti(id: string, order: number, cols: number, height: number): Placement {
   const h = hash(id);
   const col = order % cols;

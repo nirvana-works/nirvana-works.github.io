@@ -10,8 +10,8 @@ export interface WallPost {
 
 export const WALL_LIMITS = { nickname: 12, content: 140 } as const;
 export const WALL_COOLDOWN_SECONDS = 30;
-// 벽에 한 번에 붙이는 최대 개수 (최신순)
-export const WALL_PAGE_SIZE = 60;
+// 불러오는 최대 개수 (최근 것부터, 낙서장 50장 분량)
+export const WALL_PAGE_SIZE = 500;
 
 // 입력 검증: 실패하면 화면에 그대로 보여줄 문구를 돌려준다
 export function validateWallPost(
@@ -39,7 +39,8 @@ export async function listWallPosts(): Promise<WallPost[]> {
           WHERE is_hidden = 0 ORDER BY created_at DESC LIMIT ?`,
     args: [WALL_PAGE_SIZE],
   });
-  return result.rows as unknown as WallPost[];
+  // 낙서장은 오래된 장부터 채우므로 오래된 순으로 돌려준다
+  return (result.rows as unknown as WallPost[]).reverse();
 }
 
 // 같은 기기에서 마지막으로 쓴 뒤 몇 초 더 기다려야 하는지 (0이면 바로 써도 됨)
