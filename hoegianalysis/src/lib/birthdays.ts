@@ -93,3 +93,12 @@ export async function deleteBirthday(id: string): Promise<boolean> {
   const result = await getDb().execute({ sql: 'DELETE FROM member_birthdays WHERE id = ?', args: [id] });
   return result.rowsAffected > 0;
 }
+
+// 그날(한국 시간) 생일인 멤버 이름. 윤년이 아닌 해 2월 28일에는 2월 29일생도 함께
+export async function birthdayNamesOn(date: string): Promise<string[]> {
+  const [year, month, day] = date.split('-').map(Number);
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const days = month === 2 && day === 28 && !leap ? [28, 29] : [day];
+  const list = await listBirthdays(month);
+  return list.filter((b) => days.includes(b.day)).map((b) => b.name);
+}

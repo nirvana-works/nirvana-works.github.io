@@ -91,45 +91,59 @@ export function MonthCalendar({ month, events }: { month: string; events: School
                 onClick={() => setSelected(isSelected ? null : date)}
                 aria-pressed={isSelected}
                 aria-label={label}
-                className="flex h-[66px] min-w-0 flex-col items-center justify-start gap-[3px] pt-1.5"
+                className="flex h-[74px] min-w-0 flex-col items-center justify-start gap-[3px] pt-1"
               >
-                <span
-                  className={`relative grid h-[32px] w-[32px] place-items-center rounded-[8px] font-latin text-[14px] ${
-                    hoegi.length ? 'font-bold' : 'font-medium'
-                  } ${
-                    isSelected
-                      ? 'bg-cube text-white'
-                      : isToday
-                        ? 'bg-sticker'
-                        : isSunday || hoegi.length
-                          ? 'text-seal'
-                          : ''
-                  }`}
-                >
-                  {i + 1}
-                  {/* 회기분석 날은 숫자에 별 */}
-                  {hoegi.length > 0 && (
-                    <span aria-hidden className="absolute -right-1.5 -top-1.5 text-[13px] leading-none text-seal">
-                      ★
-                    </span>
-                  )}
-                </span>
+                {hoegi.length > 0 ? (
+                  // 회기분석 날은 날짜가 빨간 별 안에 들어간다 (고른 날은 파란 별)
+                  <span className="relative grid h-[36px] w-[36px] place-items-center">
+                    <svg aria-hidden viewBox="0 0 24 24" className="absolute inset-0 h-full w-full">
+                      <path
+                        d="M12 1.6l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.7l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z"
+                        fill={isSelected ? '#2B50E6' : '#C8322B'}
+                        stroke={isToday ? '#F2D80E' : 'none'}
+                        strokeWidth="1.6"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="relative mt-[3px] font-latin text-[12px] font-semibold text-white">{i + 1}</span>
+                  </span>
+                ) : (
+                  <span
+                    className={`grid h-[32px] w-[32px] place-items-center rounded-[8px] font-latin text-[14px] font-medium ${
+                      isSelected ? 'bg-cube text-white' : isToday ? 'bg-sticker' : isSunday ? 'text-seal' : ''
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                )}
                 {hoegi.length > 0 && (
                   <span aria-hidden className="whitespace-nowrap text-[10px] font-black leading-none tracking-[-0.04em] text-seal">
                     회기분석
                   </span>
                 )}
-                {/* 다른 일정은 분류 색 점 (최대 3개), 생일은 케이크 */}
-                <span aria-hidden className="flex h-[10px] items-center gap-[3px]">
-                  {others.slice(0, 3).map((ev) => (
-                    <span
-                      key={ev.id}
-                      className="h-[6px] w-[6px] rounded-full"
-                      style={{ background: categoryOf(ev.category)?.dot ?? '#2B50E6' }}
-                    />
-                  ))}
-                  {birthdays.length > 0 && <span className="text-[12px] leading-none">🎂</span>}
-                </span>
+                {/* 생일은 날짜 아래에 이름을 바로 적는다 (여러 명이면 첫 사람 + 인원) */}
+                {birthdays.length > 0 && (
+                  <span
+                    aria-hidden
+                    className="block max-w-full truncate px-0.5 text-[10px] font-bold leading-none"
+                    style={{ color: BIRTHDAY_STYLE.text }}
+                  >
+                    🎂{birthdays[0].title.replace(/ 생일$/, '')}
+                    {birthdays.length > 1 ? ` +${birthdays.length - 1}` : ''}
+                  </span>
+                )}
+                {/* 다른 일정은 분류 색 점 (최대 3개) */}
+                {others.length > 0 && (
+                  <span aria-hidden className="flex h-[6px] items-center gap-[3px]">
+                    {others.slice(0, 3).map((ev) => (
+                      <span
+                        key={ev.id}
+                        className="h-[6px] w-[6px] rounded-full"
+                        style={{ background: categoryOf(ev.category)?.dot ?? '#2B50E6' }}
+                      />
+                    ))}
+                  </span>
+                )}
               </button>
             );
           })}

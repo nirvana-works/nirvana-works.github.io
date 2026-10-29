@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Gothic_A1, Poppins } from 'next/font/google';
+import { BirthdayCelebration } from '@/components/community/BirthdayCelebration';
 import { CubeShell } from '@/components/community/CubeShell';
 import './community.css';
 
@@ -27,17 +27,14 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
   return (
     <div className={`${sign.variable} ${latin.variable} hl-root flex min-h-screen flex-col break-keep font-sign`}>
       <CubeShell />
+      <BirthdayCelebration />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16 pt-6">{children}</main>
       <footer className="mx-auto w-full max-w-2xl px-4">
-        <div className="border-t-2 border-ink py-6 text-[13px] leading-relaxed text-inkMuted">
-          <p>회기분석 학회는 공부하지 않습니다. 대신 회기역 근처를 성실하게 먹습니다.</p>
-          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-2 font-bold">
-            <Link href="/admin" className="underline underline-offset-4">
-              출석체크 시작하기
-            </Link>
-            <Link href="/admin/load" className="underline underline-offset-4">
-              정산 중인 출석 불러오기
-            </Link>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t-2 border-ink py-6 font-latin text-[13px] text-inkMuted">
+          {/* 회식 '차수(round)'에 빗댄 저작권 문구 */}
+          <p>© {new Date().getFullYear()} Hoegilab. All rounds reserved.</p>
+          <p>
+            Designed &amp; built by <span className="font-semibold text-ink">JH</span>
           </p>
         </div>
       </footer>
