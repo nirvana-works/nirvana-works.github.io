@@ -217,8 +217,22 @@ export function CubeShell() {
 
       {isHome && (
         <>
-          <span aria-hidden className="dot-cluster pointer-events-none absolute left-4 top-[150px] h-[27px] w-[36px]" />
-          <span aria-hidden className="dot-cluster pointer-events-none absolute right-4 top-[330px] h-[36px] w-[27px]" />
+          <button
+            type="button"
+            aria-label="이전 면으로 돌리기"
+            onClick={() => turnTo(index - 1)}
+            className="absolute left-0 top-[134px] flex h-[60px] w-[68px] items-center justify-center"
+          >
+            <span aria-hidden className="dot-cluster block h-[27px] w-[36px]" />
+          </button>
+          <button
+            type="button"
+            aria-label="다음 면으로 돌리기"
+            onClick={() => turnTo(index + 1)}
+            className="absolute right-0 top-[314px] flex h-[68px] w-[60px] items-center justify-center"
+          >
+            <span aria-hidden className="dot-cluster block h-[36px] w-[27px]" />
+          </button>
 
           {/* 지금 앞에 있는 면 이름. 눌러도 그 화면으로 간다 (큐브 앞면 누르기와 같음) */}
           <Link
