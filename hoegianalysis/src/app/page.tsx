@@ -21,6 +21,12 @@ export default function Home() {
         >
           정산 중인 출석 불러오기
         </Link>
+        <Link
+          href="/admin/history"
+          className="block w-full text-center text-gray-500 hover:text-gray-700 font-semibold py-2 text-base underline underline-offset-4"
+        >
+          지난 참가 기록 보기
+        </Link>
       </div>
     </main>
   );
