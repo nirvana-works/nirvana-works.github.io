@@ -1,0 +1,128 @@
+/* Hoegilab 커뮤니티 전용 스타일 (루빅스 큐브 포스터 톤). 기존 출석·정산 화면에는 적용되지 않음 */
+
+.hl-root {
+  background-color: #dde5a6;
+  color: #000000;
+}
+
+/* ── 3D 큐브 ─────────────────────────────────────────── */
+.cube-shell {
+  --s: 208px; /* 큐브 한 변 */
+  --k: 0.2; /* 오른쪽 위 칸에 들어갈 때 배율 */
+}
+@media (min-width: 640px) {
+  .cube-shell { --s: 260px; --k: 0.16; }
+}
+
+/* 큐브 전체를 감싸는 자리. 홈에선 포스터 가운데, 다른 화면에선 오른쪽 위 칸(72px) 가운데 */
+.cube-mount {
+  position: absolute;
+  z-index: 10;
+  width: var(--s);
+  height: var(--s);
+  perspective: 900px;
+  transition:
+    left 700ms cubic-bezier(0.65, 0, 0.35, 1),
+    top 700ms cubic-bezier(0.65, 0, 0.35, 1),
+    transform 700ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.cube-mount[data-mode='poster'] {
+  left: 50%;
+  top: calc(100px + var(--s) * 0.775);
+  transform: translate(-50%, -50%) scale(1);
+}
+.cube-mount[data-mode='docked'] {
+  left: calc(100% - 52px);
+  top: 56px;
+  transform: translate(-50%, -50%) scale(var(--k));
+  pointer-events: none; /* 눌림은 아래 칸 링크가 받는다 */
+}
+
+/* 포스터 자리. 큐브가 칸으로 들어가면 접힌다 */
+.cube-stage {
+  height: calc(var(--s) * 1.55);
+  transition: height 700ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.cube-stage[data-collapsed='true'] {
+  height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube-mount,
+  .cube-stage { transition: none; }
+}
+
+/* 세 면이 보이도록 살짝 기울인 고정 시점 */
+.cube-tilt {
+  width: var(--s);
+  height: var(--s);
+  transform-style: preserve-3d;
+  transform: rotateX(-24deg) rotateY(-32deg);
+}
+
+.cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 650ms cubic-bezier(0.3, 1.25, 0.4, 1);
+}
+
+/* 끄는 동안엔 손을 바로 따라가도록 전환 효과를 끈다 */
+.cube[data-dragging='true'] {
+  transition: none;
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube { transition: none; }
+}
+
+/* 갓돌·바닥 시멘트 결 (작은 노이즈를 곱하기로) */
+.concrete-grain {
+  position: absolute;
+}
+.concrete-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.2 0 0 0 0 0.18 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* 넙죽이 스프레이 글씨: 번진 가장자리 */
+.spray-tag {
+  color: #c8322b;
+  text-shadow:
+    0 0 1px #c8322b,
+    0 0 4px rgba(200, 50, 43, 0.55),
+    0 0 10px rgba(200, 50, 43, 0.3);
+}
+
+/* 방금 쓴 낙서가 벽에 툭 찍히는 순간 (글쓴이 행동에 대한 응답, 한 번만) */
+@keyframes graffiti-in {
+  0% { opacity: 0; transform: scale(1.5) rotate(var(--r, 0deg)); }
+  100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); }
+}
+.graffiti-fresh {
+  animation: graffiti-in 450ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .graffiti-fresh { animation: none; }
+}
+
+/* 포스터 장식: 점 무리 */
+.dot-cluster {
+  background-image: radial-gradient(#000 1.6px, transparent 1.8px);
+  background-size: 9px 9px;
+}
+
+.hl-root :focus-visible {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
