@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FaceHeader } from '@/components/community/FaceHeader';
-import { getAttendanceBoard } from '@/lib/attendanceBoard';
+import { getAttendanceBoard, POINTS_PER_ROUND, roundKey } from '@/lib/attendanceBoard';
 
 export const metadata = { title: '출석 성적표' };
 export const dynamic = 'force-dynamic';
@@ -12,20 +12,21 @@ function dateLabel(date: string) {
   return { md: `${m}/${d}`, weekday: WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] };
 }
 
-// 출석 칸: 붉은 원형 도장
+// 출석 칸: 붉은 도장
 function Stamp({ rotate }: { rotate: number }) {
   return (
     <span
-      className="mx-auto grid h-8 w-8 place-items-center rounded-full border-[2.5px] border-seal text-[10px] font-black text-seal sm:h-10 sm:w-10"
+      aria-label="출석"
+      className="mx-auto block h-[22px] w-[22px] rounded-full border-[2.5px] border-seal"
       style={{ transform: `rotate(${rotate}deg)` }}
     >
-      출석
+      <span className="m-[3px] block h-[10px] w-[10px] rounded-full bg-seal" />
     </span>
   );
 }
 
 export default async function AttendancePage({ searchParams }: { searchParams: { term?: string } }) {
-  const { terms, term, dates, people, cumulativeTotal } = await getAttendanceBoard(searchParams.term);
+  const { terms, term, dates, totalRounds, cumulativeTotal, people } = await getAttendanceBoard(searchParams.term);
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,71 +57,96 @@ export default async function AttendancePage({ searchParams }: { searchParams: {
       ) : (
         <section aria-label={`${term.label} 출석부`} className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between text-[13px] font-bold text-inkMuted">
-            <span>{term.label} · 회기분석 {dates.length}회</span>
+            <span>
+              {term.label} · 회기분석 {dates.length}회 · 총 {totalRounds}차수
+            </span>
             <span>참가자 {people.length}명</span>
           </div>
 
-          {/* 날짜가 많아지면 표만 가로로 밀린다. 이름 칸은 왼쪽에 고정 */}
+          {/* 날짜가 많아지면 표만 가로로 밀린다. 이름 칸은 왼쪽, 등급·점수 칸은 오른쪽에 고정 */}
           <div className="overflow-x-auto rounded-[10px] border-2 border-ink bg-white">
             <table className="w-full border-collapse text-center">
               <thead>
-                <tr className="border-b-2 border-ink">
+                <tr>
                   <th
                     scope="col"
-                    className="sticky left-0 z-10 min-w-[84px] border-r-2 border-ink bg-white px-3 py-2 text-left text-[13px] font-black"
+                    rowSpan={2}
+                    className="sticky left-0 z-10 min-w-[76px] border-r-2 border-ink bg-white px-3 py-2 text-left align-bottom text-[13px] font-black"
                   >
                     이름
                   </th>
-                  {dates.map((date) => {
-                    const { md, weekday } = dateLabel(date);
+                  {dates.map((d) => {
+                    const { md, weekday } = dateLabel(d.date);
                     return (
-                      <th key={date} scope="col" className="min-w-[40px] px-0.5 py-2">
+                      <th
+                        key={d.date}
+                        scope="colgroup"
+                        colSpan={d.rounds.length}
+                        className="border-l border-ink/25 px-1 pt-2 first:border-l-0"
+                      >
                         <span className="block font-latin text-[14px] font-semibold leading-tight">{md}</span>
                         <span className="block text-[11px] font-bold text-inkMuted">{weekday}</span>
                       </th>
                     );
                   })}
-                  <th scope="col" className="min-w-[44px] border-l-2 border-ink px-1 py-2 text-[12px] font-black">
+                  <th scope="col" rowSpan={2} className="min-w-[48px] border-l-2 border-ink px-1 align-bottom text-[12px] font-black">
+                    총계
+                  </th>
+                  <th scope="col" rowSpan={2} className="min-w-[44px] px-1 align-bottom text-[12px] font-black">
                     등급
                   </th>
-                  <th scope="col" className="min-w-[56px] px-1 py-2 text-[12px] font-black leading-tight">
+                  <th scope="col" rowSpan={2} className="min-w-[64px] px-1 align-bottom text-[12px] font-black leading-tight">
                     누적
                     <br />
                     종합점수
                   </th>
                 </tr>
+                <tr className="border-b-2 border-ink">
+                  {dates.flatMap((d) =>
+                    d.rounds.map((r, i) => (
+                      <th
+                        key={roundKey(d.date, r)}
+                        scope="col"
+                        className={`min-w-[30px] px-0.5 pb-1.5 pt-0.5 text-[10px] font-bold text-inkMuted ${
+                          i === 0 ? 'border-l border-ink/25' : ''
+                        }`}
+                      >
+                        {r}차
+                      </th>
+                    )),
+                  )}
+                </tr>
               </thead>
               <tbody>
                 {people.map((p, row) => {
-                  const perfect = p.attended.length === dates.length;
+                  const attended = new Set(p.attended);
+                  const perfect = p.points === totalRounds * POINTS_PER_ROUND;
                   return (
                     <tr key={p.name} className="border-b border-ink/15 last:border-b-0">
-                      <th
-                        scope="row"
-                        className="sticky left-0 z-10 border-r-2 border-ink bg-white px-3 py-1.5 text-left"
-                      >
+                      <th scope="row" className="sticky left-0 z-10 border-r-2 border-ink bg-white px-3 py-1.5 text-left">
                         <span className="block max-w-[80px] truncate text-[14px] font-bold">{p.name}</span>
-                        <span className={`block font-latin text-[11px] font-semibold ${perfect ? 'text-seal' : 'text-inkMuted'}`}>
-                          {p.attended.length}/{dates.length}
-                          {perfect && <span className="ml-1 font-sign font-black">개근</span>}
-                        </span>
+                        {perfect && <span className="block text-[11px] font-black text-seal">개근</span>}
                       </th>
-                      {dates.map((date, col) => (
-                        <td key={date} className="px-1 py-1.5">
-                          {p.attended.includes(date) ? (
-                            <Stamp rotate={((row * 7 + col * 13) % 17) - 8} />
-                          ) : (
-                            <span aria-label="결석" className="mx-auto block h-8 w-8 rounded-full border-2 border-dashed border-ink/20 sm:h-10 sm:w-10" />
-                          )}
-                        </td>
-                      ))}
-                      <td className="border-l-2 border-ink px-1 py-1.5">
-                        <span className="block font-latin text-[18px] font-black leading-none">{p.grade}</span>
-                        <span className="block font-latin text-[11px] font-semibold text-inkMuted">
-                          {Math.round(p.rate * 100)}%
-                        </span>
+                      {dates.flatMap((d, col) =>
+                        d.rounds.map((r, i) => (
+                          <td key={roundKey(d.date, r)} className={`px-0.5 py-1.5 ${i === 0 ? 'border-l border-ink/25' : ''}`}>
+                            {attended.has(roundKey(d.date, r)) ? (
+                              <Stamp rotate={((row * 7 + col * 13 + i * 5) % 17) - 8} />
+                            ) : (
+                              <span aria-label="결석" className="mx-auto block h-[22px] w-[22px] rounded-full border-2 border-dashed border-ink/20" />
+                            )}
+                          </td>
+                        )),
+                      )}
+                      <td className="border-l-2 border-ink px-1 py-1.5 font-latin text-[15px] font-black">
+                        {p.points}
+                        <span className="text-[11px] font-semibold text-inkMuted">/{totalRounds * POINTS_PER_ROUND}</span>
                       </td>
-                      <td className="px-1 py-1.5 font-latin text-[18px] font-black">{p.score}</td>
+                      <td className="px-1 py-1.5 font-latin text-[18px] font-black">{p.grade}</td>
+                      <td className="px-1 py-1.5 font-latin text-[18px] font-black">
+                        {p.score}
+                        <span className="text-[11px] font-semibold text-inkMuted">/{cumulativeTotal * POINTS_PER_ROUND}</span>
+                      </td>
                     </tr>
                   );
                 })}
@@ -128,10 +154,10 @@ export default async function AttendancePage({ searchParams }: { searchParams: {
             </table>
           </div>
           <p className="text-[12px] leading-relaxed text-inkMuted">
-            한 날에 몇 차든 한 번이라도 출석하면 도장 하나. 이름은 출석 때 쓴 그대로입니다.
+            회기분석 모임의 1차·2차… 차수마다 출석하면 도장 하나(10점), 그 합이 총계입니다. 이름은 출석 때 쓴 그대로입니다.
             <br />
-            등급은 이 학기 출석률 순위로 상위 15% A · 25% B · 40% C · 20% D (출석률이 같으면 같은 등급).
-            누적 종합점수는 전 학기 회기분석 {cumulativeTotal}회 중 출석한 비율(100점 만점)입니다. 회기분석 교수님은 성적에서 제외됩니다.
+            등급은 이 학기 총계 순위로 1등 A+, 상위 15% A · 25% B · 40% C · 20% D (같은 점수는 같은 등급).
+            누적 종합점수는 전 학기 점수를 모두 더한 값입니다. 회기분석 교수님은 성적에서 제외됩니다.
           </p>
         </section>
       )}

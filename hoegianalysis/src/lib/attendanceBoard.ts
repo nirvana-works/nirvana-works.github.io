@@ -2,45 +2,55 @@ import { createClient, type Client } from '@libsql/client';
 import { getDb, initDb } from './db';
 import { normalizeName } from './settlement';
 
-// 출석부: 기존 출석 DB(세션·차수·체크인)를 그대로 읽어 날짜 × 참가자 표를 만든다.
-// 금액은 읽지 않는다 (공개 화면). 한 날짜에 차수 하나라도 출석하면 그날 출석.
+// 출석부: 기존 출석 DB(세션·차수·체크인)를 읽어 날짜 × 차수 × 참가자 표를 만든다.
+// 금액은 읽지 않는다 (공개 화면). 차수마다 출석하면 10점, 그 합이 총계.
 
 export interface AttendanceTerm {
   key: string; // "2026-2"
   label: string; // "2026년 2학기"
 }
 
-export interface AttendanceBoard {
-  terms: AttendanceTerm[]; // 최근 학기가 앞
-  term: AttendanceTerm | null; // 지금 보여주는 학기
-  dates: string[]; // YYYY-MM-DD, 오래된 날짜가 왼쪽
-  people: BoardPerson[]; // 출석 많은 순
-  cumulativeTotal: number; // 누적 종합점수의 분모: 전 학기 회기분석 횟수
-}
+export const POINTS_PER_ROUND = 10;
 
-export type LetterGrade = 'A' | 'B' | 'C' | 'D';
+export type LetterGrade = 'A+' | 'A' | 'B' | 'C' | 'D';
+
+export interface BoardDate {
+  date: string; // YYYY-MM-DD
+  rounds: number[]; // 그날 열린 차수 (1, 2, 3 …)
+}
 
 export interface BoardPerson {
   name: string;
-  attended: string[];
-  rate: number; // 이 학기 출석률 0~1
+  attended: string[]; // `${date}#${round}` 출석한 차수
+  points: number; // 이 학기 총계 (차수당 10점)
   grade: LetterGrade;
-  cumulativeAttended: number; // 전 학기 합산 출석 횟수
-  score: number; // 누적 종합점수 0~100 (전 학기 합산 출석률)
+  score: number; // 누적 종합점수: 전 학기 합산 점수
 }
+
+export interface AttendanceBoard {
+  terms: AttendanceTerm[]; // 최근 학기가 앞
+  term: AttendanceTerm | null; // 지금 보여주는 학기
+  dates: BoardDate[]; // 오래된 날짜가 왼쪽
+  totalRounds: number; // 이 학기 전체 차수 (만점 = 차수 × 10)
+  cumulativeTotal: number; // 전 학기 전체 차수
+  people: BoardPerson[]; // 총계 높은 순
+}
+
+export const roundKey = (date: string, round: number) => `${date}#${round}`;
 
 // 성적에서 제외하는 사람 (회기분석 교수님)
 const EXCLUDED = new Set(['회기분석교수', '회기분석교수님']);
 
-// 출석률 순위로 상위 15% A, 다음 25% B, 다음 40% C, 나머지 20% D
+// 총계 순위로 1등 A+, 상위 15% A, 다음 25% B, 다음 40% C, 나머지 20% D
 const CUTOFFS: [LetterGrade, number][] = [
   ['A', 0.15],
   ['B', 0.4],
   ['C', 0.8],
 ];
 
-// 출석률이 같으면 같은 등급: 나보다 출석률이 높은 사람 수로 위치를 정한다
+// 점수가 같으면 같은 등급: 나보다 점수가 높은 사람 수로 위치를 정한다
 export function gradeByRank(higher: number, total: number): LetterGrade {
+  if (higher === 0) return 'A+'; // 1등 (공동 1등 포함)
   const pos = higher / total;
   for (const [grade, upTo] of CUTOFFS) if (pos < upTo) return grade;
   return 'D';
@@ -68,63 +78,68 @@ async function attendanceDb(): Promise<Client> {
 }
 
 export async function getAttendanceBoard(termKey?: string): Promise<AttendanceBoard> {
-  const result = await (await attendanceDb()).execute(`
-    SELECT s.date AS date, c.name AS name, MIN(c.checked_in_at) AS first_at
-    FROM checkins c
-    JOIN rounds r ON r.id = c.round_id
-    JOIN sessions s ON s.id = r.session_id
-    GROUP BY s.date, c.name
-    ORDER BY first_at
-  `);
-  const rows = result.rows as unknown as { date: string; name: string }[];
+  const db = await attendanceDb();
+  const [roundRes, checkRes] = await Promise.all([
+    db.execute(`
+      SELECT DISTINCT s.date AS date, r.round_number AS round
+      FROM rounds r JOIN sessions s ON s.id = r.session_id
+    `),
+    db.execute(`
+      SELECT DISTINCT s.date AS date, r.round_number AS round, c.name AS name
+      FROM checkins c
+      JOIN rounds r ON r.id = c.round_id
+      JOIN sessions s ON s.id = r.session_id
+    `),
+  ]);
+  const roundRows = roundRes.rows.map((r) => ({ date: String(r.date), round: Number(r.round) }));
+  const checkRows = checkRes.rows.map((r) => ({ date: String(r.date), round: Number(r.round), name: String(r.name) }));
+
+  // 출석이 한 번이라도 있는 날짜만 표에 넣는다 (아무도 없는 차수는 제외)
+  const attendedKeys = new Set(checkRows.map((r) => roundKey(r.date, r.round)));
+  const openRounds = roundRows.filter((r) => attendedKeys.has(roundKey(r.date, r.round)));
 
   const termMap = new Map<string, AttendanceTerm>();
-  for (const r of rows) {
-    const t = termOf(r.date);
-    termMap.set(t.key, t);
-  }
+  for (const r of openRounds) termMap.set(termOf(r.date).key, termOf(r.date));
   const terms = Array.from(termMap.values()).sort((a, b) => b.key.localeCompare(a.key));
   const term = terms.find((t) => t.key === termKey) ?? terms[0] ?? null;
-  if (!term) return { terms, term, dates: [], people: [], cumulativeTotal: 0 };
+  if (!term) return { terms, term, dates: [], totalRounds: 0, cumulativeTotal: 0, people: [] };
 
-  const inTerm = rows.filter((r) => termOf(r.date).key === term.key);
-  const dates = Array.from(new Set(inTerm.map((r) => r.date))).sort();
+  const byDate = new Map<string, number[]>();
+  for (const r of openRounds) {
+    if (termOf(r.date).key !== term.key) continue;
+    byDate.set(r.date, [...(byDate.get(r.date) ?? []), r.round]);
+  }
+  const dates: BoardDate[] = Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, rounds]) => ({ date, rounds: Array.from(new Set(rounds)).sort((a, b) => a - b) }));
+  const totalRounds = dates.reduce((n, d) => n + d.rounds.length, 0);
+  const cumulativeTotal = openRounds.length;
 
   // 띄어쓰기만 다른 이름은 한 사람으로 (성적표와 같은 규칙). 표시는 처음 쓴 이름
-  const byKey = new Map<string, { name: string; attended: Set<string> }>();
-  const allByKey = new Map<string, Set<string>>();
-  for (const r of rows) {
+  const people = new Map<string, { name: string; term: Set<string>; all: Set<string> }>();
+  for (const r of checkRows) {
     const key = normalizeName(r.name);
     if (!key || EXCLUDED.has(key)) continue;
-    const all = allByKey.get(key) ?? new Set<string>();
-    all.add(r.date);
-    allByKey.set(key, all);
-    if (termOf(r.date).key !== term.key) continue;
-    const person = byKey.get(key) ?? { name: r.name.trim(), attended: new Set<string>() };
-    person.attended.add(r.date);
-    byKey.set(key, person);
+    const p = people.get(key) ?? { name: r.name.trim(), term: new Set<string>(), all: new Set<string>() };
+    const rk = roundKey(r.date, r.round);
+    p.all.add(rk);
+    if (termOf(r.date).key === term.key) p.term.add(rk);
+    people.set(key, p);
   }
 
-  const cumulativeTotal = new Set(rows.map((r) => r.date)).size;
-  const base = Array.from(byKey.entries()).map(([key, p]) => ({
-    name: p.name,
-    attended: dates.filter((d) => p.attended.has(d)),
-    cumulativeAttended: allByKey.get(key)?.size ?? 0,
-  }));
-  const rateOf = (n: number) => (dates.length ? n / dates.length : 0);
-
-  const people: BoardPerson[] = base
+  const base = Array.from(people.values()).filter((p) => p.term.size > 0);
+  const list: BoardPerson[] = base
     .map((p) => {
-      const rate = rateOf(p.attended.length);
-      const higher = base.filter((o) => o.attended.length > p.attended.length).length;
+      const higher = base.filter((o) => o.term.size > p.term.size).length;
       return {
-        ...p,
-        rate,
+        name: p.name,
+        attended: Array.from(p.term),
+        points: p.term.size * POINTS_PER_ROUND,
         grade: gradeByRank(higher, base.length),
-        score: cumulativeTotal ? Math.round((p.cumulativeAttended / cumulativeTotal) * 100) : 0,
+        score: p.all.size * POINTS_PER_ROUND,
       };
     })
-    .sort((a, b) => b.attended.length - a.attended.length || a.name.localeCompare(b.name, 'ko'));
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'ko'));
 
-  return { terms, term, dates, people, cumulativeTotal };
+  return { terms, term, dates, totalRounds, cumulativeTotal, people: list };
 }
