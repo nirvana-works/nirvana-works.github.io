@@ -39,7 +39,12 @@ export interface AttendanceBoard {
 export const roundKey = (date: string, round: number) => `${date}#${round}`;
 
 // 성적에서 제외하는 사람 (회기분석 교수님)
-const EXCLUDED = new Set(['회기분석교수', '회기분석교수님']);
+const EXCLUDED = new Set(['회기분석교수', '회기분석교수님', '김진현']);
+
+// 오타·표기 차이로 따로 적힌 이름을 한 사람으로 합친다 (띄어쓰기 뺀 이름 → 올바른 이름)
+const ALIASES: Record<string, string> = {
+  횡준석: '황준석',
+};
 
 // 총계 순위로 1등 A+, 상위 15% A, 다음 25% B, 다음 40% C, 나머지 20% D
 const CUTOFFS: [LetterGrade, number][] = [
@@ -118,9 +123,10 @@ export async function getAttendanceBoard(termKey?: string): Promise<AttendanceBo
   // 띄어쓰기만 다른 이름은 한 사람으로 (성적표와 같은 규칙). 표시는 처음 쓴 이름
   const people = new Map<string, { name: string; term: Set<string>; all: Set<string> }>();
   for (const r of checkRows) {
-    const key = normalizeName(r.name);
+    const raw = normalizeName(r.name);
+    const key = ALIASES[raw] ?? raw;
     if (!key || EXCLUDED.has(key)) continue;
-    const p = people.get(key) ?? { name: r.name.trim(), term: new Set<string>(), all: new Set<string>() };
+    const p = people.get(key) ?? { name: ALIASES[raw] ?? r.name.trim(), term: new Set<string>(), all: new Set<string>() };
     const rk = roundKey(r.date, r.round);
     p.all.add(rk);
     if (termOf(r.date).key === term.key) p.term.add(rk);
