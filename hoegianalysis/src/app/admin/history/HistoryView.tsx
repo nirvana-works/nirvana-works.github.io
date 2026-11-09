@@ -58,7 +58,12 @@ export function HistoryView({ sessions }: { sessions: HistorySession[] }) {
   const ranking = Array.from(people.values()).sort(
     (a, b) => b.dates.size - a.dates.size || a.name.localeCompare(b.name, 'ko')
   );
-  const dateCount = new Set(sessions.map((s) => s.date)).size;
+  // 날짜 버튼 (최신 날짜가 앞). 고른 날짜가 지워지면 가장 최근 날짜로
+  const dates = Array.from(new Set(sessions.map((s) => s.date)));
+  const dateCount = dates.length;
+  const [picked, setPicked] = useState<string | null>(null);
+  const selected = picked && dates.includes(picked) ? picked : dates[0] ?? null;
+  const selectedSessions = sessions.filter((s) => s.date === selected);
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,6 +84,42 @@ export function HistoryView({ sessions }: { sessions: HistorySession[] }) {
         </button>
       </div>
 
+      {sessions.length === 0 ? (
+        <p className="text-cream/50 text-sm text-center py-10">아직 열린 회기분석이 없어요.</p>
+      ) : (
+        <>
+          <nav aria-label="날짜 선택" className="flex flex-wrap gap-2">
+            {dates.map((date) => {
+              const active = date === selected;
+              const [, m, d] = date.split('-').map(Number);
+              const count = new Set(
+                sessions
+                  .filter((s) => s.date === date)
+                  .flatMap((s) => s.rounds.flatMap((r) => r.checkins.map((c) => normalizeName(c.name))))
+              ).size;
+              return (
+                <button
+                  key={date}
+                  type="button"
+                  onClick={() => setPicked(date)}
+                  aria-pressed={active}
+                  className={`rounded-xl border px-3 py-2 text-sm font-bold transition-colors ${
+                    active ? 'bg-neon text-bg border-neon' : 'border-cream/20 text-cream/80 hover:border-neon/60'
+                  }`}
+                >
+                  {m}/{d}
+                  <span className={`ml-1 text-xs font-normal ${active ? 'text-bg/70' : 'text-cream/40'}`}>{count}명</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {selectedSessions.map((s) => (
+            <SessionCard key={s.id} session={s} onChanged={() => router.refresh()} />
+          ))}
+        </>
+      )}
+
       {ranking.length > 0 && (
         <section className="bg-bgAlt border border-cream/10 rounded-2xl p-4">
           <h2 className="font-display text-lg text-neon mb-3">누적 참가</h2>
@@ -90,14 +131,6 @@ export function HistoryView({ sessions }: { sessions: HistorySession[] }) {
             ))}
           </ul>
         </section>
-      )}
-
-      {sessions.length === 0 ? (
-        <p className="text-cream/50 text-sm text-center py-10">아직 열린 회기분석이 없어요.</p>
-      ) : (
-        sessions.map((s) => (
-          <SessionCard key={s.id} session={s} onChanged={() => router.refresh()} />
-        ))
       )}
     </div>
   );
