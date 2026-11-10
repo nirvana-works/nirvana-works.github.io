@@ -221,7 +221,7 @@ export function CubeShell() {
             type="button"
             aria-label="이전 면으로 돌리기"
             onClick={() => turnTo(index - 1)}
-            className="absolute left-0 top-[134px] flex h-[60px] w-[68px] items-center justify-center"
+            className="absolute left-0 top-[calc(134px+var(--lift))] flex h-[60px] w-[68px] items-center justify-center"
           >
             <span aria-hidden className="dot-cluster block h-[27px] w-[36px]" />
           </button>
@@ -229,7 +229,7 @@ export function CubeShell() {
             type="button"
             aria-label="다음 면으로 돌리기"
             onClick={() => turnTo(index + 1)}
-            className="absolute right-0 top-[314px] flex h-[68px] w-[60px] items-center justify-center"
+            className="absolute right-0 top-[calc(314px+var(--lift))] flex h-[68px] w-[60px] items-center justify-center"
           >
             <span aria-hidden className="dot-cluster block h-[36px] w-[27px]" />
           </button>

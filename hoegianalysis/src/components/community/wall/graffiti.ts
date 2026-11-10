@@ -13,7 +13,7 @@ function hash(text: string): number {
   return h >>> 0;
 }
 
-export const ROW_HEIGHT = 104; // 낙서 한 줄 높이(px)
+export const ROW_HEIGHT = 120; // 낙서 한 줄 높이(px)
 export const TOP_PAD = 48; // 갓돌 아래부터
 export const BOTTOM_ZONE = 360; // 넙죽이·스프레이 글씨·바닥 자리
 export const MIN_WALL = 640;
@@ -26,6 +26,12 @@ export function sheetHeight(cols: number): number {
   return Math.max(MIN_WALL, TOP_PAD + Math.ceil(PER_SHEET / cols) * ROW_HEIGHT + BOTTOM_ZONE);
 }
 
+// 기울기: 대부분 살짝, 가끔 확 기울인다 (-16° ~ 16°)
+function tilt(h: number): number {
+  const t = ((h >>> 4) % 100) / 100 - 0.5; // -0.5 ~ 0.5
+  return Math.sign(t) * Math.pow(Math.abs(t) * 2, 1.3) * 16;
+}
+
 export interface Placement {
   left: number; // %
   width: number; // %
@@ -34,15 +40,17 @@ export interface Placement {
   color: string;
 }
 
-// 낙서장 안에서 먼저 쓴 글부터 위쪽 칸에. 칸 안에서만 조금씩 흔들어 겹치지 않게 한다
+// 낙서장 안에서 먼저 쓴 글부터 위쪽 칸에 대략 배치하되, 칸 안에서 위치·기울기를 크게 흩뜨려
+// 반듯하게 줄 선 느낌이 나지 않게 한다. 홀수 줄은 옆으로 살짝 밀어 어긋나게 한다
 export function placeGraffiti(id: string, order: number, cols: number, height: number): Placement {
   const h = hash(id);
   const col = order % cols;
   const row = Math.floor(order / cols);
   const colWidth = 100 / cols;
-  const jx = ((h % 100) / 100 - 0.5) * colWidth * 0.12;
-  const jy = (((h >>> 8) % 100) / 100 - 0.5) * 22;
-  const top = TOP_PAD + row * ROW_HEIGHT + jy;
+  const rx = ((h >>> 3) % 100) / 100; // 0~1
+  const ry = ((h >>> 9) % 100) / 100;
+  const stagger = row % 2 === 1 ? colWidth * 0.08 : 0;
+  const top = TOP_PAD + row * ROW_HEIGHT + (ry - 0.5) * 30;
 
   // 황토 칠 위에서는 흰 분필이 안 보여서 검정으로 바꾼다
   let color: string = INKS[(h >>> 16) % INKS.length];
@@ -50,10 +58,10 @@ export function placeGraffiti(id: string, order: number, cols: number, height: n
 
   return {
     // 기울어져도 벽 밖으로 잘리지 않게 칸 양옆에 여백을 둔다
-    left: col * colWidth + colWidth * 0.12 + jx,
-    width: colWidth * 0.78,
+    left: Math.min(col * colWidth + colWidth * 0.05 + rx * colWidth * 0.2 + stagger, 100 - colWidth * 0.7 - 2),
+    width: colWidth * 0.7,
     top,
-    rotate: (((h >>> 4) % 100) / 100 - 0.5) * 12,
+    rotate: tilt(h),
     color,
   };
 }

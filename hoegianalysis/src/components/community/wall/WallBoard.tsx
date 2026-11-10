@@ -103,14 +103,19 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
             <section
               key={s}
               aria-label={`낙서장 ${s + 1}`}
-              className="relative w-full shrink-0 snap-center overflow-hidden"
+              className={`relative w-full shrink-0 snap-center overflow-hidden ${erasing ? '' : 'cursor-pointer'}`}
               style={{ height }}
+              // 벽 빈 곳을 누르면 바로 낙서하기 (낙서·버튼을 누른 건 제외, 지우기 모드에선 끔)
+              onClick={(e) => {
+                if (erasing || (e.target as HTMLElement).closest('button')) return;
+                composeRef.current?.showModal();
+              }}
             >
               <WallBackdrop />
 
               {sheet.length === 0 && (
                 <p className="absolute inset-x-0 top-24 px-4 text-center font-pen text-[34px] text-white/80">
-                  {s === 0 ? '아직 깨끗한 벽이에요. 첫 낙서를 남겨 보세요' : '새 낙서장이에요. 여기부터 채워 주세요'}
+                  {s === 0 ? '아직 깨끗한 벽이에요. 아무 데나 눌러 첫 낙서를 남겨 보세요' : '새 낙서장이에요. 여기부터 채워 주세요'}
                 </p>
               )}
 

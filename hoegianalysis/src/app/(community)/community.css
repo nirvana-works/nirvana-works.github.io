@@ -13,6 +13,11 @@
 @media (min-width: 640px) {
   .cube-shell { --s: 260px; --k: 0.16; }
 }
+/* 키 큰 화면에선 큐브·메뉴 이름을 위쪽에 붙이지 않고 가운데로 내린다 */
+.cube-shell { --lift: 0px; }
+@media (min-width: 640px) and (min-height: 760px) {
+  .cube-shell { --lift: calc((100vh - 760px) * 0.45); }
+}
 
 /* 큐브 전체를 감싸는 자리. 홈에선 포스터 가운데, 다른 화면에선 오른쪽 위 칸(72px) 가운데 */
 .cube-mount {
@@ -28,7 +33,7 @@
 }
 .cube-mount[data-mode='poster'] {
   left: 50%;
-  top: calc(100px + var(--s) * 0.775);
+  top: calc(100px + var(--s) * 0.775 + var(--lift));
   transform: translate(-50%, -50%) scale(1);
 }
 .cube-mount[data-mode='docked'] {
@@ -40,7 +45,7 @@
 
 /* 포스터 자리. 큐브가 칸으로 들어가면 접힌다 */
 .cube-stage {
-  height: calc(var(--s) * 1.55);
+  height: calc(var(--s) * 1.55 + var(--lift));
   transition: height 700ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 .cube-stage[data-collapsed='true'] {
