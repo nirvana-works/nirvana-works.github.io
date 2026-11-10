@@ -7,7 +7,7 @@ import type { WallPost } from '@/lib/wallPosts';
 import { AdminLogin } from '../AdminLogin';
 import { fieldClass, stickerButtonClass } from '../formStyles';
 import { WALL, WallBackdrop } from './WallBackdrop';
-import { PER_SHEET, inkShadow, placeGraffiti, sheetHeight } from './graffiti';
+import { BOTTOM_ZONE, PER_SHEET, TOP_PAD, inkShadow, placeGraffiti, sheetHeight } from './graffiti';
 
 const LIMITS = { nickname: 12, content: 140 };
 
@@ -34,11 +34,26 @@ function useColumns(): number {
   return cols;
 }
 
-// 오래된 순 낙서를 PER_SHEET개씩 낙서장으로 나눈다. 마지막 장이 꽉 찼으면 빈 새 장을 붙인다
-function toSheets(posts: WallPost[]): WallPost[][] {
-  const sheets: WallPost[][] = [];
-  for (let i = 0; i < posts.length; i += PER_SHEET) sheets.push(posts.slice(i, i + PER_SHEET));
-  if (sheets.length === 0 || sheets[sheets.length - 1].length === PER_SHEET) sheets.push([]);
+interface Sheet {
+  key: number; // 낙서장 번호 (새 낙서에 저장된다)
+  posts: WallPost[];
+}
+
+// 낙서를 낙서장별로 묶는다. 누른 자리에 쓴 낙서는 저장된 장 번호로, 예전 낙서(번호 없음)는
+// 오래된 순으로 PER_SHEET개씩 나눈다. 마지막 장이 꽉 찼으면 빈 새 장을 붙인다
+function toSheets(posts: WallPost[]): Sheet[] {
+  const map = new Map<number, WallPost[]>();
+  const add = (key: number, post: WallPost) => map.set(key, [...(map.get(key) ?? []), post]);
+  let legacy = 0;
+  for (const post of posts) {
+    if (post.sheet == null) add(Math.floor(legacy++ / PER_SHEET), post);
+    else add(post.sheet, post);
+  }
+  const sheets = Array.from(map.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([key, list]) => ({ key, posts: list }));
+  const lastSheet = sheets[sheets.length - 1];
+  if (!lastSheet || lastSheet.posts.length >= PER_SHEET) sheets.push({ key: (lastSheet?.key ?? -1) + 1, posts: [] });
   return sheets;
 }
 
@@ -51,6 +66,8 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
   const [erasing, setErasing] = useState(false);
   const [current, setCurrent] = useState(0);
   const composeRef = useRef<HTMLDialogElement>(null);
+  // 지금 쓰려는 낙서가 붙을 자리 (벽을 누른 곳, 버튼이면 무작위)
+  const spotRef = useRef<{ pos_x: number; pos_y: number; sheet: number } | null>(null);
   const viewRef = useRef<HTMLDialogElement>(null);
   const loginRef = useRef<HTMLDialogElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -101,26 +118,35 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
         >
           {sheets.map((sheet, s) => (
             <section
-              key={s}
+              key={sheet.key}
               aria-label={`낙서장 ${s + 1}`}
               className={`relative w-full shrink-0 snap-center overflow-hidden ${erasing ? '' : 'cursor-pointer'}`}
               style={{ height }}
               // 벽 빈 곳을 누르면 바로 낙서하기 (낙서·버튼을 누른 건 제외, 지우기 모드에선 끔)
               onClick={(e) => {
                 if (erasing || (e.target as HTMLElement).closest('button')) return;
+                const box = e.currentTarget.getBoundingClientRect();
+                // 가득 찬 장을 눌렀으면 같은 자리 비율로 가장 최근(새) 장에 쓴다
+                const target = sheet.posts.length >= PER_SHEET ? sheets[last].key : sheet.key;
+                spotRef.current = {
+                  pos_x: ((e.clientX - box.left) / box.width) * 100,
+                  pos_y: e.clientY - box.top,
+                  sheet: target,
+                };
                 composeRef.current?.showModal();
               }}
             >
               <WallBackdrop />
 
-              {sheet.length === 0 && (
+              {sheet.posts.length === 0 && (
                 <p className="absolute inset-x-0 top-24 px-4 text-center font-pen text-[34px] text-white/80">
                   {s === 0 ? '아직 깨끗한 벽이에요. 아무 데나 눌러 첫 낙서를 남겨 보세요' : '새 낙서장이에요. 여기부터 채워 주세요'}
                 </p>
               )}
 
-              {sheet.map((post, i) => {
-                const p = placeGraffiti(post.id, i, cols, height);
+              {sheet.posts.map((post, i) => {
+                const at = post.pos_x != null && post.pos_y != null ? { x: post.pos_x, y: post.pos_y } : null;
+                const p = placeGraffiti(post.id, i, cols, height, at);
                 return (
                   <button
                     key={post.id}
@@ -215,7 +241,20 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
         >
           {erasing ? '지우기 끝내기' : '낙서 지우기'}
         </button>
-        <button type="button" onClick={() => composeRef.current?.showModal()} className={stickerButtonClass}>
+        <button
+          type="button"
+          onClick={() => {
+            // 버튼으로 쓰면 가장 최근 낙서장의 빈 벽 아무 데나 붙인다
+            const room = Math.max(height - BOTTOM_ZONE - TOP_PAD - 60, 120);
+            spotRef.current = {
+              pos_x: 22 + Math.random() * 50,
+              pos_y: TOP_PAD + 30 + Math.random() * room,
+              sheet: sheets[last].key,
+            };
+            composeRef.current?.showModal();
+          }}
+          className={stickerButtonClass}
+        >
           <span aria-hidden>✎</span>
           낙서하기
         </button>
@@ -223,14 +262,15 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
 
       <ComposeDialog
         dialogRef={composeRef}
+        spotRef={spotRef}
         onPosted={(post) => {
           setPosts((list) => [...list.filter((p) => p.id !== post.id), post]);
           setFresh(post.id);
           setErasing(false);
-          // 새 낙서가 붙은 (가장 최근) 낙서장으로 이동
+          // 새 낙서가 붙은 낙서장으로 이동
           requestAnimationFrame(() => {
-            const el = scrollerRef.current;
-            if (el) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+            const idx = toSheets([...posts.filter((p) => p.id !== post.id), post]).findIndex((sh) => sh.key === post.sheet);
+            if (idx >= 0) scrollToSheet(idx);
           });
           router.refresh();
         }}
@@ -354,9 +394,11 @@ function ViewGraffiti({
 
 function ComposeDialog({
   dialogRef,
+  spotRef,
   onPosted,
 }: {
   dialogRef: React.RefObject<HTMLDialogElement>;
+  spotRef: React.MutableRefObject<{ pos_x: number; pos_y: number; sheet: number } | null>;
   onPosted: (post: WallPost) => void;
 }) {
   const [nickname, setNickname] = useState('');
@@ -386,7 +428,7 @@ function ComposeDialog({
       const res = await fetch('/api/wall', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, content, deviceId: deviceId() }),
+        body: JSON.stringify({ nickname, content, deviceId: deviceId(), ...spotRef.current }),
       });
       const data = (await res.json()) as { post?: WallPost; error?: string };
       if (!res.ok || !data.post) {

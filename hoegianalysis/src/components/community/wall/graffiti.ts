@@ -42,8 +42,15 @@ export interface Placement {
 
 // 낙서장 안에서 먼저 쓴 글부터 위쪽 칸에 대략 배치하되, 칸 안에서 위치·기울기를 크게 흩뜨려
 // 반듯하게 줄 선 느낌이 나지 않게 한다. 홀수 줄은 옆으로 살짝 밀어 어긋나게 한다
-export function placeGraffiti(id: string, order: number, cols: number, height: number): Placement {
+export function placeGraffiti(
+  id: string,
+  order: number,
+  cols: number,
+  height: number,
+  at?: { x: number; y: number } | null,
+): Placement {
   const h = hash(id);
+  if (at) return placeAt(h, at, cols, height);
   const col = order % cols;
   const row = Math.floor(order / cols);
   const colWidth = 100 / cols;
@@ -60,6 +67,21 @@ export function placeGraffiti(id: string, order: number, cols: number, height: n
     // 기울어져도 벽 밖으로 잘리지 않게 칸 양옆에 여백을 둔다
     left: Math.min(col * colWidth + colWidth * 0.05 + rx * colWidth * 0.2 + stagger, 100 - colWidth * 0.7 - 2),
     width: colWidth * 0.7,
+    top,
+    rotate: tilt(h),
+    color,
+  };
+}
+
+// 누른 자리를 중심으로 붙인다. 벽 밖으로 잘리지 않게만 당겨 놓는다
+function placeAt(h: number, at: { x: number; y: number }, cols: number, height: number): Placement {
+  const width = cols === 2 ? 56 : 36; // % 낙서 한 장 너비
+  const top = Math.min(Math.max(at.y - 22, 8), height - 90);
+  let color: string = INKS[(h >>> 16) % INKS.length];
+  if (color === INKS[0] && (top / height) * 100 > OCHRE_FROM - 8) color = INKS[1];
+  return {
+    left: Math.min(Math.max(at.x - width / 2, 3), 97 - width),
+    width,
     top,
     rotate: tilt(h),
     color,

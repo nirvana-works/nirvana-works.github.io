@@ -68,6 +68,13 @@ async function runInit(): Promise<void> {
     await db.execute('ALTER TABLE school_events ADD COLUMN device_id TEXT');
   }
 
+  // 낙서를 누른 자리에 붙이기 위한 위치(가로 %, 세로 px)와 낙서장 번호. 예전 낙서는 비어 있다
+  const wallColumns = await db.execute('PRAGMA table_info(wall_posts)');
+  const wallNames = new Set(wallColumns.rows.map((r) => (r as unknown as { name: string }).name));
+  for (const [col, type] of [['pos_x', 'REAL'], ['pos_y', 'REAL'], ['sheet', 'INTEGER']] as const) {
+    if (!wallNames.has(col)) await db.execute(`ALTER TABLE wall_posts ADD COLUMN ${col} ${type}`);
+  }
+
   for (const seed of SEEDS) await seedSchedule(seed.key, seed.events);
 }
 
