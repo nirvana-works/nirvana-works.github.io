@@ -51,6 +51,48 @@ async function runInit(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_member_birthdays_md ON member_birthdays(month, day);
 
+    -- 마피아 게임: 방, 참가자, 밤 행동·낮 투표
+    CREATE TABLE IF NOT EXISTS mafia_games (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      host_token TEXT NOT NULL,
+      host_player_id TEXT,
+      mode TEXT NOT NULL,
+      phase TEXT NOT NULL,
+      phase_ends_at INTEGER,
+      day_no INTEGER NOT NULL DEFAULT 0,
+      night_secs INTEGER NOT NULL,
+      talk_secs INTEGER NOT NULL,
+      vote_secs INTEGER NOT NULL,
+      reveal_roles INTEGER NOT NULL DEFAULT 1,
+      winner TEXT,
+      last_event TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_mafia_games_code ON mafia_games(code, created_at);
+
+    CREATE TABLE IF NOT EXISTS mafia_players (
+      id TEXT PRIMARY KEY,
+      game_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      token TEXT NOT NULL,
+      role TEXT,
+      alive INTEGER NOT NULL DEFAULT 1,
+      joined_at INTEGER NOT NULL,
+      UNIQUE(game_id, name)
+    );
+
+    CREATE TABLE IF NOT EXISTS mafia_actions (
+      id TEXT PRIMARY KEY,
+      game_id TEXT NOT NULL,
+      day_no INTEGER NOT NULL,
+      kind TEXT NOT NULL,
+      actor_id TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      UNIQUE(game_id, day_no, kind, actor_id)
+    );
+
     -- 기본 데이터를 넣었는지 같은 한 번짜리 기록
     CREATE TABLE IF NOT EXISTS community_meta (
       key TEXT PRIMARY KEY,
