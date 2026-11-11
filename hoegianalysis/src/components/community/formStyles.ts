@@ -8,3 +8,7 @@ export const primaryButtonClass =
 // 큐브 스티커 같은 작은 버튼 (노랑 바탕 + 검은 테두리)
 export const stickerButtonClass =
   'inline-flex h-11 items-center justify-center gap-1.5 rounded-[10px] border-2 border-ink bg-sticker px-4 text-[15px] font-bold hover:bg-[#e3c900] disabled:opacity-50';
+
+// 마피아 놀이터의 큰 버튼: 노랑 바탕 + 검은 테두리
+export const yellowButtonClass =
+  'h-12 w-full rounded-[10px] border-2 border-ink bg-sticker text-[16px] font-bold text-ink hover:bg-[#e3c900] disabled:opacity-50';

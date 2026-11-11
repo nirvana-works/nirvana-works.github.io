@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DEFAULT_SETTINGS, MIN_PLAYERS, NAME_LIMIT, type GameMode } from '@/lib/mafiaTypes';
-import { fieldClass, primaryButtonClass } from '../formStyles';
+import { fieldClass, yellowButtonClass } from '../formStyles';
 import { api, saveToken } from './storage';
 
 const NIGHT = [30, 40, 60, 90];
@@ -82,7 +82,7 @@ export function MafiaHome() {
             aria-label="방 코드"
             className={`${fieldClass} font-latin text-[20px] font-semibold tracking-[0.2em]`}
           />
-          <button type="submit" className="h-12 shrink-0 rounded-[10px] bg-ink px-5 text-[16px] font-bold text-white">
+          <button type="submit" className="h-12 shrink-0 rounded-[10px] border-2 border-ink bg-sticker px-5 text-[16px] font-bold text-ink hover:bg-[#e3c900]">
             입장
           </button>
         </form>
@@ -101,9 +101,9 @@ export function MafiaHome() {
           ).map(([value, title, desc]) => (
             <label
               key={value}
-              className={`flex cursor-pointer gap-3 rounded-[10px] border-2 p-3 ${mode === value ? 'border-cube bg-[#eef1ff]' : 'border-ink/20'}`}
+              className={`flex cursor-pointer gap-3 rounded-[10px] border-2 p-3 ${mode === value ? 'border-ink bg-[#fff6b8]' : 'border-ink/20'}`}
             >
-              <input type="radio" name="mode" checked={mode === value} onChange={() => setMode(value)} className="mt-1 h-4 w-4 accent-[#2B50E6]" />
+              <input type="radio" name="mode" checked={mode === value} onChange={() => setMode(value)} className="mt-1 h-4 w-4 accent-black" />
               <span>
                 <span className="block text-[15px] font-bold">{title}</span>
                 <span className="block text-[13px] text-inkMuted">{desc}</span>
@@ -141,7 +141,7 @@ export function MafiaHome() {
             type="checkbox"
             checked={settings.revealRoles}
             onChange={(e) => setSettings((s) => ({ ...s, revealRoles: e.target.checked }))}
-            className="h-5 w-5 accent-[#2B50E6]"
+            className="h-5 w-5 accent-black"
           />
           죽은 사람의 직업 공개
         </label>
@@ -155,7 +155,7 @@ export function MafiaHome() {
             {error}
           </p>
         )}
-        <button type="submit" disabled={busy} className={primaryButtonClass}>
+        <button type="submit" disabled={busy} className={yellowButtonClass}>
           {busy ? '만드는 중…' : '방 만들기'}
         </button>
       </form>

@@ -11,7 +11,7 @@ import {
   type Role,
   type ViewPlayer,
 } from '@/lib/mafiaTypes';
-import { fieldClass, primaryButtonClass, stickerButtonClass } from '../formStyles';
+import { fieldClass, stickerButtonClass, yellowButtonClass } from '../formStyles';
 import { RoleAvatar } from './RoleAvatar';
 import { api, loadToken, saveToken } from './storage';
 
@@ -151,7 +151,7 @@ function JoinCard({ code, onJoined }: { code: string; onJoined: (token: string) 
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy} className={primaryButtonClass}>
+      <button type="submit" disabled={busy} className={yellowButtonClass}>
         {busy ? '들어가는 중…' : '입장하기'}
       </button>
     </form>
@@ -297,7 +297,7 @@ function Lobby({ view, token, refresh }: Ctx) {
           className="self-start text-left"
         >
           <span className="block font-latin text-[44px] font-semibold leading-none tracking-[0.2em] text-ink">{view.code}</span>
-          <span className="text-[13px] font-bold text-cube">{copied ? '링크를 복사했어요' : '눌러서 링크 복사'}</span>
+          <span className="text-[13px] font-bold text-ink underline">{copied ? '링크를 복사했어요' : '눌러서 링크 복사'}</span>
         </button>
       </div>
 
@@ -335,7 +335,7 @@ function Lobby({ view, token, refresh }: Ctx) {
         </p>
       )}
       {view.isHost ? (
-        <button type="button" onClick={start} disabled={busy || n < MIN_PLAYERS} className={primaryButtonClass}>
+        <button type="button" onClick={start} disabled={busy || n < MIN_PLAYERS} className={yellowButtonClass}>
           {n < MIN_PLAYERS ? `${MIN_PLAYERS - n}명 더 필요해요` : busy ? '시작하는 중…' : '게임 시작'}
         </button>
       ) : (
