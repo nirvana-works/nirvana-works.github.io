@@ -51,6 +51,24 @@ async function runInit(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_member_birthdays_md ON member_birthdays(month, day);
 
+    -- 공지 대자보: 글 모양(제목·본문·일시·장소) 또는 올린 포스터 이미지. 일정에서 올린 공지는 event_id로 이어진다
+    CREATE TABLE IF NOT EXISTS notices (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      kicker TEXT,
+      body TEXT,
+      when_text TEXT,
+      place TEXT,
+      urgent INTEGER NOT NULL DEFAULT 0,
+      event_id TEXT,
+      image TEXT,
+      image_mime TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notices_created ON notices(created_at);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_notices_event ON notices(event_id) WHERE event_id IS NOT NULL;
+
     -- 마피아 게임: 방, 참가자, 밤 행동·낮 투표
     CREATE TABLE IF NOT EXISTS mafia_games (
       id TEXT PRIMARY KEY,

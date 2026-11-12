@@ -6,6 +6,7 @@ import { todayLocal } from "@/lib/date";
 import { BIRTHDAY_STYLE, HOEGI, categoryOf } from "@/lib/eventCategories";
 import type { SchoolEvent } from "@/lib/schoolEvents";
 import { EventList, shortDate } from "./EventList";
+import { PostNoticeButton } from "./PostNoticeButton";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -18,9 +19,13 @@ function shiftMonth(month: string, delta: number): string {
 export function MonthCalendar({
   month,
   events,
+  isAdmin = false,
+  noticeEventIds = [],
 }: {
   month: string;
   events: SchoolEvent[];
+  isAdmin?: boolean;
+  noticeEventIds?: string[];
 }) {
   const [y, m] = month.split("-").map(Number);
   const firstWeekday = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
@@ -231,7 +236,17 @@ export function MonthCalendar({
           )}
         </div>
         {shown.length > 0 ? (
-          <EventList events={shown} />
+          <EventList
+            events={shown}
+            action={
+              isAdmin
+                ? (ev) =>
+                    ev.category === BIRTHDAY_STYLE.key ? null : (
+                      <PostNoticeButton eventId={ev.id} posted={noticeEventIds.includes(ev.id)} />
+                    )
+                : undefined
+            }
+          />
         ) : (
           <p className="border-y-2 border-ink py-6 text-center text-[14px] text-inkMuted">
             {selected

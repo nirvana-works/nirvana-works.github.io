@@ -3,6 +3,8 @@ import { FaceHeader } from '@/components/community/FaceHeader';
 import { stickerButtonClass } from '@/components/community/formStyles';
 import { CategorySticker } from '@/components/community/schedule/CategorySticker';
 import { MonthCalendar } from '@/components/community/schedule/MonthCalendar';
+import { isAdmin } from '@/lib/adminAuth';
+import { listNoticeEventIds } from '@/lib/notices';
 import { birthdaysAsEvents, listBirthdays } from '@/lib/birthdays';
 import { BIRTHDAY_STYLE, EVENT_CATEGORIES, HOEGI } from '@/lib/eventCategories';
 import { daysInMonth, isValidMonth, listEventsBetween, todayKST } from '@/lib/schoolEvents';
@@ -19,6 +21,8 @@ export default async function SchedulePage({ searchParams }: { searchParams: { m
   ]);
   // 생일은 해마다 반복되니 보고 있는 해의 날짜로 얹는다. 같은 날이면 회기분석 → 생일 → 나머지 순
   const rank = (c: string | null) => (c === HOEGI ? 0 : c === BIRTHDAY_STYLE.key ? 1 : 2);
+  const admin = isAdmin();
+  const noticeIds = admin ? await listNoticeEventIds() : [];
   const events = [...schoolEvents, ...birthdaysAsEvents(birthdays, year)].sort(
     (a, b) => a.start_date.localeCompare(b.start_date) || rank(a.category) - rank(b.category),
   );
@@ -49,7 +53,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: { m
         />
       </div>
 
-      <MonthCalendar month={month} events={events} />
+      <MonthCalendar month={month} events={events} isAdmin={admin} noticeEventIds={noticeIds} />
 
       <div className="flex justify-end">
         <Link href="/schedule/manage" className={stickerButtonClass}>
