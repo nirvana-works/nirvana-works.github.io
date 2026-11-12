@@ -1,4 +1,5 @@
 import { categoryOf } from '@/lib/eventCategories';
+import { CategorySticker, hasSticker } from './CategorySticker';
 import type { SchoolEvent } from '@/lib/schoolEvents';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -23,14 +24,17 @@ export function EventList({
   action?: (e: SchoolEvent) => React.ReactNode;
 }) {
   return (
-    <ul className="divide-y divide-ink/15 border-y-2 border-ink">
+    <ul className="flex flex-col gap-2.5">
       {events.map((e) => (
-        <li key={e.id} className="flex items-start gap-3 py-3">
+        <li
+          key={e.id}
+          className="flex items-start gap-3 rounded-[10px] border-2 border-ink bg-[#FBF7EC] px-3 py-2.5 shadow-[2px_2px_0_rgba(20,33,61,0.18)]"
+        >
           <span className="w-[76px] shrink-0 pt-0.5 font-latin text-[13px] font-semibold leading-[1.45]">{dateRange(e)}</span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-bold leading-snug">
+            <span className="flex items-center text-[16px] font-bold leading-snug">
               <CategoryBadge category={e.category} />
-              {e.title}
+              <span className="min-w-0">{e.title}</span>
             </span>
             {e.place && <span className="mt-0.5 block text-[14px] text-inkMuted">{e.place}</span>}
             {e.memo && (
@@ -48,15 +52,10 @@ export function EventList({
 export function CategoryBadge({ category }: { category: string | null }) {
   const c = categoryOf(category);
   if (!c) return null;
-  // 생일은 제목에 이미 '생일'이 있어 케이크만
-  if (c.key === 'birthday') return <span aria-hidden className="mr-1">🎂</span>;
-  return (
-    <span
-      className="mr-1.5 inline-block rounded-[5px] px-1.5 py-[1px] align-[2px] text-[12px] font-bold"
-      style={{ background: c.bg, color: c.text }}
-    >
-      {c.key === 'hoegi' && <span aria-hidden>★ </span>}
-      {c.label}
-    </span>
-  );
+  if (hasSticker(c.key)) return (
+      <span className="mr-1 inline-flex w-[58px] shrink-0 justify-center -my-1">
+        <CategorySticker k={c.key} label={c.label} scale={0.8} />
+      </span>
+    );
+  return null;
 }

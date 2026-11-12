@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FaceHeader } from '@/components/community/FaceHeader';
 import { stickerButtonClass } from '@/components/community/formStyles';
+import { CategorySticker } from '@/components/community/schedule/CategorySticker';
 import { MonthCalendar } from '@/components/community/schedule/MonthCalendar';
 import { birthdaysAsEvents, listBirthdays } from '@/lib/birthdays';
 import { BIRTHDAY_STYLE, EVENT_CATEGORIES, HOEGI } from '@/lib/eventCategories';
@@ -28,29 +29,23 @@ export default async function SchedulePage({ searchParams }: { searchParams: { m
 
       {/* 캘린더 포스터 머리: 분류 범례 + 확성기 든 넙죽이 */}
       <div className="flex items-end justify-between gap-3">
-        <ul aria-label="분류" className="flex flex-wrap gap-x-3 gap-y-2 pb-1">
+        <ul aria-label="분류" className="flex flex-wrap items-center gap-x-2 gap-y-1 pb-1">
           {EVENT_CATEGORIES.map((c) => (
-            <li key={c.key} className={`flex items-center gap-1.5 text-[13px] font-bold ${c.key === HOEGI ? 'text-seal' : ''}`}>
-              {c.key === HOEGI ? (
-                <span aria-hidden className="text-[15px] leading-none">★</span>
-              ) : (
-                <span aria-hidden className="h-3.5 w-5 rounded-[4px]" style={{ background: c.dot }} />
-              )}
-              {c.label}
+            <li key={c.key}>
+              <CategorySticker k={c.key} label={c.label} />
             </li>
           ))}
-          <li className="flex items-center gap-1.5 text-[13px] font-bold">
-            <span aria-hidden className="text-[13px] leading-none">🎂</span>
-            {BIRTHDAY_STYLE.label}
+          <li>
+            <CategorySticker k={BIRTHDAY_STYLE.key} label={BIRTHDAY_STYLE.label} />
           </li>
         </ul>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/hoegilab/nupjuk-megaphone.webp"
-          alt="확성기와 일정표를 든 넙죽이"
-          width={130}
-          height={100}
-          className="-mb-2 shrink-0 select-none"
+          src="/hoegilab/schedule-nupjuk-sticker.webp"
+          alt="달력에 스티커를 붙이는 넙죽이"
+          width={140}
+          height={173}
+          className="-mb-2 h-auto w-[120px] shrink-0 select-none sm:w-[140px]"
         />
       </div>
 

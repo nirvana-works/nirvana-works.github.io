@@ -7,6 +7,7 @@ export const EVENT_CATEGORIES = [
   { key: 'value', label: '가치', dot: '#F2A93B', bg: '#FFE4BD', text: '#7A4B00' },
   { key: 'tf', label: 'TF', dot: '#4FB86E', bg: '#D2F0D8', text: '#1E6A35' },
   { key: 'academic', label: '학사', dot: '#9B7BF0', bg: '#E6DBFF', text: '#4B2F9C' },
+  { key: 'group', label: '동기모임', dot: '#F2D80E', bg: '#FFF1A8', text: '#6B5600' },
 ] as const;
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number]['key'];
@@ -14,7 +15,7 @@ export type EventCategory = (typeof EVENT_CATEGORIES)[number]['key'];
 export const HOEGI = 'hoegi' satisfies EventCategory;
 
 // 멤버 생일: 고르는 분류는 아니지만 달력·목록에서 같은 방식으로 보여준다
-export const BIRTHDAY_STYLE = { key: 'birthday', label: '생일', dot: '#E86FA8', bg: '#FFE1EF', text: '#8A1F55' } as const;
+export const BIRTHDAY_STYLE = { key: 'birthday', label: '생일', dot: '#2EC4B6', bg: '#CDF2EC', text: '#0B6358' } as const;
 
 export function categoryOf(key: string | null | undefined) {
   if (key === BIRTHDAY_STYLE.key) return BIRTHDAY_STYLE;
