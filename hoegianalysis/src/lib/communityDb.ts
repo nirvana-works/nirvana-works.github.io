@@ -93,6 +93,23 @@ async function runInit(): Promise<void> {
       UNIQUE(game_id, day_no, kind, actor_id)
     );
 
+    -- 인디언 포커: 방 하나에 대결 하나. 게임 상태는 JSON 한 덩어리로 두고 version으로 동시 변경을 막는다
+    CREATE TABLE IF NOT EXISTS poker_games (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      mode TEXT NOT NULL,
+      p1_name TEXT NOT NULL,
+      p1_token TEXT NOT NULL,
+      p2_name TEXT,
+      p2_token TEXT,
+      turn_secs INTEGER NOT NULL,
+      state TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_poker_games_code ON poker_games(code);
+
     -- 기본 데이터를 넣었는지 같은 한 번짜리 기록
     CREATE TABLE IF NOT EXISTS community_meta (
       key TEXT PRIMARY KEY,

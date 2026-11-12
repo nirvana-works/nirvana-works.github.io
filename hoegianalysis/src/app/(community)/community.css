@@ -131,3 +131,33 @@
   outline: 3px solid #000;
   outline-offset: 2px;
 }
+
+/* 인디언 포커: 카드가 뒤집히며 공개 */
+@keyframes card-flip {
+  from { transform: rotateY(90deg); }
+  to { transform: rotateY(0deg); }
+}
+.card-flip { animation: card-flip 380ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .card-flip { animation: none; }
+}
+
+/* 인디언 포커 테이블: 카드 뒷면처럼 남색 바탕에 금색 마름모 무늬와 이중 테두리 */
+.poker-table {
+  background-color: #0f1a3d;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M24 2 L46 24 L24 46 L2 24 Z' fill='none' stroke='%23c9a24a' stroke-opacity='.2'/%3E%3Cpath d='M24 12 L36 24 L24 36 L12 24 Z' fill='none' stroke='%23c9a24a' stroke-opacity='.1'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 30%, #1d2f66 0%, #0f1a3d 70%);
+  border: 2px solid #c9a24a;
+  box-shadow:
+    inset 0 0 0 4px #0f1a3d,
+    inset 0 0 0 5px rgba(201, 162, 74, 0.7),
+    0 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* 상황 그림 팝업이 닫히기까지 남은 시간 막대 */
+@keyframes popup-timer {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.popup-timer { animation-name: popup-timer; animation-timing-function: linear; animation-fill-mode: forwards; }
