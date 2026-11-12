@@ -125,6 +125,18 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_lexio_games_code ON lexio_games(code);
 
+    -- 넙죽이 블록 점수판: 한 판마다 한 줄. 1~10등만 보여 준다
+    CREATE TABLE IF NOT EXISTS blocks_scores (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      score INTEGER NOT NULL,
+      lines INTEGER NOT NULL,
+      level INTEGER NOT NULL,
+      device_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_blocks_scores_score ON blocks_scores(score DESC);
+
     -- 기본 데이터를 넣었는지 같은 한 번짜리 기록
     CREATE TABLE IF NOT EXISTS community_meta (
       key TEXT PRIMARY KEY,

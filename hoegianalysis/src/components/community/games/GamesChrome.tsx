@@ -10,6 +10,7 @@ export const GAMES = [
   { href: '/games/poker', label: '인디언 포커' },
   { href: '/games/lexio', label: '렉시오' },
   { href: '/games/hwatu', label: '화투점' },
+  { href: '/games/blocks', label: '넙죽이 블록' },
 ] as const;
 
 // 방 안(/games/<게임>/<코드>)에서는 제목·탭을 숨겨 게임 화면에 집중하게 한다
