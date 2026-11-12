@@ -1,22 +1,21 @@
 import { getDb } from './db';
 import { initCommunityDb } from './communityDb';
 
-// 목록에는 이미지 본문을 싣지 않는다 (has_image만). 이미지는 /api/notice/[id]/image로 따로 받는다
-export interface Notice {
-  id: string;
-  title: string;
-  kicker: string | null; // 제목 위 작은 빨간 글씨 (분류 등)
-  body: string | null;
-  when_text: string | null;
-  place: string | null;
-  urgent: boolean;
-  event_id: string | null;
-  has_image: boolean;
-  created_at: string;
-  issue_no: string; // 공고 제2026-N호 (그해 올린 순서)
+import { HOEGI } from './eventCategories';
+import { NOTICE_LIMITS, NOTICE_MAX, type LinkableEvent, type Notice } from './noticeTypes';
+
+export type { Notice, LinkableEvent };
+export { NOTICE_LIMITS, NOTICE_MAX };
+
+export class NoticeError extends Error {
+  constructor(
+    message: string,
+    public status = 400,
+  ) {
+    super(message);
+  }
 }
 
-export const NOTICE_LIMITS = { title: 40, kicker: 12, body: 300, when: 40, place: 40, imageBytes: 1_800_000 } as const;
 const IMAGE_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
 
 export interface NoticeInput {
@@ -67,7 +66,7 @@ export function validateNotice(body: unknown): { ok: true; value: NoticeInput } 
       when_text: when || null,
       place: place || null,
       urgent: b.urgent === true,
-      event_id: null,
+      event_id: str(b.event_id) || null,
       image,
       image_mime,
     },
@@ -105,13 +104,37 @@ export async function listNotices(): Promise<Notice[]> {
 
 export async function createNotice(input: NoticeInput): Promise<string> {
   await initCommunityDb();
+  const db = getDb();
+  const count = await db.execute('SELECT COUNT(*) AS n FROM notices');
+  if (Number((count.rows[0] as unknown as { n: number }).n) >= NOTICE_MAX) {
+    throw new NoticeError(`게시판이 가득 찼어요 (${NOTICE_MAX}장). 공지를 하나 내리고 붙여 주세요.`, 409);
+  }
+  if (input.event_id) {
+    const ev = await db.execute({ sql: 'SELECT category FROM school_events WHERE id = ?', args: [input.event_id] });
+    if (!ev.rows.length) throw new NoticeError('연결하려는 수업을 찾지 못했어요.', 404);
+    if ((ev.rows[0] as unknown as { category: string | null }).category !== HOEGI) throw new NoticeError('회기분석 수업만 연결할 수 있어요.', 409);
+    const used = await db.execute({ sql: 'SELECT 1 FROM notices WHERE event_id = ?', args: [input.event_id] });
+    if (used.rows.length) throw new NoticeError('이 수업에는 이미 공지가 붙어 있어요.', 409);
+  }
   const id = crypto.randomUUID();
-  await getDb().execute({
+  await db.execute({
     sql: `INSERT INTO notices (id, title, kicker, body, when_text, place, urgent, event_id, image, image_mime, created_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [id, input.title, input.kicker, input.body, input.when_text, input.place, input.urgent ? 1 : 0, input.event_id, input.image, input.image_mime, new Date().toISOString()],
   });
   return id;
+}
+
+// 공지에 연결할 수 있는 회기분석 수업 (아직 공지가 안 붙은 것, 최근 순)
+export async function listLinkableEvents(): Promise<LinkableEvent[]> {
+  await initCommunityDb();
+  const r = await getDb().execute({
+    sql: `SELECT id, title, start_date FROM school_events
+          WHERE category = ? AND id NOT IN (SELECT event_id FROM notices WHERE event_id IS NOT NULL)
+          ORDER BY start_date DESC LIMIT 30`,
+    args: [HOEGI],
+  });
+  return r.rows as unknown as LinkableEvent[];
 }
 
 export async function deleteNotice(id: string): Promise<boolean> {

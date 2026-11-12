@@ -2,10 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
-import type { Notice } from '@/lib/notices';
-import { NOTICE_LIMITS } from '@/lib/notices';
+import { NOTICE_LIMITS, NOTICE_MAX, type LinkableEvent, type Notice } from '@/lib/noticeTypes';
 import { AdminLogin } from '../AdminLogin';
 import { fieldClass, primaryButtonClass, stickerButtonClass } from '../formStyles';
+import { EnrollButton } from '../schedule/EnrollButton';
 import { Poster } from './Poster';
 
 // 같은 공지는 늘 같은 각도로 붙도록 id에서 기울기를 정한다
@@ -15,12 +15,15 @@ function tilt(id: string): number {
   return ((Math.abs(h) % 9) - 4) * 0.5; // -2° ~ +2°
 }
 
-export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: boolean }) {
+export function NoticeBoard({ notices, counts, linkable, admin }: { notices: Notice[]; counts: Record<string, number>; linkable: LinkableEvent[]; admin: boolean }) {
   const router = useRouter();
   const viewRef = useRef<HTMLDialogElement>(null);
   const composeRef = useRef<HTMLDialogElement>(null);
   const loginRef = useRef<HTMLDialogElement>(null);
   const [opened, setOpened] = useState<Notice | null>(null);
+  const shown = notices.slice(0, NOTICE_MAX);
+  const full = notices.length >= NOTICE_MAX;
+  const slots: (Notice | null)[] = Array.from({ length: NOTICE_MAX }, (_, i) => shown[i] ?? null);
 
   function openView(n: Notice) {
     setOpened(n);
@@ -32,20 +35,22 @@ export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: bool
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <button type="button" onClick={startCompose} className={stickerButtonClass}>
+      <div className="flex items-center justify-end gap-3">
+        <span className="font-latin text-[13px] font-semibold text-inkMuted">
+          {shown.length}/{NOTICE_MAX}
+        </span>
+        <button type="button" onClick={startCompose} disabled={admin && full} className={stickerButtonClass}>
           <span aria-hidden>+</span>
           공지 등록하기
         </button>
       </div>
+      {admin && full && <p className="-mt-2 text-right text-[12px] text-seal">게시판이 가득 찼어요. 공지를 하나 내리면 새로 붙일 수 있어요.</p>}
 
       {/* 게시판: 대자보가 테이프로 붙어 있다. 누르면 커진다 */}
       <div className="rounded-[14px] border-2 border-ink bg-[#2f3631] p-3 sm:p-4">
-        {notices.length === 0 ? (
-          <p className="py-16 text-center text-[14px] text-white/70">아직 붙은 공지가 없어요.</p>
-        ) : (
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-5">
-            {notices.map((n) => (
+        <ul className="grid grid-cols-3 gap-x-2.5 gap-y-5 sm:gap-x-5 sm:gap-y-7">
+          {slots.map((n, i) =>
+            n ? (
               <li key={n.id} style={{ transform: `rotate(${tilt(n.id)}deg)` }}>
                 <button
                   type="button"
@@ -53,13 +58,22 @@ export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: bool
                   aria-label={`${n.title} 공지 크게 보기`}
                   className="relative block w-full text-left shadow-[0_6px_14px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sticker"
                 >
-                  <span aria-hidden className="absolute -top-2 left-1/2 z-10 h-4 w-14 -translate-x-1/2 rotate-[-3deg] bg-[#e9dd9a]/85" />
+                  <span aria-hidden className="absolute -top-2 left-1/2 z-10 h-3 w-10 -translate-x-1/2 rotate-[-3deg] bg-[#e9dd9a]/85 sm:h-4 sm:w-14" />
                   <Poster notice={n} fit="thumb" />
+                  {n.event_id && (
+                    <span className="absolute bottom-1 right-1 z-10 rounded-[6px] border-2 border-ink bg-sticker px-1 py-[1px] text-[9px] font-black leading-tight sm:text-[11px]">
+                      ✍ 수강신청 {counts[n.event_id] ?? 0}명
+                    </span>
+                  )}
                 </button>
               </li>
-            ))}
-          </ul>
-        )}
+            ) : (
+              <li key={`empty-${i}`} aria-hidden className="grid aspect-[1/1.414] place-items-center rounded-[4px] border-2 border-dashed border-white/20 text-[11px] text-white/30">
+                빈 자리
+              </li>
+            ),
+          )}
+        </ul>
       </div>
 
       <dialog
@@ -73,6 +87,7 @@ export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: bool
             key={opened.id}
             notice={opened}
             canDelete={admin}
+            enrollCount={opened.event_id ? counts[opened.event_id] ?? 0 : null}
             onClose={() => viewRef.current?.close()}
             onDeleted={() => {
               viewRef.current?.close();
@@ -82,7 +97,7 @@ export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: bool
         )}
       </dialog>
 
-      <ComposeDialog dialogRef={composeRef} onDone={() => router.refresh()} />
+      <ComposeDialog dialogRef={composeRef} linkable={linkable} onDone={() => router.refresh()} />
 
       <dialog
         ref={loginRef}
@@ -109,7 +124,7 @@ export function NoticeBoard({ notices, admin }: { notices: Notice[]; admin: bool
   );
 }
 
-function ViewNotice({ notice, canDelete, onClose, onDeleted }: { notice: Notice; canDelete: boolean; onClose: () => void; onDeleted: () => void }) {
+function ViewNotice({ notice, canDelete, enrollCount, onClose, onDeleted }: { notice: Notice; canDelete: boolean; enrollCount: number | null; onClose: () => void; onDeleted: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -135,6 +150,12 @@ function ViewNotice({ notice, canDelete, onClose, onDeleted }: { notice: Notice;
   return (
     <div>
       <Poster notice={notice} />
+      {notice.event_id && enrollCount !== null && (
+        <div className="flex items-center justify-between gap-3 border-t-2 border-ink bg-lime px-3 py-2">
+          <p className="text-[13px] font-bold leading-snug">★ 회기분석 수강신청을 받고 있어요</p>
+          <EnrollButton eventId={notice.event_id} title={notice.title} count={enrollCount} isAdmin={canDelete} />
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2 border-t-2 border-ink bg-white px-3 py-1">
         {canDelete ? (
           <button
@@ -172,8 +193,8 @@ async function shrinkImage(file: File): Promise<string> {
   return canvas.toDataURL('image/jpeg', 0.85);
 }
 
-function ComposeDialog({ dialogRef, onDone }: { dialogRef: React.RefObject<HTMLDialogElement>; onDone: () => void }) {
-  const empty = { title: '', kicker: '', body: '', when_text: '', place: '', urgent: false };
+function ComposeDialog({ dialogRef, linkable, onDone }: { dialogRef: React.RefObject<HTMLDialogElement>; linkable: LinkableEvent[]; onDone: () => void }) {
+  const empty = { title: '', kicker: '', body: '', when_text: '', place: '', urgent: false, event_id: '' };
   const [form, setForm] = useState(empty);
   const [image, setImage] = useState('');
   const [error, setError] = useState('');
@@ -242,6 +263,28 @@ function ComposeDialog({ dialogRef, onDone }: { dialogRef: React.RefObject<HTMLD
               이미지 빼기
             </button>
           </div>
+        )}
+
+        {linkable.length > 0 && (
+          <label className="text-[13px] font-bold">
+            회기분석 수업 연결 <span className="font-normal text-inkMuted">(고르면 공지에서 수강신청을 받아요)</span>
+            <select
+              value={form.event_id}
+              onChange={(e) => {
+                const id = e.target.value;
+                const ev = linkable.find((x) => x.id === id);
+                setForm((f) => ({ ...f, event_id: id, title: !f.title && ev ? ev.title : f.title }));
+              }}
+              className="mt-1 h-12 w-full rounded-[8px] border-2 border-ink bg-white px-2 text-[16px] font-normal"
+            >
+              <option value="">연결 안 함</option>
+              {linkable.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.start_date.slice(5).replace('-', '/')} {ev.title}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
 
         <label className="text-[13px] font-bold">
