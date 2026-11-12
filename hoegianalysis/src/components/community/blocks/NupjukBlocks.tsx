@@ -677,8 +677,10 @@ export function NupjukBlocks() {
   );
 
   return (
-    <div ref={wrapRef} className="flex flex-col gap-3 select-none">
-      <div className="flex gap-2">
+    <div ref={wrapRef}>
+    <div className={`flex flex-col gap-3 select-none ${wide ? 'mx-auto w-fit' : ''}`}>
+      {/* 컴퓨터에서는 점수 칩/키 안내 폭을 아래 게임 화면(다음·판·명예의 전당) 폭에 맞춘다 */}
+      <div className={`flex gap-2 ${wide ? 'w-0 min-w-full' : ''}`}>
         <Chip label="점수" value={hud.score} />
         <Chip label="줄" value={hud.lines} />
         <Chip label="레벨" value={hud.level} />
@@ -856,9 +858,10 @@ export function NupjukBlocks() {
 
 
       {/* 컴퓨터용 키 안내 */}
-      <div className="hidden rounded-[10px] border-2 border-ink bg-white p-3 text-[13px] leading-relaxed md:block">
+      <div className={`hidden rounded-[10px] border-2 border-ink bg-white p-3 text-[13px] leading-relaxed md:block ${wide ? 'w-0 min-w-full' : ''}`}>
         <b>키보드</b> · ← → 이동 · ↑ 또는 X 돌리기 · Z 반대로 돌리기 · ↓ 천천히 내리기 · 스페이스 바로 떨어뜨리기 · C 또는 Shift 보관 · P 일시정지 · Enter 시작
       </div>
+    </div>
     </div>
   );
 }
