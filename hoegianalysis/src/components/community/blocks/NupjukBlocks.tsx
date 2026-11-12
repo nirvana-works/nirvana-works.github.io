@@ -746,8 +746,11 @@ export function NupjukBlocks() {
                           <div className="flex gap-1.5">
                             <input
                               value={nick}
-                              onChange={(e) => setNick(e.target.value.slice(0, 10))}
-                              onKeyDown={(e) => e.key === 'Enter' && postScore()}
+                              onChange={(e) => setNick(e.target.value)}
+                              onKeyDown={(e) => {
+                                // 한글 조합 중 Enter는 조합 확정용이라 기록으로 보내지 않는다
+                                if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) postScore();
+                              }}
                               placeholder="이름 (10자까지)"
                               maxLength={10}
                               aria-label="점수판에 남길 이름"
