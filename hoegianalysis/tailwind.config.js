@@ -27,6 +27,8 @@ module.exports = {
         latin: ["var(--font-latin)", "var(--font-sign)", "sans-serif"],
         // 낙서 벽 손글씨
         pen: ["var(--font-pen)", "cursive"],
+        // 화투점 붓글씨
+        brush: ["var(--font-brush)", "serif"],
       },
     },
   },
