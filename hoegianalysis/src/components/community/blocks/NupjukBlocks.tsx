@@ -776,7 +776,7 @@ export function NupjukBlocks() {
 
         {/* 옆 상자 (컴퓨터) */}
         {!narrow && (
-          <aside className="flex shrink-0 flex-col gap-2" style={{ width: Math.max(110, Math.min(170, Math.round(cs * 4.6))) }}>
+          <aside className="order-first flex shrink-0 flex-col gap-2" style={{ width: Math.max(110, Math.min(170, Math.round(cs * 4.6))) }}>
             <div className="chalkboard rounded-[10px] p-1.5">
               <p className="text-center font-pen text-[18px] leading-none text-white/85">다음</p>
               <div className="flex flex-col items-center">
