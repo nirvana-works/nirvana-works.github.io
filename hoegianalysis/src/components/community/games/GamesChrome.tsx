@@ -8,6 +8,7 @@ import { FaceHeader } from '../FaceHeader';
 export const GAMES = [
   { href: '/games/mafia', label: '마피아' },
   { href: '/games/poker', label: '인디언 포커' },
+  { href: '/games/lexio', label: '렉시오' },
 ] as const;
 
 // 방 안(/games/<게임>/<코드>)에서는 제목·탭을 숨겨 게임 화면에 집중하게 한다

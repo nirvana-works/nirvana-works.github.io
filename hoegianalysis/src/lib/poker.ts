@@ -15,7 +15,7 @@ import {
   type PokerState,
   type Seat,
 } from './pokerEngine';
-import { POKER_NAME_LIMIT, TURN_CHOICES, type PokerMode, type PokerView } from './pokerTypes';
+import { CHIP_CHOICES, POKER_NAME_LIMIT, RECOMMENDED_CHIPS, TURN_CHOICES, type PokerMode, type PokerView } from './pokerTypes';
 
 // 인디언 포커 방. 마피아와 같은 방식: 서버가 진실이고 폰은 주기적으로 상태를 받아간다.
 
@@ -28,6 +28,7 @@ interface Row {
   p2_name: string | null;
   p2_token: string | null;
   turn_secs: number;
+  start_chips?: number;
   state: string | null;
   version: number;
   created_at: number;
@@ -52,7 +53,7 @@ async function load(code: string): Promise<Row> {
   return { ...row, version: Number(row.version), turn_secs: Number(row.turn_secs) };
 }
 
-const cfgOf = (row: Row): Config => ({ turnSecs: row.turn_secs, botSeat: row.mode === 'bot' ? 1 : null });
+const cfgOf = (row: Row): Config => ({ turnSecs: row.turn_secs, botSeat: row.mode === 'bot' ? 1 : null, startChips: Number(row.start_chips) || RECOMMENDED_CHIPS });
 const stateOf = (row: Row): PokerState | null => (row.state ? (JSON.parse(row.state) as PokerState) : null);
 
 // 읽은 버전 그대로일 때만 저장한다 (동시에 두 요청이 와도 하나만 적용)
@@ -65,12 +66,13 @@ async function save(row: Row, state: PokerState | null, extra: Partial<Pick<Row,
   return r.rowsAffected === 1;
 }
 
-export async function createGame(input: { mode: PokerMode; name: unknown; turnSecs: unknown }): Promise<{ code: string; token: string }> {
+export async function createGame(input: { mode: PokerMode; name: unknown; turnSecs: unknown; startChips?: unknown }): Promise<{ code: string; token: string }> {
   await initCommunityDb();
   const db = getDb();
   if (input.mode !== 'bot' && input.mode !== 'pvp') throw new MafiaError('대결 방식을 골라 주세요.');
   const name = cleanName(input.name);
   const turnSecs = TURN_CHOICES.find((t) => t === Number(input.turnSecs)) ?? 20;
+  const startChips = CHIP_CHOICES.find((c) => c === Number(input.startChips)) ?? RECOMMENDED_CHIPS;
   const now = Date.now();
 
   await db.execute({ sql: 'DELETE FROM poker_games WHERE updated_at < ?', args: [now - TTL_MS] });
@@ -87,11 +89,11 @@ export async function createGame(input: { mode: PokerMode; name: unknown; turnSe
 
   const token = randomUUID();
   const bot = input.mode === 'bot';
-  const state = bot ? initState(now, { turnSecs, botSeat: 1 }) : null;
+  const state = bot ? initState(now, { turnSecs, botSeat: 1, startChips }) : null;
   await db.execute({
-    sql: `INSERT INTO poker_games (id, code, mode, p1_name, p1_token, p2_name, p2_token, turn_secs, state, version, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-    args: [randomUUID(), code, input.mode, name, token, bot ? BOT_NAME : null, null, turnSecs, state ? JSON.stringify(state) : null, now, now],
+    sql: `INSERT INTO poker_games (id, code, mode, p1_name, p1_token, p2_name, p2_token, turn_secs, start_chips, state, version, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    args: [randomUUID(), code, input.mode, name, token, bot ? BOT_NAME : null, null, turnSecs, startChips, state ? JSON.stringify(state) : null, now, now],
   });
   return { code, token };
 }
@@ -174,7 +176,7 @@ function buildView(row: Row, seat: Seat): PokerView {
       ...base,
       status: 'waiting',
       round: 0,
-      chips: { me: 20, opp: 20 },
+      chips: { me: Number(row.start_chips) || RECOMMENDED_CHIPS, opp: Number(row.start_chips) || RECOMMENDED_CHIPS },
       bets: { me: 0, opp: 0 },
       carry: 0,
       pot: 0,
@@ -187,6 +189,7 @@ function buildView(row: Row, seat: Seat): PokerView {
       winner: null,
       legal: { call: false, callAmount: 0, raise: false, raiseTo: 0, allin: false, allinTo: 0 },
       deckLeft: 20,
+      startChips: Number(row.start_chips) || RECOMMENDED_CHIPS,
       event: null,
     };
   }
@@ -222,6 +225,7 @@ function buildView(row: Row, seat: Seat): PokerView {
     winner: side(s.winner),
     legal,
     deckLeft: s.deck.length,
+    startChips: Number(row.start_chips) || RECOMMENDED_CHIPS,
     event: s.event ? { id: s.event.id, kind: s.event.kind, who: side(s.event.seat)! } : null,
   };
 }

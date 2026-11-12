@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { POKER_NAME_LIMIT, TURN_CHOICES } from '@/lib/pokerTypes';
+import { CHIP_CHOICES, POKER_NAME_LIMIT, RECOMMENDED_CHIPS, TURN_CHOICES } from '@/lib/pokerTypes';
 import { fieldClass, yellowButtonClass } from '../formStyles';
 import { api, saveToken } from './storage';
 
@@ -10,6 +10,7 @@ export function PokerHome() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [turnSecs, setTurnSecs] = useState(20);
+  const [startChips, setStartChips] = useState<number>(RECOMMENDED_CHIPS);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<'bot' | 'pvp' | null>(null);
@@ -17,7 +18,7 @@ export function PokerHome() {
   async function create(mode: 'bot' | 'pvp') {
     setBusy(mode);
     setError('');
-    const res = await api<{ code: string; token: string }>('/api/poker/games', { mode, name, turnSecs });
+    const res = await api<{ code: string; token: string }>('/api/poker/games', { mode, name, turnSecs, startChips });
     setBusy(null);
     if (!res.ok) return setError(res.error);
     saveToken(res.data.code, res.data.token);
@@ -37,7 +38,7 @@ export function PokerHome() {
         <div>
           <h2 className="text-[20px] font-black">인디언 포커</h2>
           <p className="mt-1 text-[14px] leading-snug text-inkMuted">
-            내 카드는 못 보고 상대 카드만 보입니다. 상대의 숫자와 행동으로 내 카드를 추리하세요. 칩 20개로 시작해서 상대 칩을 모두 가져오면 승리!
+            내 카드는 못 보고 상대 카드만 보입니다. 상대의 숫자와 행동으로 내 카드를 추리하세요. 처음 칩을 정해서 시작하고, 상대 칩을 모두 가져오면 승리!
           </p>
         </div>
 
@@ -72,6 +73,27 @@ export function PokerHome() {
               ))}
             </select>
           </label>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[14px] font-bold">처음 칩 개수</p>
+          <div className="grid grid-cols-4 gap-2">
+            {CHIP_CHOICES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-pressed={startChips === c}
+                onClick={() => setStartChips(c)}
+                className={`flex h-12 flex-col items-center justify-center rounded-[10px] border-2 border-ink text-[16px] font-bold leading-none ${startChips === c ? 'bg-sticker' : 'bg-white'}`}
+              >
+                {c}개
+                {c === RECOMMENDED_CHIPS && <span className="mt-1 text-[10px] font-semibold text-seal">권장</span>}
+              </button>
+            ))}
+          </div>
+          <p className="text-[12px] leading-snug text-inkMuted">
+            {RECOMMENDED_CHIPS}개를 권장해요. 10을 들고 폴드하면 10칩을 잃기 때문에, 10개로 시작하면 한 번에 끝날 수 있어요. 칩이 많을수록 판이 길어져요.
+          </p>
         </div>
 
         {error && (
@@ -134,7 +156,7 @@ export function Rules() {
         <div>
           <p className="font-bold">목표와 준비</p>
           <ul className="list-disc pl-5">
-            <li>각자 칩 20개로 시작하고, 1~10 카드가 두 장씩 든 덱을 씁니다.</li>
+            <li>각자 칩으로 시작하고(방 만들 때 정해요, 권장 20개), 1~10 카드가 두 장씩 든 덱을 씁니다.</li>
             <li>라운드마다 기본 베팅으로 칩 1개씩 냅니다. 내 카드는 못 보고 상대 카드만 보입니다.</li>
             <li>상대의 칩을 모두 가져오면 승리합니다.</li>
           </ul>

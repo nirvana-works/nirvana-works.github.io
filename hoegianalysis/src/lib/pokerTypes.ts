@@ -2,6 +2,9 @@
 export type PokerMode = 'bot' | 'pvp';
 export const POKER_NAME_LIMIT = 8;
 export const TURN_CHOICES = [15, 20, 30] as const;
+// 시작 칩 선택지. 10을 들고 폴드하면 10칩을 잃으므로 20개 이상을 권장한다
+export const CHIP_CHOICES = [10, 20, 30, 50] as const;
+export const RECOMMENDED_CHIPS = 20;
 
 export interface PokerResultView {
   round: number;
@@ -37,6 +40,7 @@ export interface PokerView {
   winner: 'me' | 'opp' | null;
   legal: { call: boolean; callAmount: number; raise: boolean; raiseTo: number; allin: boolean; allinTo: number };
   deckLeft: number;
+  startChips: number;
   // 베팅 중 사건(올인 선언, 판이 커짐). id가 새로 바뀔 때만 그림을 띄운다
   event: { id: number; kind: 'allin' | 'tense'; who: 'me' | 'opp' } | null;
 }

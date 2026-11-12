@@ -2,9 +2,10 @@ import { randomInt } from 'crypto';
 
 // 인디언 포커 규칙 엔진 (DB와 무관한 순수 로직).
 // 칩 20개로 시작, 매 라운드 기본 베팅 1칩. 상대 카드만 보이고 내 카드는 모른다.
-// 칩 보존: chips[0] + chips[1] + bets[0] + bets[1] + carry === 40 (항상)
+// 칩 보존: chips[0] + chips[1] + bets[0] + bets[1] + carry === 시작 칩 × 2 (항상)
 
-export const START_CHIPS = 20;
+export const START_CHIPS = 20; // 권장 시작 칩
+export const CHIP_CHOICES = [10, 20, 30, 50] as const;
 export const REVEAL_MS = 1500; // 결과 공개 시간
 export const TEN_PENALTY = 10;
 
@@ -53,6 +54,7 @@ export interface PokerState {
 export interface Config {
   turnSecs: number;
   botSeat: Seat | null; // 봇이 앉은 자리 (없으면 null)
+  startChips?: number; // 방을 만들 때 정한 시작 칩 (없으면 20)
 }
 
 export class RuleError extends Error {}
@@ -76,7 +78,7 @@ const newDeck = () => shuffle(FULL_DECK);
 export function initState(now: number, cfg: Config): PokerState {
   const s: PokerState = {
     round: 0,
-    chips: [START_CHIPS, START_CHIPS],
+    chips: [cfg.startChips ?? START_CHIPS, cfg.startChips ?? START_CHIPS],
     bets: [0, 0],
     carry: 0,
     cards: [0, 0],

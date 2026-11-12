@@ -110,6 +110,21 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_poker_games_code ON poker_games(code);
 
+    -- 렉시오: 방 하나에 한 판. 자리(seats)와 게임 상태는 JSON으로 두고 version으로 동시 변경을 막는다
+    CREATE TABLE IF NOT EXISTS lexio_games (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      mode TEXT NOT NULL,
+      max_players INTEGER NOT NULL,
+      turn_secs INTEGER NOT NULL,
+      seats TEXT NOT NULL,
+      state TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_lexio_games_code ON lexio_games(code);
+
     -- 기본 데이터를 넣었는지 같은 한 번짜리 기록
     CREATE TABLE IF NOT EXISTS community_meta (
       key TEXT PRIMARY KEY,
@@ -132,6 +147,13 @@ async function runInit(): Promise<void> {
   const wallNames = new Set(wallColumns.rows.map((r) => (r as unknown as { name: string }).name));
   for (const [col, type] of [['pos_x', 'REAL'], ['pos_y', 'REAL'], ['sheet', 'INTEGER']] as const) {
     if (!wallNames.has(col)) await db.execute(`ALTER TABLE wall_posts ADD COLUMN ${col} ${type}`);
+  }
+
+  // 인디언 포커 시작 칩 (방을 만들 때 정한다). 예전 방은 20개
+  const pokerColumns = await db.execute('PRAGMA table_info(poker_games)');
+  const pokerNames = new Set(pokerColumns.rows.map((r) => (r as unknown as { name: string }).name));
+  if (!pokerNames.has('start_chips')) {
+    await db.execute('ALTER TABLE poker_games ADD COLUMN start_chips INTEGER NOT NULL DEFAULT 20');
   }
 
   for (const seed of SEEDS) await seedSchedule(seed.key, seed.events);

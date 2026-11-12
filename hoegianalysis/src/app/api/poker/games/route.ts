@@ -5,5 +5,5 @@ import type { PokerMode } from '@/lib/pokerTypes';
 
 export async function POST(request: Request) {
   const b = await bodyOf(request);
-  return respond(() => createGame({ mode: b.mode as PokerMode, name: b.name, turnSecs: b.turnSecs }), 201);
+  return respond(() => createGame({ mode: b.mode as PokerMode, name: b.name, turnSecs: b.turnSecs, startChips: b.startChips }), 201);
 }
