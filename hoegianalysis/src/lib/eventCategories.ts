@@ -8,6 +8,7 @@ export const EVENT_CATEGORIES = [
   { key: 'tf', label: 'TF', dot: '#4FB86E', bg: '#D2F0D8', text: '#1E6A35' },
   { key: 'academic', label: '학사', dot: '#9B7BF0', bg: '#E6DBFF', text: '#4B2F9C' },
   { key: 'group', label: '동기모임', dot: '#F2D80E', bg: '#FFF1A8', text: '#6B5600' },
+  { key: 'wedding', label: '결혼식', dot: '#C9A66B', bg: '#F4EAD2', text: '#6B5424' },
 ] as const;
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number]['key'];
