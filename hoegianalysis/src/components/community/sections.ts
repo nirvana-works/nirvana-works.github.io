@@ -8,7 +8,7 @@ export const MENUS = [
   { href: '/wall', short: '낙서', name: '낙서 벽', en: 'Graffiti Wall', blurb: '아무 말 한 줄. 140자 넘으면 반려', color: 'white', art: 'pencil' },
   { href: '/games', short: '놀이', name: '놀이터', en: 'Playground', blurb: '폰으로 같이 노는 회기랩 놀이터. 첫 놀이는 마피아', color: 'yellow', art: 'gamepad' },
   { href: '/attendance', short: '성적표', name: '출석 성적표', en: 'Report Card', blurb: '날짜별 출석부. 개근은 숨길 수 없습니다', color: 'blue', art: 'grade' },
-  { href: '/freshmen', short: '신입생', name: '신입생 소개', en: 'Freshmen', blurb: '새로 들어온 넙죽이들을 소개합니다', color: 'white', art: 'nupjuk' },
+  { href: '/professor', short: '교수', name: '교수 소개', en: 'Professor', blurb: '회기분석을 이끄는 교수님을 소개합니다', color: 'white', art: 'nupjuk' },
 ] as const satisfies readonly {
   href: string;
   short: string;

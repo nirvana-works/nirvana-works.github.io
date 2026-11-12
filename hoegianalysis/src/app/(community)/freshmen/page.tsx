@@ -1,7 +1,6 @@
-import { ComingSoon } from '@/components/community/ComingSoon';
+import { redirect } from 'next/navigation';
 
-export const metadata = { title: '신입생 소개' };
-
+// 신입생 소개는 교수 소개로 바뀌었다. 예전 주소로 와도 새 페이지로 보낸다
 export default function Page() {
-  return <ComingSoon href="/freshmen" note="입학 허가서를 인쇄하고 있습니다." />;
+  redirect('/professor');
 }
