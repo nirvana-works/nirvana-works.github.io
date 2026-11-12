@@ -2,10 +2,10 @@ import { getDb } from './db';
 import { initCommunityDb } from './communityDb';
 
 import { HOEGI } from './eventCategories';
-import { NOTICE_LIMITS, NOTICE_MAX, type LinkableEvent, type Notice } from './noticeTypes';
+import { NOTICE_LIMITS, isNoticeCategory, type LinkableEvent, type Notice, type NoticeCategory } from './noticeTypes';
 
 export type { Notice, LinkableEvent };
-export { NOTICE_LIMITS, NOTICE_MAX };
+export { NOTICE_LIMITS };
 
 export class NoticeError extends Error {
   constructor(
@@ -26,6 +26,8 @@ export interface NoticeInput {
   place: string | null;
   urgent: boolean;
   event_id: string | null;
+  category: NoticeCategory;
+  stamp: boolean;
   image: string | null; // base64 (data: 접두어 없이)
   image_mime: string | null;
 }
@@ -39,6 +41,7 @@ export function validateNotice(body: unknown): { ok: true; value: NoticeInput } 
   const when = str(b.when_text);
   const place = str(b.place);
   const imageUrl = str(b.image);
+  const category: NoticeCategory = isNoticeCategory(b.category) ? b.category : 'school';
 
   if (!title) return { ok: false, error: '공지 제목을 입력하세요.' };
   if ([...title].length > NOTICE_LIMITS.title) return { ok: false, error: `제목은 ${NOTICE_LIMITS.title}자까지 쓸 수 있어요.` };
@@ -67,6 +70,8 @@ export function validateNotice(body: unknown): { ok: true; value: NoticeInput } 
       place: place || null,
       urgent: b.urgent === true,
       event_id: str(b.event_id) || null,
+      category,
+      stamp: b.stamp !== false,
       image,
       image_mime,
     },
@@ -76,7 +81,7 @@ export function validateNotice(body: unknown): { ok: true; value: NoticeInput } 
 export async function listNotices(): Promise<Notice[]> {
   await initCommunityDb();
   const result = await getDb().execute(
-    `SELECT id, title, kicker, body, when_text, place, urgent, event_id, (image IS NOT NULL) AS has_image, created_at
+    `SELECT id, title, kicker, body, when_text, place, urgent, event_id, (image IS NOT NULL) AS has_image, category, stamp, created_at
      FROM notices ORDER BY created_at ASC`,
   );
   const perYear = new Map<string, number>();
@@ -95,6 +100,8 @@ export async function listNotices(): Promise<Notice[]> {
       urgent: Number(row.urgent) === 1,
       event_id: (row.event_id as string | null) ?? null,
       has_image: Number(row.has_image) === 1,
+      category: isNoticeCategory(row.category) ? row.category : 'school',
+      stamp: Number(row.stamp) !== 0,
       created_at: String(row.created_at),
       issue_no: `${year}-${n}`,
     } satisfies Notice;
@@ -105,10 +112,6 @@ export async function listNotices(): Promise<Notice[]> {
 export async function createNotice(input: NoticeInput): Promise<string> {
   await initCommunityDb();
   const db = getDb();
-  const count = await db.execute('SELECT COUNT(*) AS n FROM notices');
-  if (Number((count.rows[0] as unknown as { n: number }).n) >= NOTICE_MAX) {
-    throw new NoticeError(`게시판이 가득 찼어요 (${NOTICE_MAX}장). 공지를 하나 내리고 붙여 주세요.`, 409);
-  }
   if (input.event_id) {
     const ev = await db.execute({ sql: 'SELECT category FROM school_events WHERE id = ?', args: [input.event_id] });
     if (!ev.rows.length) throw new NoticeError('연결하려는 수업을 찾지 못했어요.', 404);
@@ -118,9 +121,9 @@ export async function createNotice(input: NoticeInput): Promise<string> {
   }
   const id = crypto.randomUUID();
   await db.execute({
-    sql: `INSERT INTO notices (id, title, kicker, body, when_text, place, urgent, event_id, image, image_mime, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [id, input.title, input.kicker, input.body, input.when_text, input.place, input.urgent ? 1 : 0, input.event_id, input.image, input.image_mime, new Date().toISOString()],
+    sql: `INSERT INTO notices (id, title, kicker, body, when_text, place, urgent, event_id, image, image_mime, category, stamp, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [id, input.title, input.kicker, input.body, input.when_text, input.place, input.urgent ? 1 : 0, input.event_id, input.image, input.image_mime, input.category, input.stamp ? 1 : 0, new Date().toISOString()],
   });
   return id;
 }

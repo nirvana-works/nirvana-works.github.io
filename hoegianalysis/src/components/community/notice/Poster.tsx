@@ -1,17 +1,20 @@
-import type { Notice } from '@/lib/notices';
+import { NOTICE_CATEGORIES, type Notice, type NoticeCategory } from '@/lib/noticeTypes';
 
 // 대자보 한 장. 글자 크기를 컨테이너 폭(cqw) 기준으로 잡아, 게시판 썸네일과 확대 화면이 같은 모양으로 커지고 줄어든다.
 // 포스터 이미지를 올린 공지는 그 이미지를 그대로, 아니면 제목·일시·장소로 이 틀을 채운다.
 export function Poster({ notice, fit = 'full' }: { notice: Notice; fit?: 'thumb' | 'full' }) {
   if (notice.has_image) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={`/api/notice/${notice.id}/image`}
-        alt={notice.title}
-        draggable={false}
-        className={`block w-full select-none bg-[#F4F0E4] ${fit === 'thumb' ? 'aspect-[1/1.414] object-cover object-top' : 'h-auto'}`}
-      />
+      <div style={{ containerType: 'inline-size' }} className="relative w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/api/notice/${notice.id}/image`}
+          alt={notice.title}
+          draggable={false}
+          className={`block w-full select-none bg-[#F4F0E4] ${fit === 'thumb' ? 'aspect-[1/1.414] object-cover object-top' : 'h-auto'}`}
+        />
+        {notice.stamp && <Seal category={notice.category} />}
+      </div>
     );
   }
 
@@ -23,11 +26,11 @@ export function Poster({ notice, fit = 'full' }: { notice: Notice; fit?: 'thumb'
   ].filter(Boolean) as [string, string][];
 
   return (
-    <div style={{ containerType: 'inline-size' }} className="w-full">
+    <div style={{ containerType: 'inline-size' }} className="relative w-full">
       <div className="relative flex aspect-[1/1.414] flex-col overflow-hidden bg-[#F4F0E4] text-[#1b1b1b]" style={{ padding: '6cqw', gap: '3cqw' }}>
         <div className="flex items-start justify-between" style={{ gap: '2cqw' }}>
           <p className="font-semibold tracking-[0.08em]" style={{ fontSize: '3cqw', lineHeight: 1.3 }}>
-            KAIST MBA · 회기분석 학회 공고 제{notice.issue_no}호
+            KAIST MBA · {orgOf(notice.category)} 공고 제{notice.issue_no}호
           </p>
           {notice.urgent && (
             <span className="shrink-0 -rotate-2 bg-seal font-black text-white" style={{ fontSize: '3.4cqw', padding: '1cqw 2.4cqw' }}>
@@ -76,13 +79,39 @@ export function Poster({ notice, fit = 'full' }: { notice: Notice; fit?: 'thumb'
           </div>
         )}
 
-        <div className="relative flex items-end justify-end" style={{ minHeight: '10cqw' }}>
-          <span className="font-semibold" style={{ fontSize: '3.8cqw', marginRight: '15cqw' }}>
-            회기분석 교수
-          </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hoegilab/schedule-stamp-red.webp" alt="" aria-hidden draggable={false} className="absolute -rotate-6 select-none opacity-90" style={{ right: 0, bottom: '-1cqw', width: '13cqw' }} />
-        </div>
+        <div style={{ minHeight: '12cqw' }} />
+      </div>
+      {notice.stamp && <Seal category={notice.category} />}
+    </div>
+  );
+}
+
+const orgOf = (c: NoticeCategory) => NOTICE_CATEGORIES.find((x) => x.key === c)?.org ?? '학교 공지';
+
+// 분류별 도장: 학교공지·회기분석은 회기분석 교수 인, 학생회는 학생회장 인 (낡은 도장 이미지 위에 글자를 얹는다)
+function Seal({ category }: { category: NoticeCategory }) {
+  const council = category === 'council';
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute select-none mix-blend-multiply"
+      style={{ right: '3cqw', bottom: '3cqw', width: council ? '31cqw' : '25cqw', transform: 'rotate(-7deg)', opacity: 0.92 }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/hoegilab/notice-stamp-${council ? 'rect' : 'circle'}.webp`} alt="" draggable={false} className="block w-full" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center font-black leading-[1.05]" style={{ color: '#A33430' }}>
+        {council ? (
+          <>
+            <span style={{ fontSize: '6cqw' }}>학생회장</span>
+            <span style={{ fontSize: '6.6cqw' }}>인</span>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: '3.7cqw' }}>회기분석</span>
+            <span style={{ fontSize: '5.6cqw' }}>교수</span>
+            <span style={{ fontSize: '5.6cqw' }}>인</span>
+          </>
+        )}
       </div>
     </div>
   );

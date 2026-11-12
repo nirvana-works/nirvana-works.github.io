@@ -205,6 +205,12 @@ async function runInit(): Promise<void> {
     if (!wallNames.has(col)) await db.execute(`ALTER TABLE wall_posts ADD COLUMN ${col} ${type}`);
   }
 
+  // 공지 분류(학교공지·회기분석·학생회)와 도장 여부. 예전 공지는 학교공지·도장 있음
+  const noticeColumns = await db.execute('PRAGMA table_info(notices)');
+  const noticeNames = new Set(noticeColumns.rows.map((r) => (r as unknown as { name: string }).name));
+  if (!noticeNames.has('category')) await db.execute("ALTER TABLE notices ADD COLUMN category TEXT NOT NULL DEFAULT 'school'");
+  if (!noticeNames.has('stamp')) await db.execute('ALTER TABLE notices ADD COLUMN stamp INTEGER NOT NULL DEFAULT 1');
+
   // 인디언 포커 시작 칩 (방을 만들 때 정한다). 예전 방은 20개
   const pokerColumns = await db.execute('PRAGMA table_info(poker_games)');
   const pokerNames = new Set(pokerColumns.rows.map((r) => (r as unknown as { name: string }).name));
