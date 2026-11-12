@@ -51,6 +51,16 @@ async function runInit(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_member_birthdays_md ON member_birthdays(month, day);
 
+    -- 회기분석 수강신청: 행사 하나에 이름 하나. 같은 이름은 한 번만
+    CREATE TABLE IF NOT EXISTS event_enrollments (
+      id TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      device_id TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_event_enrollments_event ON event_enrollments(event_id, created_at);
+
     -- 공지 대자보: 글 모양(제목·본문·일시·장소) 또는 올린 포스터 이미지. 일정에서 올린 공지는 event_id로 이어진다
     CREATE TABLE IF NOT EXISTS notices (
       id TEXT PRIMARY KEY,

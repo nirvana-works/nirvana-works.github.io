@@ -113,7 +113,9 @@ export async function createEvent(input: EventInput): Promise<string> {
 
 export async function deleteEvent(id: string): Promise<boolean> {
   await initCommunityDb();
-  const result = await getDb().execute({ sql: 'DELETE FROM school_events WHERE id = ?', args: [id] });
+  const db = getDb();
+  const result = await db.execute({ sql: 'DELETE FROM school_events WHERE id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM event_enrollments WHERE event_id = ?', args: [id] });
   return result.rowsAffected > 0;
 }
 

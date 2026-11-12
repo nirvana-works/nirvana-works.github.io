@@ -1,8 +1,5 @@
 import { getDb } from './db';
 import { initCommunityDb } from './communityDb';
-import { categoryOf } from './eventCategories';
-import { dateRange } from '@/components/community/schedule/EventList';
-import type { SchoolEvent } from './schoolEvents';
 
 // 목록에는 이미지 본문을 싣지 않는다 (has_image만). 이미지는 /api/notice/[id]/image로 따로 받는다
 export interface Notice {
@@ -77,21 +74,6 @@ export function validateNotice(body: unknown): { ok: true; value: NoticeInput } 
   };
 }
 
-// 일정 하나를 공지로 옮길 때: 분류는 제목 위 글씨, 기간은 일시, 장소·메모는 그대로
-export function noticeFromEvent(e: SchoolEvent): NoticeInput {
-  return {
-    title: e.title,
-    kicker: categoryOf(e.category)?.label ?? null,
-    body: e.memo,
-    when_text: dateRange(e),
-    place: e.place,
-    urgent: false,
-    event_id: e.id,
-    image: null,
-    image_mime: null,
-  };
-}
-
 export async function listNotices(): Promise<Notice[]> {
   await initCommunityDb();
   const result = await getDb().execute(
@@ -121,12 +103,6 @@ export async function listNotices(): Promise<Notice[]> {
   return rows.reverse(); // 새 공지가 먼저
 }
 
-export async function listNoticeEventIds(): Promise<string[]> {
-  await initCommunityDb();
-  const result = await getDb().execute('SELECT event_id FROM notices WHERE event_id IS NOT NULL');
-  return result.rows.map((r) => String((r as unknown as { event_id: string }).event_id));
-}
-
 export async function createNotice(input: NoticeInput): Promise<string> {
   await initCommunityDb();
   const id = crypto.randomUUID();
@@ -136,21 +112,6 @@ export async function createNotice(input: NoticeInput): Promise<string> {
     args: [id, input.title, input.kicker, input.body, input.when_text, input.place, input.urgent ? 1 : 0, input.event_id, input.image, input.image_mime, new Date().toISOString()],
   });
   return id;
-}
-
-// 일정에서 공지로 올리기. 이미 올린 일정이면 만들지 않고 기존 공지 id를 돌려준다
-export async function createNoticeFromEvent(eventId: string): Promise<{ id: string; existed: boolean } | null> {
-  await initCommunityDb();
-  const db = getDb();
-  const exist = await db.execute({ sql: 'SELECT id FROM notices WHERE event_id = ?', args: [eventId] });
-  if (exist.rows.length) return { id: String((exist.rows[0] as unknown as { id: string }).id), existed: true };
-  const ev = await db.execute({
-    sql: 'SELECT id, title, start_date, end_date, place, memo, category FROM school_events WHERE id = ?',
-    args: [eventId],
-  });
-  if (!ev.rows.length) return null;
-  const id = await createNotice(noticeFromEvent(ev.rows[0] as unknown as SchoolEvent));
-  return { id, existed: false };
 }
 
 export async function deleteNotice(id: string): Promise<boolean> {
