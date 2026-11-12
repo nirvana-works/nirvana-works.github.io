@@ -128,6 +128,22 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_poker_games_code ON poker_games(code);
 
+    -- 넙죽이 배구: 두 사람이 직접 연결(WebRTC)하도록 연결 정보만 주고받는 방
+    CREATE TABLE IF NOT EXISTS volley_rooms (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      host_name TEXT NOT NULL,
+      host_token TEXT NOT NULL,
+      guest_name TEXT,
+      guest_token TEXT,
+      target INTEGER NOT NULL,
+      offer TEXT,
+      answer TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_volley_rooms_code ON volley_rooms(code);
+
     -- 렉시오: 방 하나에 한 판. 자리(seats)와 게임 상태는 JSON으로 두고 version으로 동시 변경을 막는다
     CREATE TABLE IF NOT EXISTS lexio_games (
       id TEXT PRIMARY KEY,
