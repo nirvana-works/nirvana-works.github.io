@@ -8,6 +8,9 @@ type Step = 'setup' | 'register' | 'pick' | 'result';
 type Mode = 'camera' | 'names';
 type Reg = { kind: 'photo'; src: string } | { kind: 'name'; text: string };
 
+// 찍을 때마다 멍멍이가 한마디 한다
+const DOG_LINES = ['킁킁… 이 카드, 커피 냄새가 나는데?', '음… 지갑이 두둑한 냄새가 나요!', '꼬리가 살랑살랑… 기억해 둘게요!', '멍! 수상한 향기… 일단 접수!', '킁킁킁… 오늘 얻어먹을 상인가?'];
+
 const MIN_PEOPLE = 2;
 const MAX_PEOPLE = 12;
 const HOLD_MS = 1300; // 카드나 폰을 이만큼 가만히 보여 주면 등록된다
@@ -34,6 +37,8 @@ export function CoffeeDog() {
   const [progress, setProgress] = useState(0);
   const [hint, setHint] = useState('카드나 핸드폰을 화면 가운데에 보여 주세요');
   const [flash, setFlash] = useState(false);
+  const [last, setLast] = useState<{ src: string; n: number; line: string } | null>(null); // 방금 찍은 것 바로 보여 주기
+  const capturedAt = useRef(0);
   const [nameInput, setNameInput] = useState('');
   const [cursor, setCursor] = useState(-1); // 킁킁 중인 칸
   const [picked, setPicked] = useState<number | null>(null);
@@ -112,6 +117,10 @@ export function CoffeeDog() {
   }, []);
 
   const addReg = useCallback((reg: Reg) => {
+    if (reg.kind === 'photo') {
+      setLast({ src: reg.src, n: regsRef.current.length + 1, line: DOG_LINES[Math.floor(Math.random() * DOG_LINES.length)] });
+      capturedAt.current = performance.now();
+    }
     setRegs((r) => [...r, reg]);
     setProgress(0);
     stableRef.current = null;
@@ -244,6 +253,7 @@ export function CoffeeDog() {
             if (!absentSince.current) absentSince.current = now;
             if (now - absentSince.current > 700) {
               armedRef.current = true;
+              if (now - capturedAt.current > 1200) setLast(null);
               setHint(`${regsRef.current.length + 1}번째 카드나 핸드폰을 보여 주세요`);
             }
           }
@@ -272,7 +282,7 @@ export function CoffeeDog() {
   useEffect(() => {
     if (step === 'register' && regs.length >= count) {
       stopCamera();
-      const t = setTimeout(() => startSniff(), 600);
+      const t = setTimeout(() => (setLast(null), startSniff()), last ? 2200 : 600);
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -321,6 +331,7 @@ export function CoffeeDog() {
     setCursor(-1);
     setProgress(0);
     setNameInput('');
+    setLast(null);
     armedRef.current = true;
     stableRef.current = null;
     foundRef.current = null;
@@ -329,6 +340,7 @@ export function CoffeeDog() {
 
   function begin() {
     setRegs([]);
+    setLast(null);
     armedRef.current = true;
     setHint('카드나 핸드폰을 화면 가운데에 보여 주세요');
     setStep('register');
@@ -404,6 +416,32 @@ export function CoffeeDog() {
               <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
               <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
               {flash && <div className="pointer-events-none absolute inset-0 bg-white/80" />}
+              {last && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/70 p-3 text-center text-white">
+                  <p className="text-[13px] font-black text-sticker">✓ {last.n}번째 등록 완료!</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={last.src} alt={`${last.n}번째로 찍힌 것`} className="max-h-[52%] max-w-[70%] rounded-[8px] border-2 border-white object-contain" />
+                  <p className="text-[14px] font-bold leading-snug">🐶 {last.line}</p>
+                  <div className="mt-1 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegs((r) => r.slice(0, -1));
+                        setLast(null);
+                        armedRef.current = true;
+                      }}
+                      className="h-10 rounded-[10px] border-2 border-ink bg-white px-4 text-[13px] font-black text-ink"
+                    >
+                      다시 찍기
+                    </button>
+                    {regs.length < total && (
+                      <button type="button" onClick={() => setLast(null)} className="h-10 rounded-[10px] border-2 border-ink bg-sticker px-4 text-[13px] font-black text-ink">
+                        다음 사람 ›
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               {camState !== 'on' && camState !== 'error' && <p className="absolute inset-0 grid place-items-center text-[14px] font-bold text-white">카메라를 켜는 중…</p>}
               {camState === 'error' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 p-4 text-center text-white">
