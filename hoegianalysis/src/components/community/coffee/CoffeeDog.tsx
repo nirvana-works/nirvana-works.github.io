@@ -4,16 +4,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { detectCardLike, type Found } from '@/lib/cardDetect';
 import { fieldClass, yellowButtonClass } from '../formStyles';
 
-type Step = 'setup' | 'register' | 'pick' | 'result';
-type Mode = 'camera' | 'names';
-type Reg = { kind: 'photo'; src: string } | { kind: 'name'; text: string };
+// 마약탐지견처럼: 한 명씩 카드(또는 핸드폰)를 비추면 멍멍이가 바로 냄새를 맡고 "이 카드다!" 또는 "아니에요"를 알려 준다.
+// 정답은 시작할 때 몰래 정해 두고(모두 같은 확률), 그 순서의 카드에서 짖는다. 끝 순서까지 아무도 안 걸렸으면 마지막이 정답이다.
 
-// 찍을 때마다 멍멍이가 한마디 한다
-const DOG_LINES = ['킁킁… 이 카드, 커피 냄새가 나는데?', '음… 지갑이 두둑한 냄새가 나요!', '꼬리가 살랑살랑… 기억해 둘게요!', '멍! 수상한 향기… 일단 접수!', '킁킁킁… 오늘 얻어먹을 상인가?'];
+type Step = 'setup' | 'scan' | 'final';
+type Mode = 'camera' | 'names';
+type Phase = 'idle' | 'sniff' | 'result';
+type Shot = { kind: 'photo'; src: string } | { kind: 'name'; text: string };
+
+const NO_LINES = ['킁킁… 이 카드는 아니에요', '음… 커피 냄새가 안 나요', '꼬리가 안 움직여요… 아닌가 봐요', '킁킁킁… 이건 아니에요!', '멍… 다음 분!'];
 
 const MIN_PEOPLE = 2;
 const MAX_PEOPLE = 12;
-const HOLD_MS = 1300; // 카드나 폰을 이만큼 가만히 보여 주면 등록된다
+const HOLD_MS = 1300; // 카드나 폰을 이만큼 가만히 보여 주면 자동으로 찍힌다
+const SNIFF_MS = 1700;
 const ANALYZE_W = 160;
 const ANALYZE_EVERY_MS = 90;
 
@@ -30,32 +34,39 @@ export function CoffeeDog() {
   const [step, setStep] = useState<Step>('setup');
   const [count, setCount] = useState(4);
   const [mode, setMode] = useState<Mode>('camera');
-  const [regs, setRegs] = useState<Reg[]>([]);
+  const [turn, setTurn] = useState(0); // 지금 몇 번째 사람 차례인지 (0부터)
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [cur, setCur] = useState<Shot | null>(null); // 방금 찍힌 것
+  const [verdict, setVerdict] = useState<boolean | null>(null); // 걸렸나?
+  const [line, setLine] = useState('');
+  const [history, setHistory] = useState<Shot[]>([]); // 앞서 "아니었던" 것들
+  const [winnerShot, setWinnerShot] = useState<Shot | null>(null);
   const [camState, setCamState] = useState<'idle' | 'starting' | 'on' | 'error'>('idle');
   const [camError, setCamError] = useState('');
-  const [attempt, setAttempt] = useState(0); // 다시 시도 누를 때마다 올라간다
+  const [attempt, setAttempt] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [hint, setHint] = useState('카드나 핸드폰을 화면 가운데에 보여 주세요');
+  const [hint, setHint] = useState('카드나 핸드폰을 화면에 보여 주세요');
   const [flash, setFlash] = useState(false);
-  const [last, setLast] = useState<{ src: string; n: number; line: string } | null>(null); // 방금 찍은 것 바로 보여 주기
-  const capturedAt = useRef(0);
   const [nameInput, setNameInput] = useState('');
-  const [cursor, setCursor] = useState(-1); // 킁킁 중인 칸
-  const [picked, setPicked] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const foundRef = useRef<Found | null>(null);
-  const armedRef = useRef(true); // 다음 사람 차례: 앞 물건이 화면에서 사라져야 다시 인식한다
+  const armedRef = useRef(true); // 앞 물건이 화면에서 사라져야 다음 것을 인식한다
   const absentSince = useRef(0);
   const stableRef = useRef<{ cx: number; cy: number; w: number; start: number } | null>(null);
-  const regsRef = useRef<Reg[]>([]);
+  const phaseRef = useRef<Phase>('idle');
+  const turnRef = useRef(0);
+  const winnerRef = useRef(0); // 몰래 정한 정답 순서
+  const countRef = useRef(4);
   const audioRef = useRef<AudioContext | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  regsRef.current = regs;
+  phaseRef.current = phase;
+  turnRef.current = turn;
+  countRef.current = count;
 
-  const bark = useCallback((kind: 'sniff' | 'bark') => {
+  const sound = useCallback((kind: 'sniff' | 'bark' | 'no') => {
     try {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
@@ -65,15 +76,14 @@ export function CoffeeDog() {
       const o = ac.createOscillator();
       const g = ac.createGain();
       o.type = kind === 'bark' ? 'sawtooth' : 'triangle';
-      const f0 = kind === 'bark' ? 420 : 260;
-      const f1 = kind === 'bark' ? 140 : 200;
+      const [f0, f1, dur, vol] = kind === 'bark' ? [420, 140, 0.2, 0.28] : kind === 'no' ? [240, 120, 0.35, 0.12] : [260, 200, 0.06, 0.07];
       o.frequency.setValueAtTime(f0, t0);
-      o.frequency.exponentialRampToValueAtTime(f1, t0 + (kind === 'bark' ? 0.18 : 0.05));
-      g.gain.setValueAtTime(kind === 'bark' ? 0.28 : 0.07, t0);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + (kind === 'bark' ? 0.2 : 0.06));
+      o.frequency.exponentialRampToValueAtTime(f1, t0 + dur * 0.9);
+      g.gain.setValueAtTime(vol, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       o.connect(g).connect(ac.destination);
       o.start(t0);
-      o.stop(t0 + 0.22);
+      o.stop(t0 + dur + 0.02);
     } catch {
       // 소리 없이 진행
     }
@@ -85,13 +95,12 @@ export function CoffeeDog() {
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
-  // 사진처럼 잘라 담기: 기울어진 물건을 바로 세워서 잘라낸다
+  // 기울어진 물건을 바로 세워서 잘라 담는다. 인식이 없으면 화면 가운데를 그대로 담는다
   const capture = useCallback((f: Found | null): string | null => {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return null;
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    // 인식이 없으면 화면 가운데 가로로 긴 부분을 그대로 담는다
     const cx = (f ? f.cx : 0.5) * vw;
     const cy = (f ? f.cy : 0.5) * vh;
     const long = (f ? f.w : 0.6) * vw * 1.07;
@@ -116,36 +125,116 @@ export function CoffeeDog() {
     return canvas.toDataURL('image/jpeg', 0.82);
   }, []);
 
-  const addReg = useCallback((reg: Reg) => {
-    if (reg.kind === 'photo') {
-      setLast({ src: reg.src, n: regsRef.current.length + 1, line: DOG_LINES[Math.floor(Math.random() * DOG_LINES.length)] });
-      capturedAt.current = performance.now();
-    }
-    setRegs((r) => [...r, reg]);
-    setProgress(0);
-    stableRef.current = null;
-    armedRef.current = false;
-    absentSince.current = 0;
-    setFlash(true);
-    setTimeout(() => setFlash(false), 220);
-  }, []);
+  // 한 번 찍으면 바로 냄새를 맡고 곧 결과가 나온다
+  const shoot = useCallback(
+    (shot: Shot) => {
+      if (phaseRef.current !== 'idle') return;
+      phaseRef.current = 'sniff';
+      setCur(shot);
+      setVerdict(null);
+      setPhase('sniff');
+      setProgress(0);
+      stableRef.current = null;
+      armedRef.current = false;
+      absentSince.current = 0;
+      setFlash(true);
+      timers.current.push(setTimeout(() => setFlash(false), 200));
+      // 킁킁 소리
+      for (let i = 0; i < 6; i++) timers.current.push(setTimeout(() => sound('sniff'), 150 + i * 250));
+      timers.current.push(
+        setTimeout(() => {
+          const yes = turnRef.current === winnerRef.current;
+          setVerdict(yes);
+          setPhase('result');
+          phaseRef.current = 'result';
+          if (yes) {
+            setWinnerShot(shot);
+            sound('bark');
+            timers.current.push(setTimeout(() => sound('bark'), 260));
+            timers.current.push(setTimeout(() => sound('bark'), 560));
+            timers.current.push(
+              setTimeout(() => {
+                stopCamera();
+                setStep('final');
+              }, 2300),
+            );
+          } else {
+            setLine(NO_LINES[Math.floor(Math.random() * NO_LINES.length)]);
+            sound('no');
+          }
+        }, SNIFF_MS),
+      );
+    },
+    [sound, stopCamera],
+  );
 
-  const registerNow = useCallback(
+  const shootCamera = useCallback(
     (f: Found | null) => {
       const src = capture(f);
-      if (src) addReg({ kind: 'photo', src });
+      if (src) shoot({ kind: 'photo', src });
     },
-    [addReg, capture],
+    [capture, shoot],
   );
+
+  // 아니었던 것: 다음 사람 차례로
+  function nextPerson() {
+    if (!cur) return;
+    setHistory((h) => [...h, cur]);
+    setCur(null);
+    setVerdict(null);
+    setPhase('idle');
+    phaseRef.current = 'idle';
+    setTurn((t) => t + 1);
+    setNameInput('');
+    stableRef.current = null;
+    setHint('다음 분, 카드나 핸드폰을 보여 주세요');
+  }
+
+  // 같은 차례에서 다시 찍기 (정답 순서는 그대로라 결과가 바뀌지 않는다)
+  function retake() {
+    setCur(null);
+    setVerdict(null);
+    setPhase('idle');
+    phaseRef.current = 'idle';
+    stableRef.current = null;
+    armedRef.current = true;
+  }
+
+  function begin() {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    winnerRef.current = randomIndex(countRef.current);
+    setTurn(0);
+    turnRef.current = 0;
+    setHistory([]);
+    setCur(null);
+    setVerdict(null);
+    setWinnerShot(null);
+    setPhase('idle');
+    phaseRef.current = 'idle';
+    setNameInput('');
+    armedRef.current = true;
+    stableRef.current = null;
+    setHint('카드나 핸드폰을 화면에 보여 주세요');
+    setStep('scan');
+  }
+
+  function reset() {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    stopCamera();
+    setStep('setup');
+    setPhase('idle');
+    phaseRef.current = 'idle';
+  }
 
   // 카메라 켜기 / 끄기
   useEffect(() => {
-    if (step !== 'register' || mode !== 'camera') return;
+    if (step !== 'scan' || mode !== 'camera') return;
     let cancelled = false;
     (async () => {
       setCamError('');
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        // 폰에서 http://192.168… 같은 주소로 열면 브라우저가 카메라를 막는다 (https 또는 localhost만 가능)
         setCamError('이 주소로는 카메라를 쓸 수 없어요. 보안 연결(https) 주소로 열어 주세요. 컴퓨터에서는 localhost로 열면 돼요.');
         setCamState('error');
         return;
@@ -157,7 +246,6 @@ export function CoffeeDog() {
         try {
           stream = await ask({ facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } });
         } catch (first) {
-          // 뒷 카메라나 해상도 조건 때문에 안 되면 조건 없이 한 번 더
           const name = (first as DOMException)?.name;
           if (name === 'NotAllowedError' || name === 'SecurityError') throw first;
           stream = await ask(true);
@@ -197,9 +285,9 @@ export function CoffeeDog() {
     };
   }, [step, mode, stopCamera, attempt]);
 
-  // 인식 루프: 카드·핸드폰 모양을 찾아 박스를 그리고, 가만히 있으면 등록한다
+  // 인식 루프: 카드·핸드폰 모양을 찾아 박스를 그리고, 가만히 있으면 자동으로 찍는다
   useEffect(() => {
-    if (step !== 'register' || mode !== 'camera' || camState !== 'on') return;
+    if (step !== 'scan' || mode !== 'camera' || camState !== 'on') return;
     const video = videoRef.current;
     const overlay = overlayRef.current;
     if (!video || !overlay) return;
@@ -222,7 +310,7 @@ export function CoffeeDog() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       const f = foundRef.current;
-      if (!f) return;
+      if (!f || phaseRef.current !== 'idle') return;
       const hw = (f.w * w) / 2;
       const hh = (f.h * w) / 2; // h는 가로 기준으로 정규화했다
       ctx.save();
@@ -246,29 +334,26 @@ export function CoffeeDog() {
         const f = detectCardLike(sctx.getImageData(0, 0, aw, ah).data, aw, ah);
         foundRef.current = f;
 
-        if (!f) {
-          stableRef.current = null;
-          setProgress(0);
-          if (!armedRef.current) {
-            if (!absentSince.current) absentSince.current = now;
-            if (now - absentSince.current > 700) {
-              armedRef.current = true;
-              if (now - capturedAt.current > 1200) setLast(null);
-              setHint(`${regsRef.current.length + 1}번째 카드나 핸드폰을 보여 주세요`);
+        if (phaseRef.current === 'idle') {
+          if (!f) {
+            stableRef.current = null;
+            setProgress(0);
+            if (!armedRef.current) {
+              if (!absentSince.current) absentSince.current = now;
+              if (now - absentSince.current > 700) armedRef.current = true;
             }
-          }
-        } else {
-          absentSince.current = 0;
-          if (armedRef.current) {
-            const st = stableRef.current;
-            const same = st && Math.hypot(f.cx - st.cx, f.cy - st.cy) < 0.07 && Math.abs(f.w - st.w) / st.w < 0.25;
-            if (!same) stableRef.current = { cx: f.cx, cy: f.cy, w: f.w, start: now };
-            const p = Math.min(1, (now - (stableRef.current?.start ?? now)) / HOLD_MS);
-            setProgress(p);
-            setHint('잠깐만 가만히…');
-            if (p >= 1) registerNow(f);
           } else {
-            setHint('등록됐어요! 다음 분께 넘겨 주세요 (물건을 화면에서 치워 주세요)');
+            absentSince.current = 0;
+            if (armedRef.current) {
+              const st = stableRef.current;
+              const same = st && Math.hypot(f.cx - st.cx, f.cy - st.cy) < 0.07 && Math.abs(f.w - st.w) / st.w < 0.25;
+              if (!same) stableRef.current = { cx: f.cx, cy: f.cy, w: f.w, start: now };
+              const p = Math.min(1, (now - (stableRef.current?.start ?? now)) / HOLD_MS);
+              setProgress(p);
+              if (p >= 1) shootCamera(f);
+            } else {
+              setHint('앞 카드를 치워 주세요');
+            }
           }
         }
       }
@@ -276,78 +361,11 @@ export function CoffeeDog() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [step, mode, camState, registerNow]);
-
-  // 모두 등록되면 멍멍이에게 넘어간다
-  useEffect(() => {
-    if (step === 'register' && regs.length >= count) {
-      stopCamera();
-      const t = setTimeout(() => (setLast(null), startSniff()), last ? 2200 : 600);
-      return () => clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regs.length, step, count]);
+  }, [step, mode, camState, shootCamera]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  function startSniff() {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    const n = regsRef.current.length;
-    const target = randomIndex(n);
-    const laps = n <= 4 ? 4 : n <= 8 ? 3 : 2;
-    const total = n * laps + target; // 0번부터 돌다가 target에서 멈춘다
-    let elapsed = 400;
-    setStep('pick');
-    setPicked(null);
-    setCursor(-1);
-    for (let j = 0; j <= total; j++) {
-      const slow = Math.pow(j / total, 3); // 갈수록 느려진다
-      elapsed += 70 + slow * 420;
-      const idx = j % n;
-      timers.current.push(
-        setTimeout(() => {
-          setCursor(idx);
-          bark('sniff');
-        }, elapsed),
-      );
-    }
-    timers.current.push(
-      setTimeout(() => {
-        setPicked(target);
-        setStep('result');
-        bark('bark');
-        setTimeout(() => bark('bark'), 260);
-      }, elapsed + 700),
-    );
-  }
-
-  function reset() {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    stopCamera();
-    setRegs([]);
-    setPicked(null);
-    setCursor(-1);
-    setProgress(0);
-    setNameInput('');
-    setLast(null);
-    armedRef.current = true;
-    stableRef.current = null;
-    foundRef.current = null;
-    setStep('setup');
-  }
-
-  function begin() {
-    setRegs([]);
-    setLast(null);
-    armedRef.current = true;
-    setHint('카드나 핸드폰을 화면 가운데에 보여 주세요');
-    setStep('register');
-  }
-
   const total = count;
-  const current = regs.length + 1;
 
   // ───── 화면 ─────
   if (step === 'setup')
@@ -359,7 +377,7 @@ export function CoffeeDog() {
         <div>
           <h2 className="text-[22px] font-black">오늘 커피 얻어먹을 카드는?</h2>
           <p className="mt-1 text-[14px] leading-snug text-inkMuted">
-            참가자가 한 명씩 카드나 핸드폰을 카메라에 보여 주면 멍멍이가 냄새를 맡고 한 명을 골라요.
+            한 명씩 카드나 핸드폰을 카메라에 비추면 멍멍이가 바로 냄새를 맡고, 커피 냄새가 나는 카드에서 짖어요.
           </p>
         </div>
         <div className="flex flex-col items-center gap-2">
@@ -398,15 +416,13 @@ export function CoffeeDog() {
       </section>
     );
 
-  if (step === 'register')
+  if (step === 'scan')
     return (
       <section className="mx-auto flex w-full max-w-[560px] flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-[18px] font-black">
-            {current > total ? '다 모였어요!' : `${current}번째 ${mode === 'camera' ? '카드 또는 핸드폰을 인식시켜 주세요' : '분 이름을 적어 주세요'}`}
-          </h2>
+          <h2 className="text-[18px] font-black">{turn + 1}번째 {mode === 'camera' ? '카드 또는 핸드폰을 비춰 주세요' : '분 이름을 적어 주세요'}</h2>
           <span className="font-latin text-[14px] font-semibold text-inkMuted">
-            {Math.min(regs.length, total)} / {total}
+            {turn + 1} / {total}
           </span>
         </div>
 
@@ -415,33 +431,7 @@ export function CoffeeDog() {
             <div className="relative overflow-hidden rounded-[12px] border-2 border-ink bg-black" style={{ aspectRatio: '4 / 3' }}>
               <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
               <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-              {flash && <div className="pointer-events-none absolute inset-0 bg-white/80" />}
-              {last && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/70 p-3 text-center text-white">
-                  <p className="text-[13px] font-black text-sticker">✓ {last.n}번째 등록 완료!</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={last.src} alt={`${last.n}번째로 찍힌 것`} className="max-h-[52%] max-w-[70%] rounded-[8px] border-2 border-white object-contain" />
-                  <p className="text-[14px] font-bold leading-snug">🐶 {last.line}</p>
-                  <div className="mt-1 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRegs((r) => r.slice(0, -1));
-                        setLast(null);
-                        armedRef.current = true;
-                      }}
-                      className="h-10 rounded-[10px] border-2 border-ink bg-white px-4 text-[13px] font-black text-ink"
-                    >
-                      다시 찍기
-                    </button>
-                    {regs.length < total && (
-                      <button type="button" onClick={() => setLast(null)} className="h-10 rounded-[10px] border-2 border-ink bg-sticker px-4 text-[13px] font-black text-ink">
-                        다음 사람 ›
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              {flash && <div className="pointer-events-none absolute inset-0 z-20 bg-white/80" />}
               {camState !== 'on' && camState !== 'error' && <p className="absolute inset-0 grid place-items-center text-[14px] font-bold text-white">카메라를 켜는 중…</p>}
               {camState === 'error' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 p-4 text-center text-white">
@@ -456,115 +446,170 @@ export function CoffeeDog() {
                   </div>
                 </div>
               )}
-              {/* 가만히 있을수록 차오르는 고리 */}
-              {progress > 0 && (
+              {phase === 'idle' && progress > 0 && (
                 <div className="pointer-events-none absolute bottom-3 left-1/2 h-2 w-40 -translate-x-1/2 overflow-hidden rounded-full bg-white/40">
                   <div className="h-full bg-sticker" style={{ width: `${progress * 100}%` }} />
                 </div>
               )}
+              <ResultOverlay phase={phase} cur={cur} verdict={verdict} line={line} turn={turn} onNext={nextPerson} onRetake={retake} />
             </div>
-            <p className="text-center text-[14px] font-bold">{hint}</p>
-            <div className="flex gap-2">
-              <button type="button" disabled={camState !== 'on'} onClick={() => registerNow(foundRef.current)} className="h-12 flex-1 rounded-[10px] border-2 border-ink bg-sticker text-[15px] font-black disabled:opacity-50">
-                지금 이걸로 등록
-              </button>
-              {regs.length > 0 && (
+
+            {phase === 'idle' && (
+              <>
+                <p className="text-center text-[14px] font-bold">{hint}</p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setRegs((r) => r.slice(0, -1));
-                    armedRef.current = true;
-                  }}
-                  className="h-12 rounded-[10px] border-2 border-ink bg-white px-4 text-[15px] font-bold"
+                  disabled={camState !== 'on'}
+                  onClick={() => shootCamera(foundRef.current)}
+                  className="h-14 w-full rounded-[12px] border-2 border-ink bg-sticker text-[18px] font-black hover:bg-[#e3c900] disabled:opacity-50"
                 >
-                  방금 것 취소
+                  📸 찍기
                 </button>
-              )}
-            </div>
+                <p className="text-center text-[12px] text-inkMuted">카드를 가만히 들고 있으면 자동으로 찍혀요. 바로 냄새를 맡고 결과가 나와요.</p>
+              </>
+            )}
           </>
         ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const t = nameInput.trim();
-              if (!t) return;
-              addReg({ kind: 'name', text: t });
-              setNameInput('');
-            }}
-            className="flex gap-2"
-          >
-            <input value={nameInput} maxLength={10} onChange={(e) => setNameInput(e.target.value)} placeholder={`${current}번째 이름`} aria-label={`${current}번째 이름`} className={fieldClass} />
-            <button type="submit" disabled={!nameInput.trim()} className="h-12 shrink-0 rounded-[10px] border-2 border-ink bg-sticker px-5 text-[16px] font-black disabled:opacity-50">
-              등록
-            </button>
-          </form>
+          <div className="relative overflow-hidden rounded-[12px] border-2 border-ink bg-white p-4" style={{ minHeight: 220 }}>
+            {phase === 'idle' ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const t = nameInput.trim();
+                  if (!t) return;
+                  shoot({ kind: 'name', text: t });
+                }}
+                className="flex flex-col gap-3"
+              >
+                <p className="text-[14px] font-bold">이름을 적고 멍멍이에게 맡겨요</p>
+                <div className="flex gap-2">
+                  <input value={nameInput} maxLength={10} onChange={(e) => setNameInput(e.target.value)} placeholder={`${turn + 1}번째 이름`} aria-label={`${turn + 1}번째 이름`} className={fieldClass} />
+                  <button type="submit" disabled={!nameInput.trim()} className="h-12 shrink-0 rounded-[10px] border-2 border-ink bg-sticker px-5 text-[16px] font-black disabled:opacity-50">
+                    킁킁!
+                  </button>
+                </div>
+              </form>
+            ) : null}
+            <ResultOverlay phase={phase} cur={cur} verdict={verdict} line={line} turn={turn} onNext={nextPerson} onRetake={retake} light />
+          </div>
         )}
 
-        {/* 등록된 것들 */}
-        {regs.length > 0 && <RegGrid regs={regs} />}
+        {/* 앞에서 "아니었던" 카드들 */}
+        {history.length > 0 && (
+          <div>
+            <p className="mb-1 text-[12px] font-bold text-inkMuted">지나간 카드 (아니었어요)</p>
+            <ul className="flex flex-wrap gap-2">
+              {history.map((h, i) => (
+                <li key={i} className="relative h-14 w-20 overflow-hidden rounded-[6px] border-2 border-ink bg-white opacity-70">
+                  <span className="absolute left-0 top-0 z-10 rounded-br-[4px] bg-ink px-1 font-latin text-[10px] font-semibold text-white">{i + 1}</span>
+                  {h.kind === 'photo' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={h.src} alt={`${i + 1}번째 지나간 카드`} className="h-full w-full object-cover" />
+                  ) : (
+                    <p className="grid h-full place-items-center px-1 text-[12px] font-black">{h.text}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <button type="button" onClick={reset} className="min-h-[44px] self-center text-[13px] font-bold text-inkMuted underline underline-offset-4">
           처음으로
         </button>
       </section>
     );
 
-  // 킁킁 / 결과
+  // 최종: 걸린 카드
   return (
-    <section className="mx-auto flex w-full max-w-[560px] flex-col items-center gap-4 text-center">
-      <h2 className="text-[20px] font-black">{step === 'pick' ? '멍멍이가 냄새를 맡는 중… 킁킁' : '멍멍이가 골랐어요!'}</h2>
-      <RegGrid regs={regs} cursor={step === 'pick' ? cursor : (picked ?? -1)} final={step === 'result'} />
-      {step === 'result' && picked !== null && (
-        <div className="flex w-full flex-col items-center gap-3 rounded-[14px] border-2 border-ink bg-white p-5">
-          <p className="text-[56px] leading-none" aria-hidden>
-            🐶☕
-          </p>
-          <p className="text-[22px] font-black leading-tight">
-            오늘 커피는 <span className="text-seal">{picked + 1}번째 {regs[picked].kind === 'name' ? regs[picked].text : '카드'}</span>!
-          </p>
-          <div className="w-44 overflow-hidden rounded-[8px] border-2 border-ink">
-            {regs[picked].kind === 'photo' ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={(regs[picked] as { src: string }).src} alt="멍멍이가 고른 카드" className="block w-full" />
-            ) : (
-              <p className="py-6 text-[24px] font-black">{(regs[picked] as { text: string }).text}</p>
-            )}
-          </div>
-          <div className="flex w-full gap-2">
-            <button type="button" onClick={startSniff} className="h-12 flex-1 rounded-[10px] border-2 border-ink bg-sticker text-[15px] font-black">
-              다시 냄새 맡기
-            </button>
-            <button type="button" onClick={reset} className="h-12 flex-1 rounded-[10px] border-2 border-ink bg-white text-[15px] font-bold">
-              처음부터
-            </button>
-          </div>
-        </div>
-      )}
+    <section className="mx-auto flex w-full max-w-[520px] flex-col items-center gap-4 rounded-[14px] border-2 border-ink bg-white p-6 text-center">
+      <p className="text-[56px] leading-none" aria-hidden>
+        🐶☕
+      </p>
+      <p className="text-[24px] font-black leading-tight">
+        멍멍멍! 오늘 커피는 <span className="text-seal">{turn + 1}번째 {winnerShot?.kind === 'name' ? winnerShot.text : '카드'}</span>!
+      </p>
+      <div className="w-52 overflow-hidden rounded-[8px] border-2 border-ink">
+        {winnerShot?.kind === 'photo' ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={winnerShot.src} alt="멍멍이가 고른 카드" className="block w-full" />
+        ) : (
+          <p className="py-8 text-[28px] font-black">{winnerShot?.kind === 'name' ? winnerShot.text : ''}</p>
+        )}
+      </div>
+      <p className="text-[13px] text-inkMuted">
+        {total}명 중 {turn + 1}번째에서 걸렸어요.
+      </p>
+      <div className="flex w-full gap-2">
+        <button type="button" onClick={begin} className="h-12 flex-1 rounded-[10px] border-2 border-ink bg-sticker text-[15px] font-black">
+          한 번 더 (같은 인원)
+        </button>
+        <button type="button" onClick={reset} className="h-12 flex-1 rounded-[10px] border-2 border-ink bg-white text-[15px] font-bold">
+          처음부터
+        </button>
+      </div>
     </section>
   );
 }
 
-function RegGrid({ regs, cursor = -1, final = false }: { regs: Reg[]; cursor?: number; final?: boolean }) {
+// 찍은 직후: 킁킁 → 결과 (걸렸다 / 아니다)
+function ResultOverlay({
+  phase,
+  cur,
+  verdict,
+  line,
+  turn,
+  onNext,
+  onRetake,
+  light = false,
+}: {
+  phase: Phase;
+  cur: Shot | null;
+  verdict: boolean | null;
+  line: string;
+  turn: number;
+  onNext: () => void;
+  onRetake: () => void;
+  light?: boolean;
+}) {
+  if (phase === 'idle' || !cur) return null;
+  const yes = verdict === true;
+  const bg = light ? 'bg-white' : yes ? 'bg-black/75' : 'bg-black/70';
+  const fg = light ? 'text-ink' : 'text-white';
   return (
-    <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
-      {regs.map((r, i) => {
-        const on = i === cursor;
-        return (
-          <li key={i} className={`relative overflow-hidden rounded-[8px] border-2 bg-white transition-transform ${on ? 'z-10 scale-[1.06] border-seal shadow-[0_0_0_3px_#F2D80E]' : 'border-ink'} ${final && !on ? 'opacity-40' : ''}`}>
-            <span className="absolute left-0 top-0 z-10 rounded-br-[6px] bg-ink px-1.5 font-latin text-[11px] font-semibold text-white">{i + 1}</span>
-            {r.kind === 'photo' ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={r.src} alt={`${i + 1}번째 등록`} className="block aspect-[3/2] w-full object-cover" />
-            ) : (
-              <p className="grid aspect-[3/2] place-items-center px-1 text-[15px] font-black">{r.text}</p>
-            )}
-            {on && (
-              <span className="pointer-events-none absolute inset-0 grid place-items-center text-[40px]" aria-hidden>
-                🐽
-              </span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 p-3 text-center ${bg} ${fg}`}>
+      <div className={`relative max-h-[48%] max-w-[64%] overflow-hidden rounded-[8px] border-2 ${yes ? 'border-sticker shadow-[0_0_0_4px_#C8322B]' : 'border-white'} ${light ? '!border-ink' : ''}`}>
+        {cur.kind === 'photo' ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cur.src} alt="방금 찍힌 것" className="block max-h-[190px] object-contain" />
+        ) : (
+          <p className="px-6 py-4 text-[22px] font-black">{cur.text}</p>
+        )}
+        {phase === 'sniff' && (
+          <span className="pointer-events-none absolute inset-0 grid place-items-center text-[44px] [animation:wiggle_0.25s_ease-in-out_infinite_alternate]" aria-hidden>
+            🐽
+          </span>
+        )}
+      </div>
+      {phase === 'sniff' && <p className="text-[18px] font-black">킁킁킁킁…</p>}
+      {phase === 'result' && yes && (
+        <p className="text-[24px] font-black leading-tight">
+          🐶 멍멍멍! <span className="text-sticker">이 카드예요!</span>
+        </p>
+      )}
+      {phase === 'result' && verdict === false && (
+        <>
+          <p className="text-[16px] font-black leading-snug">🐶 {line}</p>
+          <div className="mt-1 flex gap-2">
+            <button type="button" onClick={onRetake} className="h-10 rounded-[10px] border-2 border-ink bg-white px-4 text-[13px] font-black text-ink">
+              다시 찍기
+            </button>
+            <button type="button" onClick={onNext} className="h-10 rounded-[10px] border-2 border-ink bg-sticker px-4 text-[13px] font-black text-ink">
+              다음 사람 ›
+            </button>
+          </div>
+        </>
+      )}
+      <span className="sr-only">{turn + 1}번째 결과</span>
+    </div>
   );
 }
