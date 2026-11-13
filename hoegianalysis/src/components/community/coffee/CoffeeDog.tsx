@@ -371,9 +371,8 @@ export function CoffeeDog() {
   if (step === 'setup')
     return (
       <section className="mx-auto flex w-full max-w-[520px] flex-col items-center gap-5 rounded-[14px] border-2 border-ink bg-white p-6 text-center">
-        <div className="text-[72px] leading-none" aria-hidden>
-          🐶
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hoegilab/coffee-shiba-wait.webp" alt="" aria-hidden draggable={false} className="h-[150px] w-auto select-none [animation:shiba-bounce_0.7s_ease-in-out_infinite_alternate]" />
         <div>
           <h2 className="text-[22px] font-black">오늘 커피 얻어먹을 카드는?</h2>
           <p className="mt-1 text-[14px] leading-snug text-inkMuted">
@@ -456,7 +455,11 @@ export function CoffeeDog() {
 
             {phase === 'idle' && (
               <>
-                <p className="text-center text-[14px] font-bold">{hint}</p>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/hoegilab/coffee-shiba-wait.webp" alt="" aria-hidden draggable={false} className="h-16 w-auto select-none [animation:shiba-bounce_0.7s_ease-in-out_infinite_alternate]" />
+                  <p className="text-[14px] font-bold leading-snug">{hint}</p>
+                </div>
                 <button
                   type="button"
                   disabled={camState !== 'on'}
@@ -470,7 +473,7 @@ export function CoffeeDog() {
             )}
           </>
         ) : (
-          <div className="relative overflow-hidden rounded-[12px] border-2 border-ink bg-white p-4" style={{ minHeight: 220 }}>
+          <div className="relative overflow-hidden rounded-[12px] border-2 border-ink bg-white p-4" style={{ aspectRatio: '4 / 3' }}>
             {phase === 'idle' ? (
               <form
                 onSubmit={(e) => {
@@ -490,7 +493,7 @@ export function CoffeeDog() {
                 </div>
               </form>
             ) : null}
-            <ResultOverlay phase={phase} cur={cur} verdict={verdict} line={line} turn={turn} onNext={nextPerson} onRetake={retake} light />
+            <ResultOverlay phase={phase} cur={cur} verdict={verdict} line={line} turn={turn} onNext={nextPerson} onRetake={retake} />
           </div>
         )}
 
@@ -521,14 +524,23 @@ export function CoffeeDog() {
 
   // 최종: 걸린 카드
   return (
-    <section className="mx-auto flex w-full max-w-[520px] flex-col items-center gap-4 rounded-[14px] border-2 border-ink bg-white p-6 text-center">
-      <p className="text-[56px] leading-none" aria-hidden>
-        🐶☕
+    <section className="relative mx-auto flex w-full max-w-[520px] flex-col items-center gap-3 overflow-hidden rounded-[14px] border-2 border-ink bg-lime p-6 text-center">
+      <p className="text-[28px] leading-none" aria-hidden>
+        🎉 ✨ 🎉
       </p>
-      <p className="text-[24px] font-black leading-tight">
-        멍멍멍! 오늘 커피는 <span className="text-seal">{turn + 1}번째 {winnerShot?.kind === 'name' ? winnerShot.text : '카드'}</span>!
-      </p>
-      <div className="w-52 overflow-hidden rounded-[8px] border-2 border-ink">
+      <div className="relative flex w-full items-end justify-center gap-1">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hoegilab/coffee-shiba-beg.webp" alt="커피를 사 달라고 조르는 시바" draggable={false} className="h-[190px] w-auto select-none [animation:shiba-bounce_0.6s_ease-in-out_infinite_alternate]" />
+        <Bubble src="/hoegilab/coffee-prop-burst.webp" text="커피 사주세욤" className="absolute -top-3 right-0 h-[88px] w-[130px] [animation:pop-in_0.35s_ease-out]" textClass="text-[15px]" />
+      </div>
+      <div className="relative w-full max-w-[300px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hoegilab/coffee-prop-ribbon.webp" alt="" aria-hidden draggable={false} className="block w-full" />
+        <span className="absolute inset-0 grid place-items-center px-[12%] pb-[4%] text-[16px] font-black">
+          {turn + 1}번째 {winnerShot?.kind === 'name' ? winnerShot.text : '카드'} 걸렸다 시바!
+        </span>
+      </div>
+      <div className="w-48 -rotate-2 overflow-hidden rounded-[8px] border-2 border-ink bg-white shadow-md">
         {winnerShot?.kind === 'photo' ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={winnerShot.src} alt="멍멍이가 고른 카드" className="block w-full" />
@@ -551,65 +563,90 @@ export function CoffeeDog() {
   );
 }
 
-// 찍은 직후: 킁킁 → 결과 (걸렸다 / 아니다)
+// 말풍선 그림 위에 글자를 얹는다 (그림 속 글자는 깨지기 쉬워서 코드로 쓴다)
+function Bubble({ src, text, className = '', textClass = '' }: { src: string; text: string; className?: string; textClass?: string }) {
+  return (
+    <div className={className}>
+      <div className="relative h-full w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" aria-hidden draggable={false} className="block h-full w-full select-none object-contain" />
+        <span className={`absolute inset-0 grid place-items-center px-[14%] text-center font-black leading-tight text-ink ${textClass}`}>{text}</span>
+      </div>
+    </div>
+  );
+}
+
+// 찍은 직후: 킁킁 → 결과 (걸렸다 / 아니다). 시바가 포즈를 바꿔 알려 준다
 function ResultOverlay({
   phase,
   cur,
   verdict,
   line,
-  turn,
   onNext,
   onRetake,
-  light = false,
 }: {
   phase: Phase;
   cur: Shot | null;
   verdict: boolean | null;
   line: string;
-  turn: number;
+  turn?: number;
   onNext: () => void;
   onRetake: () => void;
-  light?: boolean;
 }) {
   if (phase === 'idle' || !cur) return null;
   const yes = verdict === true;
-  const bg = light ? 'bg-white' : yes ? 'bg-black/75' : 'bg-black/70';
-  const fg = light ? 'text-ink' : 'text-white';
+  const no = verdict === false;
+  const shiba = phase === 'sniff' ? 'sniff' : yes ? 'caught' : 'no';
+  const shibaAnim =
+    phase === 'sniff' ? '[animation:shiba-sniff_0.3s_ease-in-out_infinite_alternate]' : yes ? '[animation:shiba-bounce_0.4s_ease-in-out_infinite_alternate]' : '';
+  const cardPos = yes ? 'left-[4%] top-[40%] w-[28%]' : 'left-[4%] top-[8%] w-[32%]';
   return (
-    <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 p-3 text-center ${bg} ${fg}`}>
-      <div className={`relative max-h-[48%] max-w-[64%] overflow-hidden rounded-[8px] border-2 ${yes ? 'border-sticker shadow-[0_0_0_4px_#C8322B]' : 'border-white'} ${light ? '!border-ink' : ''}`}>
+    <div className="absolute inset-0 z-10 overflow-hidden bg-lime text-ink">
+      {/* 찍힌 카드 */}
+      <div className={`absolute ${cardPos} -rotate-3 overflow-hidden rounded-[6px] border-2 border-ink bg-white shadow-md`}>
         {cur.kind === 'photo' ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={cur.src} alt="방금 찍힌 것" className="block max-h-[190px] object-contain" />
+          <img src={cur.src} alt="방금 찍힌 것" className="block max-h-[120px] w-full object-contain" />
         ) : (
-          <p className="px-6 py-4 text-[22px] font-black">{cur.text}</p>
-        )}
-        {phase === 'sniff' && (
-          <span className="pointer-events-none absolute inset-0 grid place-items-center text-[44px] [animation:wiggle_0.25s_ease-in-out_infinite_alternate]" aria-hidden>
-            🐽
-          </span>
+          <p className="px-2 py-3 text-center text-[16px] font-black">{cur.text}</p>
         )}
       </div>
-      {phase === 'sniff' && <p className="text-[18px] font-black">킁킁킁킁…</p>}
-      {phase === 'result' && yes && (
-        <p className="text-[24px] font-black leading-tight">
-          🐶 멍멍멍! <span className="text-sticker">이 카드예요!</span>
-        </p>
-      )}
-      {phase === 'result' && verdict === false && (
+
+      {/* 시바 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/hoegilab/coffee-shiba-${shiba}.webp`} alt="" aria-hidden draggable={false} className={`absolute bottom-[1%] right-[2%] h-[72%] w-auto select-none ${shibaAnim}`} />
+
+      {phase === 'sniff' && (
         <>
-          <p className="text-[16px] font-black leading-snug">🐶 {line}</p>
-          <div className="mt-1 flex gap-2">
-            <button type="button" onClick={onRetake} className="h-10 rounded-[10px] border-2 border-ink bg-white px-4 text-[13px] font-black text-ink">
-              다시 찍기
-            </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hoegilab/coffee-prop-q.webp" alt="" aria-hidden draggable={false} className="absolute right-[12%] top-[2%] h-[22%] w-auto [animation:shiba-bounce_0.4s_ease-in-out_infinite_alternate]" />
+          <p className="absolute bottom-[10%] left-[5%] text-[18px] font-black">킁킁킁킁…</p>
+        </>
+      )}
+
+      {yes && (
+        <>
+          <Bubble src="/hoegilab/coffee-prop-burst.webp" text="걸렸다 시바!" className="absolute left-[2%] top-[1%] h-[40%] w-[54%] [animation:pop-in_0.3s_ease-out]" textClass="text-[19px]" />
+          <Bubble src="/hoegilab/coffee-prop-bubble-blue.webp" text="커피 사주세욤" className="absolute bottom-[6%] left-[4%] h-[26%] w-[46%] [animation:pop-in_0.45s_ease-out]" textClass="!text-white text-[15px]" />
+          <span className="pointer-events-none absolute right-[6%] top-[4%] text-[26px]" aria-hidden>
+            🎉
+          </span>
+        </>
+      )}
+
+      {no && (
+        <>
+          <Bubble src="/hoegilab/coffee-prop-bubble.webp" text={line} className="absolute right-[4%] top-[2%] h-[36%] w-[40%] [animation:pop-in_0.3s_ease-out]" textClass="text-[12px]" />
+          <div className="absolute bottom-[6%] left-[4%] flex flex-col gap-2">
             <button type="button" onClick={onNext} className="h-10 rounded-[10px] border-2 border-ink bg-sticker px-4 text-[13px] font-black text-ink">
               다음 사람 ›
+            </button>
+            <button type="button" onClick={onRetake} className="h-10 rounded-[10px] border-2 border-ink bg-white px-4 text-[13px] font-black text-ink">
+              다시 찍기
             </button>
           </div>
         </>
       )}
-      <span className="sr-only">{turn + 1}번째 결과</span>
     </div>
   );
 }
