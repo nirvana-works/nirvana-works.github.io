@@ -241,3 +241,71 @@
   from { transform: scale(0.4); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* 점심 처방전 */
+@keyframes machine-shake {
+  0% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-2px, 1px) rotate(-0.6deg); }
+  50% { transform: translate(2px, -1px) rotate(0.6deg); }
+  75% { transform: translate(-1px, -1px) rotate(-0.3deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+@keyframes capsule-drop {
+  0% { transform: translateY(-110px); opacity: 0; }
+  35% { opacity: 1; }
+  60% { transform: translateY(0); }
+  75% { transform: translateY(-18px); }
+  90% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+@keyframes capsule-nudge {
+  0%, 100% { transform: rotate(0) scale(1); }
+  25% { transform: rotate(-9deg) scale(1.06); }
+  75% { transform: rotate(9deg) scale(1.06); }
+}
+@keyframes slide-up {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes stamp-in {
+  from { transform: rotate(-12deg) scale(2.4); opacity: 0; }
+  to { transform: rotate(-12deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .\[animation\:machine-shake_0\.16s_linear_infinite\] { animation: none !important; }
+}
+
+/* 점심 처방전: 의사 넙죽이 장면 */
+@keyframes doc-pop {
+  from { transform: translateY(6px) scale(0.97); opacity: 0.6; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes nurse-in {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes wheel-across {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(120%); }
+}
+@keyframes scene-shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes anger-pulse {
+  from { transform: scale(0.9) rotate(-6deg); }
+  to { transform: scale(1.15) rotate(6deg); }
+}
+@keyframes clip-fly {
+  0% { transform: translate(-50%, -50%) translate(-60px, 50px) scale(0.3) rotate(-20deg); opacity: 1; }
+  85% { transform: translate(-50%, -50%) scale(2.8) rotate(420deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(3.4) rotate(480deg); opacity: 0; }
+}
+@keyframes impact-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { opacity: 0; }
+}

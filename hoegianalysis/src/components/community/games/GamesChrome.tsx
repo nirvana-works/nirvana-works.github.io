@@ -13,6 +13,7 @@ export const GAMES = [
   { href: '/games/blocks', label: '넙죽이 블록' },
   { href: '/games/volley', label: '넙죽이 배구' },
   { href: '/games/coffee', label: '커피 마려운 댕댕이' },
+  { href: '/games/lunch', label: '점심 처방전' },
 ] as const;
 
 // 방 안(/games/<게임>/<코드>)에서는 제목·탭을 숨겨 게임 화면에 집중하게 한다
