@@ -5,7 +5,8 @@ export type FaceArt = 'megaphone' | 'calendar' | 'pencil' | 'gamepad' | 'grade' 
 // 학사포탈 안의 세부 페이지. 새 페이지는 여기에 한 줄씩 추가한다
 export const PORTAL_PAGES = [
   { href: '/professor', name: '교수 소개', en: 'Professor', blurb: '회기분석을 이끄는 교수님을 소개합니다', image: '/hoegilab/professor.webp' },
-  { href: '/courses', name: '겨울학기 개설과목', en: 'Winter 2026 Courses', blurb: '분야·대상·요일로 거르고, 친구들이 듣는 과목과 수업 리뷰도 봅니다', image: '/hoegilab/course-nup-2.webp' },
+  { href: '/courses', name: '겨울학기 개설과목', en: 'Winter 2026', blurb: '필터로 찾고, 친구들이 듣는 과목과 수업 리뷰도 봅니다', image: '/hoegilab/course-nup-2.webp' },
+  { href: '/we-can', name: '회기분석 모토', en: 'Our Motto', blurb: 'We can do it. We can make everything we imagine.', image: null },
 ] as const;
 
 export const MENUS = [
