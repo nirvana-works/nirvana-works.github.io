@@ -50,7 +50,9 @@ function frontFace(ax: number, ay: number): number {
 }
 
 function menuIndexOf(pathname: string): number {
-  return MENUS.findIndex((m) => pathname === m.href || pathname.startsWith(`${m.href}/`));
+  const inside = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // 면 안의 세부 페이지(예: 학사포탈 > 교수 소개)도 그 면으로 친다
+  return MENUS.findIndex((m) => inside(m.href) || (m as { children?: readonly { href: string }[] }).children?.some((c) => inside(c.href)));
 }
 
 // 커뮤니티 모든 화면 위쪽. 레이아웃에 있어서 화면을 옮겨도 큐브가 그대로 살아 있고,

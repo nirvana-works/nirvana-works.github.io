@@ -18,8 +18,8 @@ export default function CoursesPage() {
   return (
     <div className={`${pen.variable} flex flex-col gap-6`}>
       <header className="relative">
-        <Link href="/" className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] font-bold">
-          <span aria-hidden>‹</span> Hoegilab
+        <Link href="/portal" className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] font-bold">
+          <span aria-hidden>‹</span> 학사포탈
         </Link>
         <p className="font-latin text-[12px] font-semibold tracking-[0.2em] text-seal">WINTER 2026 · COURSES</p>
         <h1 className="mt-1 pr-24 text-[30px] font-black leading-tight sm:text-[32px]">겨울학기 개설과목</h1>
