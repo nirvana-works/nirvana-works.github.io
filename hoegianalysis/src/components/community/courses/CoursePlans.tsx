@@ -14,12 +14,14 @@ export function CoursePlans({
   plans,
   isAdmin,
   onChanged,
+  tone = 'default',
 }: {
   courseKey: string;
   title: string;
   plans: CoursePlan[]; // 이 과목을 들을 예정인 사람들
   isAdmin: boolean;
   onChanged: (name?: string) => void;
+  tone?: 'default' | 'onYellow'; // 노란 바탕 카드 위에서는 흰 버튼
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState('');
@@ -92,7 +94,7 @@ export function CoursePlans({
       <button
         type="button"
         onClick={open}
-        className={`inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-full border-2 border-ink px-4 text-[14px] font-black hover:bg-[#e3c900] ${hasMine ? 'bg-ink text-sticker' : 'bg-sticker'}`}
+        className={`inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-full border-2 border-ink px-4 text-[14px] font-black hover:bg-[#e3c900] ${hasMine ? 'bg-ink text-sticker' : tone === 'onYellow' ? 'bg-white hover:bg-white' : 'bg-sticker'}`}
       >
         <span aria-hidden>{hasMine ? '✓' : '✋'}</span> 나는 이 과목 들을 예정이에요 <span className="font-latin">{plans.length}</span>
       </button>

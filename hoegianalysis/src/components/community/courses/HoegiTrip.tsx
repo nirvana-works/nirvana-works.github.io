@@ -1,10 +1,28 @@
 /* eslint-disable @next/next/no-img-element */
+import { HOEGI_TRIP_KEY } from '@/lib/courses/courseKey';
+import type { CoursePlan } from '@/lib/coursePlanTypes';
+import { CourseComments } from './CourseComments';
+import { CoursePlans } from './CoursePlans';
 
 const WEEK = ['월', '화', '수', '목', '금', '토', '일'];
 const ON = ['목', '금', '토', '일'];
 
 // 회기분석 카테고리의 특별 과목: 해외현장연수. 목록 맨 아래에서 가장 눈에 띄게
-export function HoegiTrip() {
+const TITLE = '회기분석 해외현장연수';
+
+export function HoegiTrip({
+  plans,
+  onPlansChanged,
+  count,
+  onCount,
+  isAdmin,
+}: {
+  plans: CoursePlan[];
+  onPlansChanged: (name?: string) => void;
+  count: number;
+  onCount: (n: number) => void;
+  isAdmin: boolean;
+}) {
   return (
     <section aria-label="회기분석 해외현장연수" className="relative mt-2">
       {/* 카테고리 띠 */}
@@ -60,7 +78,8 @@ export function HoegiTrip() {
         </div>
 
         {/* 연수 안내 */}
-        <ul className="mt-4 flex flex-col gap-2 border-t-[3px] border-dashed border-ink/60 pt-4 pr-20 text-[15px] leading-snug">
+        <div className="relative mt-4 min-h-[104px] border-t-[3px] border-dashed border-ink/60 pt-4">
+        <ul className="flex flex-col gap-2 pr-20 text-[15px] leading-snug">
           <li className="flex gap-2">
             <span aria-hidden>✈️</span>
             <span>
@@ -74,8 +93,14 @@ export function HoegiTrip() {
             </span>
           </li>
         </ul>
+        <img src="/hoegilab/course-nup-9.webp" alt="" aria-hidden draggable={false} className="pointer-events-none absolute -bottom-1 right-0 h-[96px] w-auto select-none" />
+        </div>
 
-        <img src="/hoegilab/course-nup-9.webp" alt="" aria-hidden draggable={false} className="pointer-events-none absolute -bottom-1 right-1 h-[96px] w-auto select-none" />
+        {/* 수강 예정과 수업 리뷰 */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <CoursePlans courseKey={HOEGI_TRIP_KEY} title={TITLE} plans={plans} isAdmin={isAdmin} onChanged={onPlansChanged} tone="onYellow" />
+          <CourseComments courseKey={HOEGI_TRIP_KEY} title={TITLE} count={count} isAdmin={isAdmin} onCount={onCount} />
+        </div>
       </div>
     </section>
   );

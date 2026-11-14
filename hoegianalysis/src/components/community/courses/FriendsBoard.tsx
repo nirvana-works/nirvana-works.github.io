@@ -1,14 +1,21 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { COURSES, type Course } from '@/lib/courses/winter2026';
-import { courseKey } from '@/lib/courses/courseKey';
+import { COURSES } from '@/lib/courses/winter2026';
+import { HOEGI_TRIP_KEY, courseKey } from '@/lib/courses/courseKey';
 import type { CoursePlan } from '@/lib/coursePlanTypes';
 
 const AMBER = '#FFC83D';
 const glow = { textShadow: '0 0 8px rgba(255,200,61,0.5)' } as const;
-const courseByKey = new Map<string, Course>(COURSES.map((c) => [courseKey(c), c]));
-const label = (c: Course) => (c.sub ? `${c.name} · ${c.sub}` : c.name);
+// 전광판에 올릴 수 있는 과목: 개설과목과 회기분석 해외현장연수
+interface Info {
+  label: string;
+  meta: string;
+}
+const info = new Map<string, Info>([
+  ...COURSES.map((c): [string, Info] => [courseKey(c), { label: c.sub ? `${c.name} · ${c.sub}` : c.name, meta: `${c.professor} 교수 · ${c.days.length ? c.days.join('·') : '일정 별도'}` }]),
+  [HOEGI_TRIP_KEY, { label: '회기분석 해외현장연수', meta: '회기분석 교수 · 목·금·토·일' }],
+]);
 
 type Tab = 'course' | 'people';
 
@@ -32,7 +39,7 @@ export function FriendsBoard({ plans, me, onMe }: { plans: CoursePlan[]; me: str
     const byCourse = new Map<string, string[]>();
     const people = new Map<string, { name: string; keys: string[] }>();
     for (const p of plans) {
-      if (!courseByKey.has(p.key)) continue;
+      if (!info.has(p.key)) continue;
       const names = byCourse.get(p.key) ?? [];
       names.push(p.name);
       byCourse.set(p.key, names);
@@ -46,7 +53,7 @@ export function FriendsBoard({ plans, me, onMe }: { plans: CoursePlan[]; me: str
 
   const meId = me.trim().toLowerCase();
   const mine = people.get(meId);
-  const rows = COURSES.map((c) => ({ c, key: courseKey(c), names: byCourse.get(courseKey(c)) ?? [] }))
+  const rows = Array.from(info.entries()).map(([key, i]) => ({ i, key, names: byCourse.get(key) ?? [] }))
     .filter((r) => r.names.length > 0)
     .sort((a, b) => b.names.length - a.names.length);
   const sortedPeople = Array.from(people.values())
@@ -104,18 +111,18 @@ export function FriendsBoard({ plans, me, onMe }: { plans: CoursePlan[]; me: str
         </div>
       ) : tab === 'course' ? (
         <ul className="mt-2">
-          {rows.map(({ c, key, names }) => {
+          {rows.map(({ i, key, names }) => {
             const takes = !!mine?.keys.includes(key);
             return (
               <li key={key} className="border-t border-dashed border-[#FFC83D]/25 py-3 first:border-t-0">
                 <p className="flex items-baseline justify-between gap-2">
                   <span className="min-w-0 text-[16px] font-black leading-snug" style={glow}>
                     {takes && <span aria-label="내가 듣는 과목">★ </span>}
-                    {label(c)}
+                    {i.label}
                   </span>
                   <span className="shrink-0 font-latin text-[13px] font-semibold">{names.length}명</span>
                 </p>
-                <p className="mb-1.5 text-[12px] opacity-70">{c.professor} 교수 · {c.days.length ? c.days.join('·') : '일정 별도'}</p>
+                <p className="mb-1.5 text-[12px] opacity-70">{i.meta}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {names.map((n, i) => (
                     <Tag key={`${n}${i}`} on={n.toLowerCase() === meId}>
@@ -168,11 +175,11 @@ export function FriendsBoard({ plans, me, onMe }: { plans: CoursePlan[]; me: str
               </div>
               <ul className="mt-2">
                 {mine.keys.map((k) => {
-                  const c = courseByKey.get(k)!;
+                  const ci = info.get(k)!;
                   const others = (byCourse.get(k) ?? []).filter((n) => n.toLowerCase() !== meId);
                   return (
                     <li key={k} className="border-t border-dashed border-[#FFC83D]/25 py-2.5 first:border-t-0">
-                      <p className="text-[15px] font-black leading-snug">{label(c)}</p>
+                      <p className="text-[15px] font-black leading-snug">{ci.label}</p>
                       {others.length ? (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <span className="text-[12px] opacity-75">같이 듣는 친구 {others.length}명</span>

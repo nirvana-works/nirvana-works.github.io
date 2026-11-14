@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { COURSES, type Course, type Day, type FieldKey } from '@/lib/courses/winter2026';
-import { courseKey } from '@/lib/courses/courseKey';
+import { HOEGI_TRIP_KEY, courseKey } from '@/lib/courses/courseKey';
 import { deviceId } from '@/lib/deviceId';
 import type { CoursePlan } from '@/lib/coursePlanTypes';
 import { fieldClass } from '../formStyles';
@@ -342,7 +342,13 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
         </div>
       )}
 
-      <HoegiTrip />
+      <HoegiTrip
+        plans={plans.filter((p) => p.key === HOEGI_TRIP_KEY)}
+        onPlansChanged={loadPlans}
+        count={counts[HOEGI_TRIP_KEY] ?? 0}
+        onCount={(n) => setCounts((cur) => ({ ...cur, [HOEGI_TRIP_KEY]: n }))}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }
