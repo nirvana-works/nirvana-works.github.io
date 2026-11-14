@@ -78,12 +78,12 @@ export function HoegiTrip({
         </div>
 
         {/* 연수 안내 */}
-        <div className="relative mt-4 min-h-[104px] border-t-[3px] border-dashed border-ink/60 pt-4">
-        <ul className="flex flex-col gap-2 pr-20 text-[15px] leading-snug">
+        <div className="relative mt-4 border-t-[3px] border-dashed border-ink/60 pt-4">
+        <ul className="flex flex-col gap-2 text-[15px] leading-snug">
           <li className="flex gap-2">
             <span aria-hidden>✈️</span>
             <span>
-              <span className="font-black">연수기간</span> : 1/28~30 09:00 ~ 22:00 나고야
+              <span className="font-black">연수기간</span> : 1/28~31 09:00 ~ 22:00 나고야
             </span>
           </li>
           <li className="flex gap-2">
@@ -93,13 +93,34 @@ export function HoegiTrip({
             </span>
           </li>
         </ul>
-        <img src="/hoegilab/course-nup-9.webp" alt="" aria-hidden draggable={false} className="pointer-events-none absolute -bottom-1 right-0 h-[96px] w-auto select-none" />
         </div>
 
         {/* 수강 예정과 수업 리뷰 */}
         <div className="mt-4 flex flex-wrap gap-2">
           <CoursePlans courseKey={HOEGI_TRIP_KEY} title={TITLE} plans={plans} isAdmin={isAdmin} onChanged={onPlansChanged} tone="onYellow" />
           <CourseComments courseKey={HOEGI_TRIP_KEY} title={TITLE} count={count} isAdmin={isAdmin} onCount={onCount} />
+        </div>
+
+        {/* 깃발 든 가이드 넙죽이와 따라가는 친구들. 카드 맨 아래 가장자리를 따라 걷는다. 좁은 화면에서는 가이드 쪽만 크게 보인다 */}
+        <div className="-mx-4 -mb-5 mt-3 overflow-hidden">
+          <div className="relative -ml-[85%] w-[185%] [container-type:inline-size] sm:ml-0 sm:w-full">
+            <img src="/hoegilab/trip-banner.webp" alt="깃발을 든 가이드 넙죽이와 뒤따라가는 넙죽이 친구들" draggable={false} className="block w-full select-none" />
+            <p
+              aria-hidden
+              className="absolute whitespace-nowrap text-center font-pen leading-[0.95] text-white"
+              style={{
+                left: '88%',
+                top: '17.5%',
+                transform: 'translate(-50%,-50%) rotate(-2deg)',
+                fontSize: '3.4cqw',
+                textShadow: '0.045em 0.045em 0 #172040, -0.045em 0.045em 0 #172040, 0.045em -0.045em 0 #172040, -0.045em -0.045em 0 #172040, 0 0.07em 0 #172040',
+              }}
+            >
+              해외현장
+              <br />
+              연수
+            </p>
+          </div>
         </div>
       </div>
     </section>

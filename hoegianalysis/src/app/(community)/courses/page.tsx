@@ -1,13 +1,22 @@
+import { Nanum_Pen_Script } from 'next/font/google';
 import Link from 'next/link';
 import { isAdmin } from '@/lib/adminAuth';
 import { CourseBoard } from '@/components/community/courses/CourseBoard';
 import { COURSES, WINTER_2026_UPDATED } from '@/lib/courses/winter2026';
 
+// 해외현장연수 깃발에 쓰는 손글씨
+const pen = Nanum_Pen_Script({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-pen',
+  adjustFontFallback: false, // 이 글꼴은 Next에 대체 글꼴 보정값이 없다
+});
+
 export const metadata = { title: '2026 겨울학기 개설과목' };
 
 export default function CoursesPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`${pen.variable} flex flex-col gap-6`}>
       <header className="relative">
         <Link href="/" className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] font-bold">
           <span aria-hidden>‹</span> Hoegilab
