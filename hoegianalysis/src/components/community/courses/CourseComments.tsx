@@ -115,10 +115,12 @@ export function CourseComments({ courseKey, title, count, isAdmin, onCount }: { 
       >
         <div className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[12px] font-black text-seal">💬 수업 리뷰</p>
               <h2 className="text-[20px] font-black leading-tight">{title}</h2>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/hoegilab/course-nup-8.webp" alt="" aria-hidden draggable={false} className="-mb-1 h-[92px] w-auto shrink-0 select-none" />
             <button type="button" onClick={() => dialogRef.current?.close()} aria-label="닫기" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[22px]">
               ×
             </button>

@@ -3,8 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { COURSES, type Course, type Day, type FieldKey } from '@/lib/courses/winter2026';
 import { courseKey } from '@/lib/courses/courseKey';
+import { deviceId } from '@/lib/deviceId';
+import type { CoursePlan } from '@/lib/coursePlanTypes';
 import { fieldClass } from '../formStyles';
 import { CourseComments } from './CourseComments';
+import { CoursePlans } from './CoursePlans';
+import { FriendsBoard } from './FriendsBoard';
 
 const DAYS: Day[] = ['월', '화', '수', '목', '금', '토'];
 
@@ -52,7 +56,7 @@ function WeekStrip({ days }: { days: Day[] }) {
   );
 }
 
-function CourseCard({ c, count, isAdmin, onCount }: { c: Course; count: number; isAdmin: boolean; onCount: (n: number) => void }) {
+function CourseCard({ c, count, isAdmin, onCount, plans, onPlansChanged }: { c: Course; count: number; isAdmin: boolean; onCount: (n: number) => void; plans: CoursePlan[]; onPlansChanged: (name?: string) => void }) {
   const f = fieldOf(c.field);
   return (
     <li className="flex flex-col gap-3 rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">
@@ -111,7 +115,10 @@ function CourseCard({ c, count, isAdmin, onCount }: { c: Course; count: number; 
         </div>
       )}
 
-      <CourseComments courseKey={courseKey(c)} title={c.sub ? `${c.name} · ${c.sub}` : c.name} count={count} isAdmin={isAdmin} onCount={onCount} />
+      <div className="flex flex-wrap gap-2">
+        <CoursePlans courseKey={courseKey(c)} title={c.sub ? `${c.name} · ${c.sub}` : c.name} plans={plans} isAdmin={isAdmin} onChanged={onPlansChanged} />
+        <CourseComments courseKey={courseKey(c)} title={c.sub ? `${c.name} · ${c.sub}` : c.name} count={count} isAdmin={isAdmin} onCount={onCount} />
+      </div>
     </li>
   );
 }
@@ -124,6 +131,38 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
   const [days, setDays] = useState<Day[]>([]);
   const [prof, setProf] = useState('');
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [plans, setPlans] = useState<CoursePlan[]>([]);
+  const [showBoard, setShowBoard] = useState(false);
+  const [me, setMeState] = useState('');
+
+  // 수강 예정 전체 목록 (카드의 버튼과 전광판이 함께 쓴다)
+  const loadPlans = async (justAdded?: string) => {
+    try {
+      const res = await fetch(`/api/course-plans?device=${encodeURIComponent(deviceId())}`, { cache: 'no-store' });
+      const d = (await res.json()) as { plans?: CoursePlan[] };
+      setPlans(d.plans ?? []);
+    } catch {
+      /* 못 불러오면 이전 목록 그대로 */
+    }
+    if (justAdded) setMe(justAdded);
+  };
+  const setMe = (n: string) => {
+    setMeState(n);
+    try {
+      if (n) localStorage.setItem('hl_plan_name', n);
+    } catch {
+      /* ignore */
+    }
+  };
+  useEffect(() => {
+    void loadPlans();
+    try {
+      setMeState(localStorage.getItem('hl_plan_name') ?? '');
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 과목별 댓글 개수 (카드의 버튼에 보여 준다)
   useEffect(() => {
@@ -152,7 +191,7 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
       if (prof && c.professor !== prof) return false;
       if (kw && !`${c.name} ${c.sub ?? ''} ${c.professor} ${c.note}`.toLowerCase().includes(kw)) return false;
       return true;
-    });
+    }).sort((a, b) => Number(b.target === 'PMBA Only') - Number(a.target === 'PMBA Only')); // PMBA Only 과목을 맨 위로 (나머지는 원래 순서)
   }, [q, field, target, days, prof]);
 
   const active = !!(q || field || target || days.length || prof);
@@ -168,7 +207,29 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => setShowBoard((v) => !v)}
+          aria-expanded={showBoard}
+          className="flex min-h-[56px] items-center justify-between gap-3 rounded-[14px] border-2 border-ink bg-ink px-4 text-left text-[16px] font-black text-[#FFC83D] shadow-[0_4px_0_#000] active:translate-y-[2px] active:shadow-[0_2px_0_#000]"
+        >
+          <span className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/hoegilab/course-nup-4.webp" alt="" aria-hidden draggable={false} className="h-11 w-11 shrink-0 rounded-full border-2 border-[#FFC83D] bg-white object-cover object-[45%_28%]" />
+            친구들은 어떤 과목 듣지?
+          </span>
+          <span className="shrink-0 font-latin text-[13px] font-semibold opacity-80">{showBoard ? '닫기 ▲' : `${new Set(plans.map((p) => p.name.toLowerCase())).size}명 참여 ▼`}</span>
+        </button>
+        {showBoard && <FriendsBoard plans={plans} me={me} onMe={setMe} />}
+      </div>
+
       <section aria-label="과목 거르기" className="flex flex-col gap-4 rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">
+        <div className="-mb-1 flex items-end justify-between">
+          <p className="text-[15px] font-black">과목 거르기</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hoegilab/course-nup-3.webp" alt="" aria-hidden draggable={false} className="-mt-2 h-[76px] w-auto select-none" />
+        </div>
         <div>
           <label htmlFor="course-q" className="sr-only">
             과목명 또는 교수 검색
@@ -259,7 +320,7 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
       {filtered.length > 0 ? (
         <ul className="flex flex-col gap-5">
           {filtered.map((c) => (
-            <CourseCard key={c.id} c={c} count={counts[courseKey(c)] ?? 0} isAdmin={isAdmin} onCount={(n) => setCounts((cur) => ({ ...cur, [courseKey(c)]: n }))} />
+            <CourseCard key={c.id} c={c} count={counts[courseKey(c)] ?? 0} isAdmin={isAdmin} onCount={(n) => setCounts((cur) => ({ ...cur, [courseKey(c)]: n }))} plans={plans.filter((p) => p.key === courseKey(c))} onPlansChanged={loadPlans} />
           ))}
         </ul>
       ) : (

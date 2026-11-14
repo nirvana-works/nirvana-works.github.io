@@ -61,6 +61,16 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_event_enrollments_event ON event_enrollments(event_id, created_at);
 
+    -- 개설과목 수강 예정: 과목 하나(course_key)에 이름 하나. 같은 이름은 과목마다 한 번만
+    CREATE TABLE IF NOT EXISTS course_plans (
+      id TEXT PRIMARY KEY,
+      course_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      device_id TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_course_plans_course ON course_plans(course_key, created_at);
+
     -- 개설과목 댓글: 과목 하나(course_key)에 들은 사람들의 한마디
     CREATE TABLE IF NOT EXISTS course_comments (
       id TEXT PRIMARY KEY,
