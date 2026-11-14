@@ -338,3 +338,9 @@
   from { color: #17130f; }
   to { color: #F2D80E; }
 }
+
+/* 바이브 코딩 표지 */
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
