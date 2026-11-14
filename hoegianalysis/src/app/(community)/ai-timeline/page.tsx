@@ -131,6 +131,12 @@ export default function AiTimelinePage() {
           </article>
         ))}
       </section>
+
+      <p className="text-[12px] text-inkMuted">
+        <a href="https://nirvana-works.github.io/Todomanager/" target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-4">
+          📋 Todo Manager ↗
+        </a>
+      </p>
     </div>
   );
 }
