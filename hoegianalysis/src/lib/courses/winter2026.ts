@@ -1,5 +1,6 @@
 // 2026 겨울학기 개설과목 (원본: 2026_Winter_Semester_Course_Offerings_Guide, 2026.11.06 기준)
-// 엑셀의 G(과목명) · J(교수) · K(분야) · M(요일) · N(시간) · R(비고) · S(수강 대상) 열만 옮겼다.
+// 엑셀의 G(과목명) · J(교수) · K(분야) · M(요일) · N(시간) · R(비고) · S(수강 대상) 열을 옮기고,
+// 학점은 I열 L:L:C(강의:실험:학점)의 마지막 값을 썼다.
 // 학과별로 중복된 같은 행은 하나로 합쳤다.
 export type Day = '월' | '화' | '수' | '목' | '금' | '토';
 export type FieldKey = '금융' | 'IT경영' | '기술/조직/전략' | '기타(연수/연구)';
@@ -9,6 +10,7 @@ export interface Course {
   name: string;
   sub: string | null; // <> 안의 부제
   professor: string;
+  credits: number; // 학점 (L:L:C의 마지막 값)
   field: FieldKey;
   days: Day[];
   time: string[]; // 요일별 수업 시간
@@ -47,7 +49,8 @@ export const COURSES: Course[] = [
       "1/29",
       "1/30"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 2,
@@ -74,7 +77,8 @@ export const COURSES: Course[] = [
       "1/19",
       "1/21"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 3,
@@ -101,7 +105,8 @@ export const COURSES: Course[] = [
       "1/14",
       "1/19"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 4,
@@ -128,7 +133,8 @@ export const COURSES: Course[] = [
       "1/11",
       "1/13"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 5,
@@ -156,7 +162,8 @@ export const COURSES: Course[] = [
       "1/29",
       "1/30"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 6,
@@ -169,7 +176,8 @@ export const COURSES: Course[] = [
     "target": null,
     "note": "",
     "dates": [],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 7,
@@ -193,7 +201,8 @@ export const COURSES: Course[] = [
       "1/23(토)",
       "1/29(금)"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 8,
@@ -220,7 +229,8 @@ export const COURSES: Course[] = [
       "1/19",
       "1/26"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 9,
@@ -244,7 +254,8 @@ export const COURSES: Course[] = [
       "1/9(토)",
       "1/15(금)"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 10,
@@ -273,7 +284,8 @@ export const COURSES: Course[] = [
       "1/19(화)",
       "1/21(목)"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 1.5
   },
   {
     "id": 11,
@@ -309,7 +321,8 @@ export const COURSES: Course[] = [
       "1/27",
       "1/29"
     ],
-    "extra": []
+    "extra": [],
+    "credits": 3
   },
   {
     "id": 12,
@@ -334,7 +347,8 @@ export const COURSES: Course[] = [
     "extra": [
       "연수기간: 1/12 19:00~22:00 홍릉,  1/27~1/30  09:00~22:00 나고야",
       "연수장소: 나고야 (일본)"
-    ]
+    ],
+    "credits": 1.5
   },
   {
     "id": 13,
@@ -347,7 +361,8 @@ export const COURSES: Course[] = [
     "target": null,
     "note": "",
     "dates": [],
-    "extra": []
+    "extra": [],
+    "credits": 1
   },
   {
     "id": 14,
@@ -360,6 +375,7 @@ export const COURSES: Course[] = [
     "target": null,
     "note": "",
     "dates": [],
-    "extra": []
+    "extra": [],
+    "credits": 1
   }
 ];

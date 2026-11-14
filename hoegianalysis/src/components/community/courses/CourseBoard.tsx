@@ -61,9 +61,14 @@ function CourseCard({ c, count, isAdmin, onCount, plans, onPlansChanged }: { c: 
   return (
     <li className="flex flex-col gap-3 rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">
       <div className="flex items-start justify-between gap-2">
-        <span className="rounded-full border-2 border-ink px-2.5 py-0.5 text-[12px] font-black" style={{ backgroundColor: f.bg, color: f.fg }}>
-          {f.label}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full border-2 border-ink px-2.5 py-0.5 text-[12px] font-black" style={{ backgroundColor: f.bg, color: f.fg }}>
+            {f.label}
+          </span>
+          <span className="rounded-full border-2 border-ink bg-white px-2.5 py-0.5 text-[12px] font-black">
+            <span className="font-latin">{c.credits}</span>학점
+          </span>
+        </div>
         {c.target && <span className="rounded-[6px] border-2 border-ink bg-[#FFF1A8] px-2 py-0.5 font-latin text-[12px] font-semibold">{c.target}</span>}
       </div>
 
