@@ -9,6 +9,7 @@ import { fieldClass } from '../formStyles';
 import { CourseComments } from './CourseComments';
 import { CoursePlans } from './CoursePlans';
 import { FriendsBoard } from './FriendsBoard';
+import { HoegiTrip } from './HoegiTrip';
 
 const DAYS: Day[] = ['월', '화', '수', '목', '금', '토'];
 
@@ -22,6 +23,9 @@ const FIELDS: { key: FieldKey; label: string; bg: string; fg: string }[] = [
 const fieldOf = (k: FieldKey) => FIELDS.find((f) => f.key === k)!;
 
 const NO_TARGET = '__none__';
+
+// 목록 순서: PMBA Only(0) → 나머지(1) → EMBA Only(2)
+const rank = (c: Course) => (c.target === 'PMBA Only' ? 0 : c.target === 'EMBA Only' ? 2 : 1);
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -196,7 +200,7 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
       if (prof && c.professor !== prof) return false;
       if (kw && !`${c.name} ${c.sub ?? ''} ${c.professor} ${c.note}`.toLowerCase().includes(kw)) return false;
       return true;
-    }).sort((a, b) => Number(b.target === 'PMBA Only') - Number(a.target === 'PMBA Only')); // PMBA Only 과목을 맨 위로 (나머지는 원래 순서)
+    }).sort((a, b) => rank(a) - rank(b)); // PMBA Only는 맨 위로, EMBA Only는 맨 뒤(회기분석 카드 바로 위)로. 나머지는 원래 순서
   }, [q, field, target, days, prof]);
 
   const active = !!(q || field || target || days.length || prof);
@@ -337,6 +341,8 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
           </button>
         </div>
       )}
+
+      <HoegiTrip />
     </div>
   );
 }
