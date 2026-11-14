@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Gothic_A1, Poppins } from 'next/font/google';
 import { BirthdayCelebration } from '@/components/community/BirthdayCelebration';
 import { CubeShell } from '@/components/community/CubeShell';
@@ -33,9 +34,14 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t-2 border-ink py-6 font-latin text-[13px] text-inkMuted">
           {/* 회식 '차수(round)'에 빗댄 저작권 문구 */}
           <p>© {new Date().getFullYear()} Hoegilab. All rounds reserved.</p>
-          <p>
-            Designed &amp; built by <span className="font-semibold text-ink">JH</span>
-          </p>
+          <div>
+            <p>
+              Designed &amp; built by <span className="font-semibold text-ink">JH</span>
+            </p>
+            <Link href="/we-can" className="mt-0.5 inline-block text-[12px] underline underline-offset-4">
+              We can do it →
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
