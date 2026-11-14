@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ counts: await courseCommentCounts() }, { headers });
   } catch (error) {
-    return fail(error, '댓글을 불러오지 못했어요.');
+    return fail(error, '리뷰를 불러오지 못했어요.');
   }
 }
 
@@ -31,6 +31,6 @@ export async function POST(request: Request) {
     const comment = await addCourseComment(b.key, b.nickname, b.body, b.deviceId);
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {
-    return fail(error, '댓글을 남기지 못했어요. 다시 시도해 주세요.');
+    return fail(error, '리뷰를 남기지 못했어요. 다시 시도해 주세요.');
   }
 }

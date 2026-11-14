@@ -48,8 +48,8 @@ export async function addCourseComment(rawKey: unknown, rawNickname: unknown, ra
   if (!VALID_COURSE_KEYS.has(key)) throw new CommentError('없는 과목이에요.', 404);
   if (!nickname) throw new CommentError('별명을 입력하세요.');
   if ([...nickname].length > COURSE_COMMENT_LIMITS.nickname) throw new CommentError(`별명은 ${COURSE_COMMENT_LIMITS.nickname}자까지 쓸 수 있어요.`);
-  if (!body) throw new CommentError('댓글 내용을 입력하세요.');
-  if ([...body].length > COURSE_COMMENT_LIMITS.body) throw new CommentError(`댓글은 ${COURSE_COMMENT_LIMITS.body}자까지 쓸 수 있어요.`);
+  if (!body) throw new CommentError('리뷰 내용을 입력하세요.');
+  if ([...body].length > COURSE_COMMENT_LIMITS.body) throw new CommentError(`리뷰는 ${COURSE_COMMENT_LIMITS.body}자까지 쓸 수 있어요.`);
   if (!device || device.length > 64) throw new CommentError('기기 정보를 읽지 못했어요. 새로고침 후 다시 시도해 주세요.');
 
   await initCommunityDb();
@@ -60,7 +60,7 @@ export async function addCourseComment(rawKey: unknown, rawNickname: unknown, ra
   if (last.rows.length) {
     const elapsed = (Date.now() - Date.parse((last.rows[0] as unknown as { created_at: string }).created_at)) / 1000;
     const wait = Math.ceil(COURSE_COMMENT_COOLDOWN_SECONDS - elapsed);
-    if (wait > 0) throw new CommentError(`방금 댓글을 남겼어요. ${wait}초 뒤에 다시 남겨 주세요.`, 429);
+    if (wait > 0) throw new CommentError(`방금 리뷰를 남겼어요. ${wait}초 뒤에 다시 남겨 주세요.`, 429);
   }
 
   const c: CourseComment = { id: crypto.randomUUID(), nickname, body, created_at: new Date().toISOString(), mine: true };
