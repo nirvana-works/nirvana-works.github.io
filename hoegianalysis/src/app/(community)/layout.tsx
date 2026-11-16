@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Gothic_A1, Poppins } from 'next/font/google';
 import { BirthdayCelebration } from '@/components/community/BirthdayCelebration';
 import { CubeShell } from '@/components/community/CubeShell';
@@ -38,9 +37,6 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
             <p>
               Designed &amp; built by <span className="font-semibold text-ink">JH</span>
             </p>
-            <Link href="/we-can" className="mt-0.5 inline-block text-[12px] underline underline-offset-4">
-              We can do it →
-            </Link>
           </div>
         </div>
       </footer>
