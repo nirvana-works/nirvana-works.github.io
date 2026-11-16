@@ -110,6 +110,38 @@ export async function createWallPost(input: WallInput): Promise<WallPost> {
 // 운영자 삭제: 기록은 남기고 벽에서만 숨긴다
 export async function hideWallPost(id: string): Promise<boolean> {
   await initCommunityDb();
-  const result = await getDb().execute({ sql: 'UPDATE wall_posts SET is_hidden = 1 WHERE id = ? AND is_hidden = 0', args: [id] });
+  const result = await getDb().execute({ sql: 'UPDATE wall_posts SET is_hidden = 1, hidden_at = ? WHERE id = ? AND is_hidden = 0', args: [new Date().toISOString(), id] });
   return result.rowsAffected > 0;
+}
+
+// 운영자가 지운(숨긴) 낙서 목록. 숨긴 시각은 기록을 시작한 뒤에 지운 것만 있다
+export interface HiddenWallPost {
+  id: string;
+  nickname: string;
+  content: string;
+  created_at: string;
+  hidden_at: string | null;
+}
+
+export async function listHiddenWallPosts(): Promise<HiddenWallPost[]> {
+  await initCommunityDb();
+  const result = await getDb().execute('SELECT id, nickname, content, created_at, hidden_at FROM wall_posts WHERE is_hidden = 1 ORDER BY created_at DESC');
+  return result.rows.map((r) => {
+    const x = r as unknown as { id: string; nickname: string; content: string; created_at: string; hidden_at: string | null };
+    return { id: x.id, nickname: x.nickname, content: x.content, created_at: x.created_at, hidden_at: x.hidden_at ?? null };
+  });
+}
+
+// 지운 낙서를 벽에 되살린다. ids를 주면 그것만, 'all'이면 지운 것 전부. 되살린 개수를 돌려준다
+export async function restoreWallPosts(ids: string[] | 'all'): Promise<number> {
+  await initCommunityDb();
+  const db = getDb();
+  if (ids === 'all') {
+    const r = await db.execute('UPDATE wall_posts SET is_hidden = 0, hidden_at = NULL WHERE is_hidden = 1');
+    return r.rowsAffected;
+  }
+  if (ids.length === 0) return 0;
+  const marks = ids.map(() => '?').join(',');
+  const r = await db.execute({ sql: `UPDATE wall_posts SET is_hidden = 0, hidden_at = NULL WHERE is_hidden = 1 AND id IN (${marks})`, args: ids });
+  return r.rowsAffected;
 }

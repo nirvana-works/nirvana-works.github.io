@@ -7,6 +7,7 @@ import type { WallPost } from '@/lib/wallPosts';
 import { AdminLogin } from '../AdminLogin';
 import { fieldClass, stickerButtonClass } from '../formStyles';
 import { WALL, WallBackdrop } from './WallBackdrop';
+import { RestoreWall } from './RestoreWall';
 import { BOTTOM_ZONE, PER_SHEET, TOP_PAD, inkShadow, placeGraffiti, sheetHeight } from './graffiti';
 
 const LIMITS = { nickname: 12, content: 140 };
@@ -233,14 +234,17 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={startErasing}
-          aria-pressed={erasing}
-          className={`h-11 rounded-[10px] border-2 border-ink px-4 text-[15px] font-bold ${erasing ? 'bg-ink text-white' : ''}`}
-        >
-          {erasing ? '지우기 끝내기' : '낙서 지우기'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={startErasing}
+            aria-pressed={erasing}
+            className={`h-11 rounded-[10px] border-2 border-ink px-4 text-[15px] font-bold ${erasing ? 'bg-ink text-white' : ''}`}
+          >
+            {erasing ? '지우기 끝내기' : '낙서 지우기'}
+          </button>
+          {(canDelete || erasing) && <RestoreWall />}
+        </div>
         <button
           type="button"
           onClick={() => {
