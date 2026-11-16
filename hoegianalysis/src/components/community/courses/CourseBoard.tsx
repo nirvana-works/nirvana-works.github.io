@@ -233,9 +233,9 @@ export function CourseBoard({ isAdmin = false }: { isAdmin?: boolean }) {
         {showBoard && <FriendsBoard plans={plans} me={me} onMe={setMe} />}
       </div>
 
-      <section aria-label="과목 거르기" className="flex flex-col gap-4 rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">
+      <section aria-label="과목 찾기" className="flex flex-col gap-4 rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">
         <div className="-mb-1 flex items-end justify-between">
-          <p className="text-[15px] font-black">과목 거르기</p>
+          <p className="text-[15px] font-black">과목 찾기</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hoegilab/course-nup-3.webp" alt="" aria-hidden draggable={false} className="-mt-2 h-[76px] w-auto select-none" />
         </div>
