@@ -176,6 +176,22 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_volley_rooms_code ON volley_rooms(code);
 
+    -- 넙죽이 체스 방: 배구 방과 같은 구조 (연결 정보만 전달). target: 0 랜덤 · 1 방장 백 · 2 방장 흑
+    CREATE TABLE IF NOT EXISTS chess_rooms (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      host_name TEXT NOT NULL,
+      host_token TEXT NOT NULL,
+      guest_name TEXT,
+      guest_token TEXT,
+      target INTEGER NOT NULL,
+      offer TEXT,
+      answer TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_chess_rooms_code ON chess_rooms(code);
+
     -- 렉시오: 방 하나에 한 판. 자리(seats)와 게임 상태는 JSON으로 두고 version으로 동시 변경을 막는다
     CREATE TABLE IF NOT EXISTS lexio_games (
       id TEXT PRIMARY KEY,

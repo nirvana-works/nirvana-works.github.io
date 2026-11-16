@@ -12,6 +12,7 @@ export const GAMES = [
   { href: '/games/hwatu', label: '화투점' },
   { href: '/games/blocks', label: '넙죽이 블록' },
   { href: '/games/volley', label: '넙죽이 배구' },
+  { href: '/games/chess', label: '넙죽이 체스' },
   { href: '/games/coffee', label: '커피 마려운 댕댕이' },
   { href: '/games/lunch', label: '점심 처방전' },
 ] as const;
