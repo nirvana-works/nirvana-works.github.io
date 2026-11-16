@@ -94,3 +94,80 @@ function placeAt(h: number, at: { x: number; y: number }, cols: number, height: 
 export function inkShadow(color: string): string | undefined {
   return color === INKS[0] ? '0 1px 0 rgba(0,0,0,0.35)' : undefined;
 }
+
+// ---------- 낙서끼리 겹치지 않게 자리 찾기 ----------
+export interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+// 한 글자가 차지하는 대략적인 폭(px). 낙서 글꼴(25px)·별명 글꼴(17px) 기준
+function textWidth(text: string, hangul: number, other: number): number {
+  let w = 0;
+  for (const ch of text) w += ch === ' ' ? other * 0.6 : /[ㄱ-힣]/.test(ch) ? hangul : other;
+  return w;
+}
+
+// 낙서가 실제로 글씨로 덮는 사각형(회전 여유 포함)
+export function inkRect(p: Placement, content: string, nickname: string, sheetW: number): Rect {
+  const boxW = (p.width / 100) * sheetW;
+  const tw = textWidth(content.replace(/\s+/g, ' '), 22, 11) * 1.05;
+  const lines = Math.min(3, Math.max(1, Math.ceil(tw / Math.max(boxW - 4, 40))));
+  const nickW = textWidth(`- ${nickname}`, 15, 8);
+  const inkW = Math.min(boxW, Math.max(lines > 1 ? boxW : tw, nickW));
+  const h = lines * 27 + 22;
+  const x0 = (p.left / 100) * sheetW;
+  const margin = 12;
+  return { x0: x0 - margin, y0: p.top - margin, x1: x0 + inkW + margin, y1: p.top + h + margin };
+}
+
+function overlapArea(a: Rect, b: Rect): number {
+  const w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+  const h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+  return w > 0 && h > 0 ? w * h : 0;
+}
+
+// 누른 자리에 이미 낙서가 있으면, 가장 가까운 빈 자리로 옮긴다. (글씨는 누른 자리가 중심)
+// 빈 자리가 없으면 가장 덜 겹치는 자리를 쓴다
+export function resolveFreeSpot(args: {
+  spot: { pos_x: number; pos_y: number };
+  content: string;
+  nickname: string;
+  rects: Rect[];
+  sheetW: number;
+  height: number;
+  cols: number;
+}): { pos_x: number; pos_y: number } {
+  const { spot, content, nickname, rects, sheetW, height, cols } = args;
+  const widthPct = cols === 2 ? 56 : 36; // placeAt 과 같은 값
+  const rectAt = (cx: number, cy: number): Rect => {
+    const left = Math.min(Math.max(cx - widthPct / 2, 3), 97 - widthPct);
+    const top = Math.min(Math.max(cy - 22, 8), height - 110);
+    return inkRect({ left, width: widthPct, top, rotate: 0, color: '' }, content, nickname, sheetW);
+  };
+  const cost = (cx: number, cy: number): number => {
+    const r = rectAt(cx, cy);
+    return rects.reduce((sum, o) => sum + overlapArea(r, o), 0);
+  };
+
+  if (cost(spot.pos_x, spot.pos_y) === 0) return spot;
+
+  const R = 420;
+  const step = 14;
+  const cands: { dx: number; dy: number; d: number }[] = [];
+  for (let dy = -R; dy <= R; dy += step) for (let dx = -R; dx <= R; dx += step) cands.push({ dx, dy, d: dx * dx + dy * dy });
+  cands.sort((a, b) => a.d - b.d);
+
+  let best = { pos_x: spot.pos_x, pos_y: spot.pos_y, c: Infinity };
+  for (const { dx, dy } of cands) {
+    const cx = spot.pos_x + (dx / sheetW) * 100;
+    const cy = spot.pos_y + dy;
+    if (cx < 8 || cx > 92 || cy < 56 || cy > height - 120) continue; // 벽 안쪽만
+    const c = cost(cx, cy);
+    if (c === 0) return { pos_x: cx, pos_y: cy };
+    if (c < best.c) best = { pos_x: cx, pos_y: cy, c };
+  }
+  return { pos_x: best.pos_x, pos_y: best.pos_y };
+}

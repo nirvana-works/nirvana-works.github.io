@@ -8,7 +8,7 @@ import { AdminLogin } from '../AdminLogin';
 import { fieldClass, stickerButtonClass } from '../formStyles';
 import { WALL, WallBackdrop } from './WallBackdrop';
 import { RestoreWall } from './RestoreWall';
-import { BOTTOM_ZONE, PER_SHEET, TOP_PAD, inkShadow, placeGraffiti, sheetHeight } from './graffiti';
+import { BOTTOM_ZONE, PER_SHEET, TOP_PAD, inkRect, inkShadow, placeGraffiti, resolveFreeSpot, sheetHeight, type Rect } from './graffiti';
 
 const LIMITS = { nickname: 12, content: 140 };
 
@@ -79,6 +79,20 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
   const sheets = toSheets(posts);
   const height = sheetHeight(cols);
   const last = sheets.length - 1;
+
+  // 낙서가 겹치지 않게: 글을 확정할 때 누른 자리에 이미 낙서가 있으면 가까운 빈 자리로 옮긴다
+  function resolveSpot(spot: { pos_x: number; pos_y: number; sheet: number }, content: string, nickname: string) {
+    const sheetW = scrollerRef.current?.clientWidth || 360;
+    const target = sheets.find((sh) => sh.key === spot.sheet);
+    const rects: Rect[] = (target?.posts ?? []).map((post, i) => {
+      const at = post.pos_x != null && post.pos_y != null ? { x: post.pos_x, y: post.pos_y } : null;
+      return inkRect(placeGraffiti(post.id, i, cols, height, at), post.content, post.nickname, sheetW);
+    });
+    // 왼쪽 아래의 넙죽이 그림·'왔다감' 글씨 자리도 피한다
+    rects.push({ x0: 0, y0: height - 330, x1: 300, y1: height });
+    const free = resolveFreeSpot({ spot, content, nickname, rects, sheetW, height, cols });
+    return { ...spot, ...free };
+  }
 
   function scrollToSheet(i: number, smooth = true) {
     const el = scrollerRef.current;
@@ -267,6 +281,7 @@ export function WallBoard({ initialPosts, canDelete }: { initialPosts: WallPost[
       <ComposeDialog
         dialogRef={composeRef}
         spotRef={spotRef}
+        resolveSpot={resolveSpot}
         onPosted={(post) => {
           setPosts((list) => [...list.filter((p) => p.id !== post.id), post]);
           setFresh(post.id);
@@ -399,10 +414,12 @@ function ViewGraffiti({
 function ComposeDialog({
   dialogRef,
   spotRef,
+  resolveSpot,
   onPosted,
 }: {
   dialogRef: React.RefObject<HTMLDialogElement>;
   spotRef: React.MutableRefObject<{ pos_x: number; pos_y: number; sheet: number } | null>;
+  resolveSpot: (spot: { pos_x: number; pos_y: number; sheet: number }, content: string, nickname: string) => { pos_x: number; pos_y: number; sheet: number };
   onPosted: (post: WallPost) => void;
 }) {
   const [nickname, setNickname] = useState('');
@@ -432,7 +449,12 @@ function ComposeDialog({
       const res = await fetch('/api/wall', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, content, deviceId: deviceId(), ...spotRef.current }),
+        body: JSON.stringify({
+          nickname,
+          content,
+          deviceId: deviceId(),
+          ...(spotRef.current ? resolveSpot(spotRef.current, content.trim(), nickname.trim()) : null),
+        }),
       });
       const data = (await res.json()) as { post?: WallPost; error?: string };
       if (!res.ok || !data.post) {
