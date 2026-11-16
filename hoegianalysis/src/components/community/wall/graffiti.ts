@@ -19,11 +19,13 @@ export const BOTTOM_ZONE = 360; // 넙죽이·스프레이 글씨·바닥 자리
 export const MIN_WALL = 640;
 
 // 낙서장 한 장에 붙는 낙서 수. 가득 차면 새 장이 생긴다
-export const PER_SHEET = 10;
+export const PER_SHEET = 20;
+// 장 높이는 예전(10개) 기준 그대로 둔다. 20개는 같은 높이에 더 촘촘히 붙는다
+const HEIGHT_BASIS = 10;
 
 // 낙서장 높이는 장마다 같다 (가득 찼을 때 기준)
 export function sheetHeight(cols: number): number {
-  return Math.max(MIN_WALL, TOP_PAD + Math.ceil(PER_SHEET / cols) * ROW_HEIGHT + BOTTOM_ZONE);
+  return Math.max(MIN_WALL, TOP_PAD + Math.ceil(HEIGHT_BASIS / cols) * ROW_HEIGHT + BOTTOM_ZONE);
 }
 
 // 기울기: 대부분 살짝, 가끔 확 기울인다 (-16° ~ 16°)
@@ -57,7 +59,7 @@ export function placeGraffiti(
   const rx = ((h >>> 3) % 100) / 100; // 0~1
   const ry = ((h >>> 9) % 100) / 100;
   const stagger = row % 2 === 1 ? colWidth * 0.08 : 0;
-  const top = TOP_PAD + row * ROW_HEIGHT + (ry - 0.5) * 30;
+  const top = TOP_PAD + row * ROW_HEIGHT * (HEIGHT_BASIS / PER_SHEET) + (ry - 0.5) * 30;
 
   // 황토 칠 위에서는 흰 분필이 안 보여서 검정으로 바꾼다
   let color: string = INKS[(h >>> 16) % INKS.length];
