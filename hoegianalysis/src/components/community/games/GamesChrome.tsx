@@ -14,6 +14,7 @@ export const GAMES = [
   { href: '/games/volley', label: '넙죽이 배구' },
   { href: '/games/chess', label: '넙죽이 체스' },
   { href: '/games/nambuk', label: '남북전쟁' },
+  { href: '/games/slot', label: '학자금 슬롯' },
   { href: '/games/coffee', label: '커피 마려운 댕댕이' },
   { href: '/games/lunch', label: '점심 처방전' },
 ] as const;

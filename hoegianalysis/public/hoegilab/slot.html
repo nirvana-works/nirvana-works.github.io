@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>학자금 슬롯 · Hoegilab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;700;900&family=Nanum+Pen+Script&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#dde5a6; --ink:#000; --muted:#4c5230; --sticker:#f2d80e; --stamp:#e63946; --blue:#2B50E6;
+  --board:#25392f; --board2:#1b2b23; --wood:#7a5632; --wood2:#5d4126; --chalk:#eef1e4; --chalk2:#b9c4ad;
+  --row:clamp(46px,12.2vw,64px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Gothic A1',ui-sans-serif,system-ui,sans-serif;word-break:keep-all;min-height:100vh}
+.wrap{max-width:672px;margin:0 auto;padding:12px 12px 28px;display:flex;flex-direction:column;gap:24px}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #000;outline-offset:2px}
+
+/* ---- site chrome (mirrors hoegilab) ---- */
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-weight:900;font-size:18px;display:inline-block}
+.logo::after{content:"";display:block;height:2px;background:#000;margin-top:8px;width:100%}
+.cube-ico{width:56px;height:56px;position:relative}
+.cube-ico i{position:absolute;width:12px;height:12px;border:2px solid #000}
+.cube-ico i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+.cube-ico i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.cube-ico i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+.cube-ico i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.cube-ico svg{position:absolute;inset:9px;width:38px;height:38px}
+h1{margin:0;font-size:32px;font-weight:900;line-height:1.15}
+.sub{margin:4px 0 0;font-size:14px;line-height:1.35;color:var(--muted)}
+.facenav{margin-top:20px;display:flex;justify-content:space-between;border-top:2px solid #000;font-size:14px;font-weight:700}
+.facenav a{min-height:44px;display:flex;align-items:center;gap:6px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:-8px}
+.pill{border:2px solid #000;border-radius:999px;padding:6px 16px;font-size:15px;font-weight:700;background:#fff}
+.pill.on{background:#000;color:#fff}
+.pill.new{position:relative}
+.pill.new::after{content:"NEW";position:absolute;top:-9px;right:-6px;background:var(--stamp);color:#fff;font:700 9px/1 'Poppins',sans-serif;padding:3px 5px;border-radius:6px;border:1.5px solid #000;transform:rotate(8deg)}
+.pill.soon{border-style:dashed;border-color:var(--muted);color:var(--muted);background:transparent}
+.proto-tag{align-self:flex-start;border:2px dashed var(--muted);border-radius:10px;padding:6px 12px;font-size:12px;color:var(--muted);line-height:1.4}
+h2{margin:0;font-size:28px;font-weight:900;line-height:1.2}
+.foot{border-top:2px solid #000;padding-top:14px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);gap:8px}
+.foot b{color:#000}
+
+/* ---- board ---- */
+.board{position:relative;background:var(--board);border:5px solid var(--wood);border-radius:12px;box-shadow:inset 0 0 0 2px var(--wood2),inset 0 0 40px rgba(0,0,0,.45);padding:12px;color:var(--chalk);overflow:hidden;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:24px 24px}
+.hint-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hs{background:var(--board2);border:2px solid var(--wood);border-radius:8px;padding:6px 6px 7px;font-family:'Nanum Pen Script','Gothic A1',cursive;font-size:16px;line-height:1.2;color:var(--chalk);text-align:center}
+.hs b{display:block;color:var(--sticker);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:1px}
+
+.track{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:10px}
+.sem{min-height:40px;border:2px solid var(--wood);border-radius:8px;background:var(--board2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:1.15;color:var(--chalk2);font-weight:700;text-align:center;padding:2px}
+.sem small{display:block;font-weight:400;font-size:11px}
+.sem.done{background:#3a6b4a;border-color:#7ddc8a;color:#fff}
+.sem.now{background:var(--sticker);border-color:#000;color:#000}
+.track.endless{grid-template-columns:1fr}
+.track.endless .sem{background:var(--sticker);color:#000;border-color:#000;min-height:34px;font-size:14px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.chip{background:var(--board2);border:2px solid var(--wood);border-radius:8px;padding:5px 4px 6px;text-align:center;min-width:0}
+.chip small{display:block;font-family:'Nanum Pen Script',cursive;font-size:15px;color:var(--chalk2);line-height:1}
+.chip b{display:block;font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;line-height:1.35;white-space:nowrap}
+.chip b em{font-style:normal;font-size:11px;font-family:'Gothic A1',sans-serif;color:var(--chalk2);margin-left:1px}
+.chip.cash{border-color:#d99a00}
+.chip.bank{border-color:#7ddc8a}
+.atm{margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.atm button{min-height:40px;border:2px solid #7ddc8a;border-radius:10px;background:rgba(125,220,138,.12);color:#c9f5d0;font-weight:700;font-size:13px}
+.atm button:hover:not(:disabled){background:rgba(125,220,138,.28)}
+.atm button:disabled{opacity:.4;cursor:not-allowed}
+
+.letter{position:relative;background:#fff8dc;color:#2a2418;border:2px solid #000;border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.4;box-shadow:2px 3px 0 rgba(0,0,0,.45);transform:rotate(-.6deg)}
+.letter b{font-weight:900}
+.letter .lt{font-weight:900;font-size:13px;margin-bottom:2px}
+.letter.s2{background:#ffe9b0}.letter.s3{background:#ffc9c9;animation:shakeS 1.6s infinite}.letter.s4{background:#e8d0ff;animation:shakeS 1.6s infinite}.letter.ok{background:#d6f5db}
+@keyframes shakeS{0%,92%,100%{transform:rotate(-.6deg)}94%{transform:rotate(1.4deg)}96%{transform:rotate(-1.6deg)}98%{transform:rotate(1deg)}}
+.bill{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:4px;align-items:center;margin-top:10px;text-align:center}
+.bill div small{display:block;font-family:'Nanum Pen Script',cursive;font-size:16px;color:var(--chalk2);line-height:1}
+.bill div b{display:block;font-family:'Poppins',sans-serif;font-size:19px;line-height:1.3;white-space:nowrap}
+.bill div b em{font-style:normal;font-size:11px;font-family:'Gothic A1',sans-serif;margin-left:1px;color:var(--chalk2)}
+.bill .op{font-family:'Poppins',sans-serif;font-size:18px;color:var(--chalk2)}
+.bill .short{background:rgba(230,57,70,.18);border:2px solid var(--stamp);border-radius:8px;padding:2px 4px}
+.bill .short b{color:#ff9aa4}
+.bill .short.ok{background:rgba(125,220,138,.18);border-color:#7ddc8a}.bill .short.ok b{color:#9fe8aa}
+.depo{margin-top:8px;width:100%;min-height:44px;border:2px solid #7ddc8a;border-radius:10px;background:rgba(125,220,138,.2);color:#d9ffe0;font-weight:900;font-size:13px;animation:pulseG 1.4s infinite;line-height:1.25}
+.depo:disabled{display:none}
+@keyframes pulseG{0%,100%{box-shadow:0 0 0 0 rgba(125,220,138,.5)}50%{box-shadow:0 0 0 6px rgba(125,220,138,0)}}
+.rdots i{height:22px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:var(--chalk2)}
+.rdots i.done{color:#000}.rdots i.now{color:var(--sticker)}
+.goal{margin-top:10px;background:var(--board2);border:3px solid var(--sticker);border-radius:12px;padding:10px 12px}
+.goal-t{font-weight:900;font-size:16px;line-height:1.3}
+.goal-t em{font-style:normal;color:var(--sticker);font-family:'Poppins',sans-serif}
+.goal-sub{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-size:13px;color:var(--chalk2)}
+.goal-sub b{color:var(--chalk);font-family:'Poppins',sans-serif}
+.bar{position:relative;height:18px;border:2px solid var(--wood);border-radius:9px;background:#10201a;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--sticker);transition:width .6s}
+.bar.ok i{background:#7ddc8a}
+.goal-warn{margin-top:6px;font-size:12.5px;line-height:1.35;color:#ff9aa4}
+.goal-warn.ok{color:#9fe8aa}
+.goal-loan{margin-top:4px;font-size:12px;color:var(--chalk2)}
+
+.roundbox{margin-top:10px;min-height:76px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.rd-l{font-weight:900;font-size:15px;line-height:1.3;min-height:58px}
+.rd-l small{display:block;font-weight:400;font-size:12px;color:var(--chalk2)}
+.rdots{display:flex;gap:5px;margin-top:6px}
+.rdots i{flex:1;height:14px;border-radius:4px;border:2px solid var(--chalk2)}
+.rdots i.done{background:var(--chalk2)}
+.rdots i.now{border-color:var(--sticker);background:rgba(242,216,14,.35)}
+.rdots i.extra{border-color:#ff9aa4;background:rgba(255,154,164,.35)}
+.left{min-width:92px;text-align:center;background:var(--sticker);color:#000;border:2px solid #000;border-radius:12px;padding:4px 8px 6px}
+.left small{display:block;font-size:11px;font-weight:700;line-height:1.2}
+.left b{display:block;font-family:'Poppins',sans-serif;font-size:30px;line-height:1}
+.left b span{font-family:'Gothic A1',sans-serif;font-size:13px;margin-left:1px}
+.left.zero{background:#555;color:#ddd;border-color:#333}
+
+/* ---- machine ---- */
+.machine{margin-top:10px;background:var(--board2);border:3px solid var(--wood);border-radius:12px;padding:10px}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;min-height:28px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:12px;font-weight:700;border:2px solid var(--wood);border-radius:999px;padding:1px 9px;background:rgba(0,0,0,.25)}
+.badge.hot{border-color:var(--sticker);color:var(--sticker)}
+.fastbtn{border:2px solid var(--chalk2);border-radius:999px;background:transparent;color:var(--chalk);font-size:12px;font-weight:700;padding:3px 10px;min-height:30px}
+.fastbtn.on{background:var(--sticker);color:#000;border-color:#000}
+.reels{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.rwin{position:relative;height:calc(var(--row)*3);background:var(--chalk);border:3px solid #000;border-radius:10px;overflow:hidden}
+.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.cell{display:grid;place-items:center;font-size:calc(var(--row)*.6);line-height:1;border-top:1px solid rgba(0,0,0,.08)}
+.cell.s-coffee{background:#e9d3b8}.cell.s-ramen{background:#ffd0a8}.cell.s-excel{background:#bfe0ff}.cell.s-net{background:#ffd3ea}.cell.s-book{background:#d9ccff}.cell.s-idea{background:#fff3a0}.cell.s-degree{background:#bff0c6}.cell.s-team{background:#d8d8d8}
+.cell.dim{opacity:.38;filter:grayscale(.5)}
+.cell.hit{box-shadow:inset 0 0 0 3px #000;animation:hit .6s ease-out;z-index:1}
+.reels{position:relative}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+.lines polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;animation:lineIn .5s ease-out both}
+.lines .u{stroke:#fff;stroke-width:9}.lines .c{stroke-width:5}
+@keyframes lineIn{from{opacity:0}to{opacity:1}}
+.mdot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;border:1.5px solid #fff;vertical-align:-1px}
+.mlist li small{display:block;font-size:11px;color:var(--chalk2)}
+.mlist li span{min-width:0}
+.cell.bad{background:rgba(230,57,70,.35);box-shadow:inset 0 0 0 2px var(--stamp)}
+@keyframes hit{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.rwin.moving .cell{filter:blur(1.4px)}
+.rwin.thud{animation:thud .22s ease-out}
+@keyframes thud{0%{transform:translateY(-3px)}60%{transform:translateY(2px)}100%{transform:none}}
+
+.controls{margin-top:10px;display:grid;gap:8px;grid-template-columns:1fr;min-height:64px}
+.controls.two{grid-template-columns:1fr 1fr}
+.btn{min-height:64px;border:2px solid #000;border-radius:10px;background:var(--sticker);color:#000;font-weight:900;font-size:16px;padding:6px 12px;line-height:1.25}
+.btn small{display:block;font-weight:700;font-size:12px;opacity:.8}
+.btn:hover:not(:disabled){background:#e3c900}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.alt{background:var(--chalk);font-size:14px;min-height:44px}
+.btn.settle{background:var(--stamp);color:#fff}
+.btn.mini{min-height:40px;font-size:13px;padding:4px 10px}
+.abil{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-height:44px}
+.abil button{min-height:44px;border:2px solid #ff7b86;border-radius:10px;background:rgba(230,57,70,.18);color:#ffd5d9;font-weight:700;font-size:13px}
+.abil button.on{background:var(--stamp);color:#fff}
+.abil button:disabled{opacity:.4;cursor:not-allowed}
+.abil .none{grid-column:1/-1;display:grid;place-items:center;border:2px dashed var(--wood);border-radius:10px;font-family:'Nanum Pen Script',cursive;font-size:17px;color:var(--chalk2);opacity:.8}
+
+.result{margin-top:10px;min-height:210px}
+.rhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rtitle{font-family:'Nanum Pen Script',cursive;font-size:20px;color:var(--chalk2)}
+.grade{font-family:'Poppins',sans-serif;font-weight:700;font-size:34px;line-height:1}
+.grade.g-a{color:var(--sticker);text-shadow:0 0 14px rgba(242,216,14,.5)}
+.pay{font-family:'Poppins',sans-serif;font-weight:700;font-size:20px;text-align:right;line-height:1.1}
+.pay small{display:block;font-family:'Gothic A1',sans-serif;font-weight:400;font-size:11px;color:var(--chalk2)}
+.mlist{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.mlist li{display:flex;justify-content:space-between;gap:8px;font-size:13px;background:rgba(255,255,255,.06);border-radius:6px;padding:3px 8px}
+.mlist li b{font-family:'Poppins',sans-serif;font-weight:600;white-space:nowrap}
+.mlist li.cut{color:#ffb3bb;background:rgba(230,57,70,.15)}
+.mlist li.good{color:#c9f5d0;background:rgba(125,220,138,.12)}
+.note{font-family:'Nanum Pen Script',cursive;font-size:19px;color:var(--chalk2);line-height:1.2;margin-top:2px}
+
+.mascot{display:flex;gap:10px;align-items:center;margin-top:12px}
+.mascot svg{width:64px;height:64px;flex:none}
+.bubble{position:relative;flex:1;background:var(--board2);border:2px solid var(--wood);border-radius:10px;padding:8px 10px;font-family:'Nanum Pen Script',cursive;font-size:19px;line-height:1.2;color:var(--chalk)}
+.bubble::before{content:"";position:absolute;left:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-right-color:var(--wood);border-left:0}
+
+.shelf-h{margin-top:12px;display:flex;justify-content:space-between;font-family:'Nanum Pen Script',cursive;font-size:20px;color:var(--chalk2)}
+.shelf{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;min-height:40px}
+.it{display:flex;align-items:center;gap:5px;background:var(--board2);border:2px solid var(--wood);border-radius:999px;padding:3px 10px 3px 6px;font-size:12px;font-weight:700;min-height:36px;color:var(--chalk)}
+.it span{font-size:18px}
+.it:hover{border-color:var(--sticker)}
+.empty{font-family:'Nanum Pen Script',cursive;font-size:17px;color:var(--chalk2);opacity:.7;align-self:center}
+details{margin-top:10px;background:var(--board2);border:2px solid var(--wood);border-radius:10px;padding:8px 12px}
+summary{cursor:pointer;font-family:'Nanum Pen Script',cursive;font-size:20px;color:var(--chalk)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.tbl th{font-weight:400;font-size:11px;color:var(--chalk2);text-align:left;padding:2px}
+.tbl td{padding:4px 2px;border-top:1px dashed rgba(255,255,255,.18)}
+.tbl td:nth-child(n+2),.tbl th:nth-child(n+2){text-align:right;font-family:'Poppins',sans-serif;font-weight:600}
+.ptip{font-size:12px;color:var(--chalk2);margin:8px 0 0;line-height:1.45}
+
+/* ---- modal ---- */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,16,12,.72);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.modal.show{display:flex}
+.mcard{width:100%;max-width:460px;margin:auto;background:#fff;color:#000;border:3px solid #000;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.mcard h3{margin:0;font-size:22px;font-weight:900}
+.mcard h4{margin:4px 0 0;font-size:14px;text-align:left}
+.mcard p{margin:0;font-size:14px;line-height:1.5;color:#333}
+.mcard p.warn{color:#b3121f;font-weight:700}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;text-align:left;font-size:14px;border-top:2px solid #000;border-bottom:2px solid #000;padding:10px 0}
+.kv b{font-family:'Poppins',sans-serif;text-align:right}
+.pills2{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.coupon{display:inline-flex;align-items:center;gap:6px;background:var(--sticker);border:2px solid #000;border-radius:999px;padding:3px 14px;font-weight:900;font-size:15px}
+.coupon.g{background:#d6f5db}
+.offers{display:grid;gap:8px}
+.offer{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid #000;border-radius:12px;padding:8px 10px}
+.offer .ic{font-size:28px;flex:none}
+.offer .tx{flex:1;min-width:0}
+.offer b{display:block;font-size:14px}
+.offer span.d{font-size:12px;color:#444;line-height:1.35;display:block}
+.offer .buy{flex:none;min-width:66px;min-height:44px;border:2px solid #000;border-radius:10px;background:var(--sticker);font-weight:900;font-size:14px}
+.offer .buy.sell{background:#fff}
+.offer .buy:disabled{opacity:.4;cursor:not-allowed}
+.offer.sold{opacity:.4}
+.offer.special{background:#f4f7e0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mcard .btn{min-height:50px}
+.mcard .btn.alt{min-height:44px}
+.name-row{display:flex;gap:8px}
+.name-row input{flex:1;min-width:0;height:44px;border:2px solid #000;border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
+.modal.dark{background:radial-gradient(circle at 50% 40%,rgba(80,0,0,.88),rgba(0,0,0,.96) 70%)}
+.modal.dark .mcard{background:#120a0a;color:#f1dcdc;border-color:#5a1218;box-shadow:0 0 40px rgba(230,57,70,.35)}
+.modal.dark .mcard p{color:#c9a9a9}
+.modal.dark .btn{background:#2a1214;color:#f1dcdc;border-color:#5a1218}
+.modal.dark .btn:hover{background:#3a181b}
+.modal.dark .name-row input{background:#1c0f10;color:#f1dcdc;border-color:#5a1218}
+.dline{font-family:'Nanum Pen Script',cursive;font-size:24px;line-height:1.25;opacity:0;animation:fadein .8s forwards}
+.dline.red{color:#ff5a68}
+.dline.flick{animation:fadein .8s forwards,flick 2.6s 1s infinite}
+@keyframes fadein{to{opacity:1}}
+@keyframes flick{0%,100%{opacity:1}8%{opacity:.25}12%{opacity:1}50%{opacity:.9}54%{opacity:.15}58%{opacity:1}}
+.stamp{align-self:center;border:4px solid var(--stamp);color:var(--stamp);font-weight:900;font-size:34px;padding:2px 18px;border-radius:8px;transform:rotate(-8deg) scale(1.6);opacity:0;animation:stampIn .35s 2.4s forwards;letter-spacing:4px}
+@keyframes stampIn{to{transform:rotate(-8deg) scale(1);opacity:1}}
+.shake{animation:shake .5s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.flashA{animation:flashA .7s}
+@keyframes flashA{0%{box-shadow:inset 0 0 0 2px var(--wood2),inset 0 0 40px rgba(0,0,0,.45)}30%{box-shadow:inset 0 0 0 2px var(--sticker),inset 0 0 60px rgba(242,216,14,.55)}100%{box-shadow:inset 0 0 0 2px var(--wood2),inset 0 0 40px rgba(0,0,0,.45)}}
+
+/* ---- ranking ---- */
+.card{background:#fff;border:2px solid #000;border-radius:14px;padding:16px}
+.card h3{margin:0 0 8px;font-size:18px;font-weight:900}
+.rank{width:100%;border-collapse:collapse;font-size:14px}
+.rank td,.rank th{padding:7px 4px;border-top:1px solid #ddd;text-align:left}
+.rank th{font-size:12px;color:var(--muted);border-top:0}
+.rank td:nth-child(n+3),.rank th:nth-child(n+3){text-align:right}
+.rank td:first-child{font-family:'Poppins',sans-serif;font-weight:700;width:28px}
+.hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important}.strip{transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="board" id="board">
+      <div class="hint-steps">
+        <div class="hs"><b>1</b>이번 달 응모 횟수를<br>고르고 슬롯을 돌려요</div>
+        <div class="hs"><b>2</b>같은 그림이 3개 이상<br>이어지면 선이 그어져요</div>
+        <div class="hs"><b>3</b>🏧 통장에 넣어야<br>상환돼요. 지갑은 털릴 수 있어요</div>
+      </div>
+
+      <div class="track" id="track"></div>
+
+      <div class="roundbox">
+        <div>
+          <div class="rd-l" id="rdL"></div>
+          <div class="rdots" id="rdots"></div>
+        </div>
+        <div class="left" id="left"><small>남은 응모 기회</small><b id="leftN">0<span>회</span></b></div>
+      </div>
+
+      <div class="machine">
+        <div class="mhead">
+          <div class="badges" id="badges"></div>
+          <button class="fastbtn" id="fastBtn" data-go="fast">⚡ 빠르게</button>
+        </div>
+        <div class="reels" id="reels">
+          <div class="rwin"><div class="strip"></div></div>
+          <div class="rwin"><div class="strip"></div></div>
+          <div class="rwin"><div class="strip"></div></div>
+          <div class="rwin"><div class="strip"></div></div>
+          <div class="rwin"><div class="strip"></div></div>
+          <svg class="lines" id="lines" viewBox="0 0 5 3" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="controls" id="controls"></div>
+        <div class="abil" id="abil"></div>
+        <div class="result" id="result"></div>
+      </div>
+
+      <div class="stats">
+        <div class="chip cash"><small>지갑 현금</small><b id="sCash">0<em>만</em></b></div>
+        <div class="chip bank"><small>통장 (상환용)</small><b id="sBank">0<em>만</em></b></div>
+        <div class="chip"><small>쿠폰 🎟️</small><b id="sCpn">0<em>장</em></b></div>
+      </div>
+      <div class="atm">
+        <button data-atm="all" id="atmAll">🏧 지갑 전액 입금</button>
+        <button data-atm="half" id="atmHalf">🏧 절반만 입금</button>
+      </div>
+
+      <div class="goal" id="goal">
+        <div class="letter" id="letter"></div>
+        <div class="bill"><div><small>학기 말 낼 돈</small><b id="bReq"></b></div><div class="op">−</div><div><small>내 통장</small><b id="bBank"></b></div><div class="op">=</div><div class="short" id="bShort"><small>부족한 돈</small><b id="bNeed"></b></div></div>
+        <div class="bar" id="bar"><i id="barI"></i></div>
+        <button class="depo" id="depo" data-atm="all"></button>
+        <div class="goal-warn" id="goalWarn"></div>
+        <div class="goal-loan" id="goalLoan"></div>
+      </div>
+
+      <div class="mascot">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 10c-4-8-12-6-12-6s0 8 8 10" fill="#4caf63" stroke="#000" stroke-width="2"/>
+          <path d="M32 12c14 0 24 16 24 30 0 10-8 17-24 17S8 52 8 42c0-14 10-30 24-30z" fill="#5bb8e8" stroke="#000" stroke-width="2.5"/>
+          <circle cx="23" cy="36" r="7" fill="#fff" stroke="#000" stroke-width="2"/><circle cx="41" cy="36" r="7" fill="#fff" stroke="#000" stroke-width="2"/>
+          <circle cx="24" cy="37" r="3" fill="#000"/><circle cx="42" cy="37" r="3" fill="#000"/>
+          <path d="M27 48q5 4 10 0" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <div class="bubble" id="bubble"></div>
+      </div>
+
+      <div class="shelf-h"><span>보유 아이템 <small style="font-size:15px">(눌러서 팔기)</small></span><span id="slotN">0/5</span></div>
+      <div class="shelf" id="shelf"></div>
+
+      <details>
+        <summary>그림 확률·점수표 보기</summary>
+        <table class="tbl" id="symtable"></table>
+        <table class="tbl" id="pattable" style="margin-top:8px"></table>
+        <p class="ptip" id="ptip"></p><p class="ptip" id="unl"></p>
+      </details>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>회기랩 장학 랭킹</h3>
+    <table class="rank" id="rank"></table>
+    <p class="hint">이 기기에 저장된 기록만 보여요.</p>
+  </section>
+
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="mcard" id="mcard"></div></div>
+
+<script>
+(function(){
+'use strict';
+/* ===================== data ===================== */
+var SYMS=['coffee','ramen','excel','net','book','idea','degree'];
+var SYM={coffee:{e:'☕',n:'커피'},ramen:{e:'🍕',n:'야식'},excel:{e:'📊',n:'엑셀'},net:{e:'🥂',n:'네트워킹'},book:{e:'📚',n:'케이스'},idea:{e:'💡',n:'아이디어'},degree:{e:'🎓',n:'A+ 학점'},team:{e:'👥',n:'팀플'}};
+/* 원작과 같은 비율: 낮은 가치 그림이 흔하고 가장 귀한 그림이 7.5% */
+var BASE_W={coffee:1.3,ramen:1.3,excel:1.0,net:1.0,book:0.8,idea:0.8,degree:0.5};
+var BASE_V={coffee:10,ramen:10,excel:20,net:20,book:40,idea:40,degree:100};
+var VS=1.5; /* 가치 배율 (밸런스 조정용) */
+var COLS=5, ROWS=3;
+var SHAPES=[
+ {name:'V자',rows:[0,1,2,1,0]},{name:'역V자',rows:[2,1,0,1,2]},
+ {name:'지그재그',rows:[0,1,0,1,0]},{name:'지그재그',rows:[2,1,2,1,2]}
+];
+var SEM_NAMES=['1학년 봄학기','1학년 가을학기','2학년 봄학기','2학년 가을학기','3학년 봄학기','3학년 가을학기'];
+var SEM_SHORT=[['1학년','봄'],['1학년','가을'],['2학년','봄'],['2학년','가을'],['3학년','봄'],['3학년','가을']];
+var TARGETS=[200,450,800,1050,1250,1250];
+var SEMS=TARGETS.length;
+var LOAN_TOTAL=TARGETS.reduce(function(a,b){return a+b},0);
+var ROUNDS=3, FEE_PCT=0.18, BASE_SLOTS=5, MAX_SLOTS=10, BASE_INTEREST=0.06, GRANT=150;
+var DANGER={triple:0.015,dbl:0.06,single:0.075};
+
+var ITEMS=[];
+(function build(){
+  var pp={coffee:1,ramen:1,excel:1,net:1,book:2,idea:2,degree:2}, gp={coffee:2,ramen:2,excel:2,net:2,book:3,idea:3,degree:3};
+  SYMS.forEach(function(k){
+    ITEMS.push({id:'p_'+k,ic:SYM[k].e,n:SYM[k].n+' 포스터',p:pp[k],d:SYM[k].e+' '+SYM[k].n+'이(가) 더 자주 나와요.'});
+  });
+  SYMS.forEach(function(k){
+    ITEMS.push({id:'g_'+k,ic:'✨',n:'황금 '+SYM[k].e,p:gp[k],d:SYM[k].e+' '+SYM[k].n+'의 가치가 2배예요.'});
+  });
+  [
+   {id:'diag',ic:'📐',n:'대각선 마스터',p:2,d:'대각선 패턴의 배수가 2배예요.'},
+   {id:'col',ic:'🪜',n:'세로줄 달인',p:2,d:'세로 3줄 패턴의 배수가 2배예요.'},
+   {id:'five',ic:'👀',n:'교수님 눈도장',p:2,d:'가로 4연속·5연속의 배수가 2배예요.'},
+   {id:'vsh',ic:'🔱',n:'모양 전문가',p:2,d:'V자·지그재그 패턴의 배수가 2배예요.'},
+   {id:'shroom',ic:'🍄',n:'야식 파티',p:2,d:'한 번에 패턴 3개 이상이면 그 달이 끝날 때까지 모든 그림 가치가 2배예요.'},
+   {id:'pent',ic:'⭐',n:'별점 다섯 개',p:3,d:'한 번에 패턴 5개 이상이면 모든 점수 배수가 영구적으로 +0.5 올라요.'},
+   {id:'cat',ic:'🐱',n:'복고양이',p:1,d:'한 번에 패턴 3개 이상이면 현재 통장 이자만큼 현금을 받아요.'},
+   {id:'clover',ic:'🍀',n:'네잎클로버',p:2,d:'행운 +1. 같은 그림이 최소 1칸 더 보장돼요.'},
+   {id:'rainbow',ic:'🌈',n:'무지개',p:3,d:'행운 +2. 같은 그림이 최소 2칸 더 보장돼요.'},
+   {id:'oracle',ic:'🔮',n:'점괘',p:2,d:'매 응모마다 행운 스파크(행운 +3) 확률이 10%p 올라요.'},
+   {id:'bank',ic:'💳',n:'이자 우대',p:2,d:'통장 이자율이 5%p 올라요.'},
+   {id:'grant',ic:'🏛️',n:'장학재단 인맥',p:2,d:'매 학기 시작할 때 지갑에 '+GRANT+'만원을 받아요.'},
+   {id:'jokbo',ic:'📓',n:'선배 족보',p:3,d:'모든 응모의 장학금이 25% 늘어요.'},
+   {id:'tuition',ic:'🧾',n:'등록금 감면',p:2,d:'학기 상환 목표가 10% 줄어요.'},
+   {id:'nap',ic:'🛏️',n:'낮잠 쿠션',p:3,d:'달마다 응모 기회가 1회 늘어요.'},
+   {id:'waive',ic:'🎫',n:'팀플 면제권',p:2,d:'👥 팀플이 나올 확률이 60% 줄어요.'},
+   {id:'shield',ic:'🛡️',n:'학사 면책',p:3,d:'학기마다 1번, 팀플 3개가 나와도 지갑 현금을 지켜 줘요.'},
+   {id:'ankh',ic:'🙏',n:'교수님 선처',p:3,d:'학기 정산에 실패하면 연체 유예 1개월을 받아요 (1회용).'},
+   {id:'energy',ic:'🥤',n:'에너지 드링크',p:2,d:'능력: 달마다 1번, 다음 응모의 행운을 +4 올려요.'},
+   {id:'retake',ic:'📝',n:'재수강 신청서',p:3,d:'능력: 학기마다 2번, 방금 응모를 무르고 다시 돌려요.'}
+  ].forEach(function(x){ITEMS.push(x)});
+})();
+var UNLOCK_START=['p_coffee','p_ramen','p_excel','p_net','p_book','p_idea','p_degree','diag','col','waive'];
+var UNLOCK_NEXT=['bank','g_coffee','g_ramen','five','vsh','clover','grant','g_excel','g_net','cat','jokbo','tuition','nap','oracle','energy','shield','g_book','g_idea','shroom','retake','rainbow','pent','g_degree','ankh'];
+var UNLOCK_STEP=3;
+function failCount(){try{return +localStorage.getItem('hl_slot_fails')||0}catch(e){return 0}}
+function unlockedIds(n){return UNLOCK_START.concat(UNLOCK_NEXT.slice(0,n*UNLOCK_STEP))}
+function itemById(id){for(var i=0;i<ITEMS.length;i++)if(ITEMS[i].id===id)return ITEMS[i];return null}
+
+var CALLS=[
+ {ic:'🗄️',n:'학과 조교 전화',d:'아이템 슬롯이 영구적으로 1칸 늘어요.',fn:function(){S.slots=Math.min(MAX_SLOTS,S.slots+1)}},
+ {ic:'🎟️',n:'동기 전화',d:'쿠폰 4장을 받아요.',fn:function(){S.coupons+=4}},
+ {ic:'🎓',n:'지도교수님 전화',d:'🎓 A+ 학점의 가치가 영구적으로 2배가 돼요.',fn:function(){S.perm.degreeMult*=2}},
+ {ic:'🏦',n:'선배 전화',d:'통장 이자율이 영구적으로 3%p 올라요.',fn:function(){S.perm.interest+=0.03}},
+ {ic:'🍀',n:'스터디 모임',d:'행운이 영구적으로 1 올라요.',fn:function(){S.perm.luck+=1}},
+ {ic:'💰',n:'장학재단 전화',d:'지갑에 현금을 받아요 (다음 학기 목표의 30%).',fn:function(){S.cash+=Math.round(target(S.sem+1)*0.3)}},
+ {ic:'🆓',n:'응모비 할인 안내',d:'7회 응모비가 영구적으로 절반이 돼요.',fn:function(){S.perm.fee*=0.5}},
+ {ic:'😈',n:'조장 제안 (위험)',d:'모든 그림 가치가 영구적으로 1.5배가 되지만, 팀플이 2배 자주 나와요.',fn:function(){S.perm.mult*=1.5;S.perm.team*=2}},
+ {ic:'📈',n:'무리한 수강신청 (위험)',d:'쿠폰 6장을 받지만, 상환 목표가 영구적으로 10% 늘어요.',fn:function(){S.coupons+=6;S.perm.target*=1.1}}
+];
+var BUBBLES={
+ idle:['대출은 무섭지만 슬롯은 돌려야 제맛이지!','번 돈은 통장에! 지갑은 팀플이 노려요.','가로·세로·대각선, 이어지면 다 장학금!'],
+ big:['대박이에요! 지갑이 두둑해졌어요.','교수님이 처음으로 웃으셨어요.','이 기세로 통장에 입금해요!'],
+ mid:['쏠쏠한 장학금! 다음 응모로!','나쁘지 않아요.','학점은 쌓이고 있어요.'],
+ low:['이번엔 소소하게…','꽝이어도 이자는 붙어요.','다음 응모엔 되겠죠?'],
+ team:['팀플이 보이면 지갑부터 걱정돼요…','조별 과제는 조용히 사람을 시험합니다.']
+};
+
+/* ===================== state ===================== */
+var S, spinning=false, timers=[], reelSyms=[];
+function $(id){return document.getElementById(id)}
+function rnd(a){return a[Math.floor(Math.random()*a.length)]}
+function fmt(n){return Number(Math.round(n)).toLocaleString('ko-KR')}
+function has(id){return S.items.indexOf(id)>=0}
+function semName(s){return s<=SEMS?SEM_NAMES[s-1]:'박사 '+(s-SEMS)+'학기'}
+function target(sem){return sem<=SEMS?TARGETS[sem-1]:Math.round(TARGETS[SEMS-1]*Math.pow(1.3,sem-SEMS)/50)*50}
+function reqNow(){return Math.round(target(S.sem)*S.perm.target*(has('tuition')?0.9:1))}
+function feeNow(){return Math.round(target(S.sem)*FEE_PCT*S.perm.fee)}
+function interestRate(){return BASE_INTEREST+(has('bank')?0.05:0)+S.perm.interest}
+function luckBase(){return S.perm.luck+(has('clover')?1:0)+(has('rainbow')?2:0)}
+function slotsFull(){return S.items.length>=S.slots}
+function maxSpins(n){return n+(has('nap')?1:0)}
+function sellValue(id){return Math.floor(itemById(id).p/2)}
+
+function freshPerm(){return {interest:0,luck:0,mult:1,degreeMult:1,team:1,fee:1,target:1}}
+function newGame(){
+  clearTimers();
+  S={sem:1,endless:false,cash:0,bank:0,repaid:0,round:1,extra:false,phase:'choose',spins:0,spinNo:0,pend:0,coupons:0,
+     slots:BASE_SLOTS,slotUp:0,items:[],offers:[],refreshN:0,perm:freshPerm(),roundMult:1,
+     energyCh:0,energyArmed:false,retakeCh:0,shieldCh:0,snap:null,roundGain:0,spent:0,
+     stats:{earned:0,best:0,big:0,teamHit:0,saved:0},done:0,saved:false,fast:false,unlocked:unlockedIds(failCount()),failCounted:false};
+  for(var i=0;i<COLS;i++){reelSyms[i]=[rnd(SYMS),rnd(SYMS),rnd(SYMS)];drawStrip(i,reelSyms[i])}
+  roundIntro();say('idle');render();
+}
+function clearTimers(){timers.forEach(function(t){clearTimeout(t);clearInterval(t)});timers=[];spinning=false}
+function say(k){$('bubble').textContent=rnd(BUBBLES[k])}
+function monthOf(r){var spring=S.sem%2===1;return (spring?2:8)+r}
+function lastMonth(){return monthOf(ROUNDS)}
+function roundLabel(){return S.extra?'연체 유예':monthOf(S.round)+'월'}
+function roundIntro(){
+  $('result').innerHTML='<div class="rtitle">'+semName(S.sem)+' · '+roundLabel()+'</div><div class="note">💡 슬롯 규칙: 같은 그림이 <b>가로·세로·대각선</b>으로 3개 이상 이어지면 당첨이에요. 이어진 그림 위에 선이 그어지고, 이 아래에 어떤 그림으로 얼마를 벌었는지 알려줘요.<br>3회 응모는 쿠폰 2장, 7회는 쿠폰 1장이고 응모비 '+fmt(feeNow())+'만원이 지갑에서 나가요. 번 돈은 🏧 통장에 입금해야 학자금 상환에 쓸 수 있어요.</div>';
+}
+
+/* ===================== reels ===================== */
+function reelWin(i){return document.querySelectorAll('.rwin')[i]}
+function drawStrip(i,arr,marks,dim){
+  var st=reelWin(i).querySelector('.strip');
+  st.style.transition='none';st.style.transform='none';
+  st.style.height=(arr.length*100/3)+'%';
+  st.innerHTML=arr.map(function(k,j){var c=marks&&marks[j]===1?' hit':marks&&marks[j]===2?' bad':(marks&&dim?' dim':'');return '<div class="cell s-'+k+c+'" style="height:'+(100/arr.length)+'%">'+SYM[k].e+'</div>'}).join('');
+}
+function rollReel(i,fin,dur,done){
+  var win=reelWin(i), st=win.querySelector('.strip');
+  var cur=reelSyms[i], n=14+i*5, arr=cur.slice(), k;
+  for(k=0;k<n;k++)arr.push(rnd(SYMS));
+  arr=arr.concat(fin);
+  drawStrip(i,arr);
+  void st.offsetWidth;
+  win.classList.add('moving');
+  st.style.transition='transform '+dur+'ms cubic-bezier(.12,.6,.18,1)';
+  st.style.transform='translateY(-'+((arr.length-3)/arr.length*100)+'%)';
+  timers.push(setTimeout(function(){
+    win.classList.remove('moving');
+    reelSyms[i]=fin.slice();drawStrip(i,fin);
+    win.classList.remove('thud');void win.offsetWidth;win.classList.add('thud');
+    done&&done();
+  },dur+30));
+}
+
+/* ===================== rules ===================== */
+function weights(){
+  var w={};SYMS.forEach(function(k){w[k]=BASE_W[k]+(has('p_'+k)?0.7:0)});
+  return w;
+}
+function pickSym(w){var t=0;SYMS.forEach(function(k){t+=w[k]});var r=Math.random()*t;for(var i=0;i<SYMS.length;i++){r-=w[SYMS[i]];if(r<0)return SYMS[i]}return SYMS[0]}
+function val(k){
+  var v=BASE_V[k]*VS*S.perm.mult*S.roundMult;
+  if(has('g_'+k))v*=2;
+  if(k==='degree')v*=S.perm.degreeMult;
+  return v;
+}
+var HMULT={3:1,4:1.5,5:2.5};
+function mH(L){var m=HMULT[L];if(L>=4&&has('five'))m*=2;return m}
+function mV(){return 1*(has('col')?2:1)}
+function mD(){return 1.5*(has('diag')?2:1)}
+function mS(){return 2*(has('vsh')?2:1)}
+var MJACK=10;
+function dangerRoll(){
+  var f=(has('waive')?0.4:1)*S.perm.team, r=Math.random();
+  if(r<DANGER.triple*f)return 3;
+  if(r<(DANGER.triple+DANGER.dbl)*f)return 2;
+  if(r<(DANGER.triple+DANGER.dbl+DANGER.single)*f)return 1;
+  return 0;
+}
+function makeGrid(extraLuck){
+  var w=weights(), g=[[],[],[]], r, c;
+  for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++)g[r][c]=pickSym(w);
+  var spark=Math.random()<(0.10+(has('oracle')?0.10:0));
+  var L=luckBase()+(extraLuck||0)+(spark?3:0);
+  if(L>0){
+    var s=pickSym(w), cnt=0, cells=[];
+    for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++){if(g[r][c]===s)cnt++;else cells.push([r,c])}
+    while(cnt<Math.min(L,15)&&cells.length){var i=Math.floor(Math.random()*cells.length),p=cells.splice(i,1)[0];g[p[0]][p[1]]=s;cnt++}
+  }
+  var n=dangerRoll(), tcells=[];
+  if(n>0){
+    var all=[];for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++)all.push([r,c]);
+    for(var k=0;k<n;k++){var j=Math.floor(Math.random()*all.length),q=all.splice(j,1)[0];g[q[0]][q[1]]='team';tcells.push(q)}
+  }
+  return {g:g,team:n,tcells:tcells,spark:spark,luck:L};
+}
+function same(a,b){return a===b&&a!=='team'}
+function evaluate(g){
+  var list=[], marks=[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]], r, c, e, L;
+  function add(name,sym,cells,mult){
+    var pay=val(sym)*cells.length*mult;
+    list.push({name:name,sym:sym,pay:pay,cells:cells,unit:val(sym),mult:mult});
+    cells.forEach(function(p){marks[p[0]][p[1]]=1});
+  }
+  for(r=0;r<ROWS;r++){c=0;while(c<COLS){e=c;while(e+1<COLS&&same(g[r][e+1],g[r][c]))e++;L=e-c+1;
+    if(L>=3&&g[r][c]!=='team'){var cs=[];for(var x=c;x<=e;x++)cs.push([r,x]);add('가로 '+L+'연속',g[r][c],cs,mH(L))}
+    c=e+1}}
+  for(c=0;c<COLS;c++)if(same(g[0][c],g[1][c])&&same(g[1][c],g[2][c]))add('세로 3줄',g[0][c],[[0,c],[1,c],[2,c]],mV());
+  for(c=0;c<COLS-2;c++){
+    if(same(g[0][c],g[1][c+1])&&same(g[1][c+1],g[2][c+2]))add('대각선',g[0][c],[[0,c],[1,c+1],[2,c+2]],mD());
+    if(same(g[2][c],g[1][c+1])&&same(g[1][c+1],g[0][c+2]))add('대각선',g[2][c],[[2,c],[1,c+1],[0,c+2]],mD());
+  }
+  SHAPES.forEach(function(sh){
+    var s0=g[sh.rows[0]][0], ok=s0!=='team', cs=[];
+    for(var cc=0;cc<COLS&&ok;cc++){if(g[sh.rows[cc]][cc]!==s0)ok=false;cs.push([sh.rows[cc],cc])}
+    if(ok)add(sh.name,s0,cs,mS());
+  });
+  var flat=[].concat.apply([],g);
+  if(flat.every(function(x){return x===flat[0]&&x!=='team'})){var all=[];for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++)all.push([r,c]);add('올킬 15칸!',flat[0],all,MJACK)}
+  var np=list.length;
+  var sum=list.reduce(function(a,b){return a+b.pay},0);
+  if(has('jokbo')&&sum>0){var up=sum*0.25;list.push({name:'선배 족보 +25%',sym:null,pay:up,tag:'good'});sum+=up}
+  sum=Math.round(sum);
+  return {total:sum,list:list,marks:marks,np:np};
+}
+function gradeFor(t){var u=reqNow()/6;return t>=u*1.5?'A+':t>=u*0.9?'A0':t>=u*0.5?'B+':t>=u*0.25?'B0':t>0?'C':'D'}
+
+/* ===================== flow: spin ===================== */
+function chooseSpins(n){
+  if(S.phase!=='choose'||spinning)return;
+  var fee=0;
+  if(n===7){fee=feeNow();if(S.cash<fee)return;S.cash-=fee}
+  S.spins=maxSpins(n);S.spinNo=0;S.pend=n===3?2:1;S.phase='play';S.roundGain=0;S.spent=fee;S.roundMult=1;S.snap=null;
+  S.energyCh=has('energy')?1:0;S.energyArmed=false;
+  $('result').innerHTML='<div class="rtitle">'+roundLabel()+' 시작</div><div class="note">'+(n===7?'응모비 '+fmt(fee)+'만원을 냈어요. ':'')+'응모 기회 '+S.spins+'회, 슬롯을 돌려 보세요!</div>';
+  render();
+}
+function snapshot(){
+  return {cash:S.cash,roundGain:S.roundGain,roundMult:S.roundMult,shieldCh:S.shieldCh,permMult:S.perm.mult,stats:JSON.parse(JSON.stringify(S.stats)),spins:S.spins,spinNo:S.spinNo,phase:S.phase};
+}
+function doSpin(){
+  if(spinning||S.phase!=='play'||S.spins<=0)return;
+  S.snap=snapshot();
+  S.spins--;spinning=true;clearLines();render();
+  var extra=0;if(S.energyArmed){extra=4;S.energyArmed=false}
+  var m=makeGrid(extra), g=m.g, ev=evaluate(g), num=++S.spinNo;
+  $('result').innerHTML='<div class="rtitle">'+num+'번째 응모 확인 중…</div><div class="note">같은 그림이 이어지면 선이 그어져요. 두근두근…</div>';
+  var base=[900,1100,1300,1500,1700], f=S.fast?0.4:1, fin=0;
+  for(var c=0;c<COLS;c++)(function(c){rollReel(c,[g[0][c],g[1][c],g[2][c]],Math.round(base[c]*f),function(){
+    if(++fin<COLS)return;
+    resolveSpin(num,m,ev);
+  })})(c);
+}
+function resolveSpin(num,m,ev){
+  var extraLines=[], gain=ev.total, i;
+  /* 패턴 개수 아이템 */
+  if(ev.np>=3&&has('cat')){var it=Math.round(S.bank*interestRate());gain+=it;extraLines.push({name:'🐱 복고양이: 이자만큼 보너스',pay:it,tag:'good'})}
+  if(ev.np>=3&&has('shroom')&&S.roundMult<2){S.roundMult=2;extraLines.push({name:'🍄 야식 파티: 이번 달 동안 가치 2배!',pay:null,tag:'good'})}
+  if(ev.np>=5&&has('pent')){S.perm.mult+=0.5;extraLines.push({name:'⭐ 별점 다섯 개: 점수 배수 +0.5 영구',pay:null,tag:'good'})}
+  /* 팀플 위험 */
+  var lost=0;
+  if(m.team===3){
+    S.stats.teamHit++;
+    if(S.shieldCh>0){S.shieldCh--;extraLines.push({name:'🛡️ 학사 면책 발동! 지갑 현금을 지켰어요',pay:null,tag:'good'})}
+    else{lost=S.cash;S.cash=0;extraLines.push({name:'👥 팀플 3개! 지갑 현금이 회식비로 사라졌어요',pay:-lost,tag:'cut'})}
+  }
+  S.cash+=gain;S.roundGain+=gain;S.stats.earned+=gain;
+  if(gain>S.stats.best)S.stats.best=gain;
+  var big=gain>=reqNow()/4;if(big)S.stats.big++;
+  /* highlight */
+  for(i=0;i<COLS;i++){var mk=[ev.marks[0][i],ev.marks[1][i],ev.marks[2][i]];
+    m.tcells.forEach(function(p){if(p[1]===i)mk[p[0]]=2});
+    drawStrip(i,reelSyms[i],mk,ev.np>0)}
+  drawLines(ev);
+  showResult(num,m,ev,gain,extraLines);
+  spinning=false;if(S.spins<=0)S.phase='end';
+  render();
+  var b=$('board');
+  if(big){b.classList.remove('flashA');void b.offsetWidth;b.classList.add('flashA')}
+  if(lost>0||m.team===3){b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}
+  say(m.team>=2?'team':gain>=reqNow()/4?'big':gain>0?'mid':'low');
+}
+var LCOL=['#e63946','#2B50E6','#0f9d58','#9c27b0','#ff7a00','#00acc1','#c2185b'];
+function clearLines(){$('lines').innerHTML=''}
+function drawLines(ev){
+  var h='';
+  ev.list.forEach(function(x,i){
+    if(!x.cells)return;
+    var pts=x.cells.map(function(p){return (p[1]+.5)+','+(p[0]+.5)}).join(' ');
+    if(x.cells.length===15)pts='0.5,0.5 4.5,0.5 4.5,1.5 0.5,1.5 0.5,2.5 4.5,2.5';
+    h+='<polyline class="u" points="'+pts+'" style="animation-delay:'+(i*0.18)+'s"/><polyline class="c" stroke="'+LCOL[i%LCOL.length]+'" points="'+pts+'" style="animation-delay:'+(i*0.18)+'s"/>';
+  });
+  $('lines').innerHTML=h;
+}
+function showResult(num,m,ev,gain,extra){
+  var g=gradeFor(gain);
+  var lines=ev.list.map(function(x,i){return {name:(x.sym?SYM[x.sym].e+' '+SYM[x.sym].n+' ':'')+x.name,pay:x.pay,tag:x.tag,col:x.cells?LCOL[i%LCOL.length]:null,f:x.cells?x.cells.length+'칸 × '+fmt(x.unit)+'만 × 배수 '+(Math.round(x.mult*100)/100):''}}).concat(extra);
+  var shown=lines.slice(0,6).map(function(x){
+    return '<li class="'+(x.tag||'')+'"><span>'+(x.col?'<i class="mdot" style="background:'+x.col+'"></i>':'')+x.name+(x.f?'<small>'+x.f+'</small>':'')+'</span><b>'+(x.pay===null||x.pay===undefined?'':(x.pay>=0?'+':'−')+fmt(Math.abs(x.pay)))+'</b></li>'}).join('');
+  if(lines.length>6)shown+='<li><span>…외 '+(lines.length-6)+'개</span><b></b></li>';
+  if(!lines.length)shown='<li><span>같은 그림이 3개 이상 이어지지 않았어요<small>가로·세로·대각선으로 이어져야 해요</small></span><b>0</b></li>';
+  var tag=(m.spark?'<span class="badge hot">✨ 행운 스파크</span> ':'')+(m.team?'<span class="badge">👥 팀플 '+m.team+'개</span>':'');
+  $('result').innerHTML='<div class="rhead"><div><div class="rtitle">'+num+'번째 응모 결과 '+tag+'</div><div class="grade'+(g==='A+'||g==='A0'?' g-a':'')+'">'+g+'</div></div><div class="pay">+'+fmt(gain)+'만원<small>지갑에 들어왔어요</small></div></div><ul class="mlist">'+shown+'</ul>';
+}
+
+/* ===================== wallet / ATM ===================== */
+function deposit(mode){
+  if(spinning)return;
+  var amt=mode==='all'?S.cash:Math.floor(S.cash/2);
+  if(amt<=0)return;
+  S.cash-=amt;S.bank+=amt;S.stats.saved+=amt;
+  render();
+  if($('modal').classList.contains('show')&&S.shopOpen)showShop();
+}
+
+/* ===================== abilities ===================== */
+function useEnergy(){
+  if(spinning||S.phase!=='play'||S.energyCh<=0||S.energyArmed)return;
+  S.energyCh--;S.energyArmed=true;render();
+}
+function useRetake(){
+  if(spinning||S.retakeCh<=0||!S.snap)return;
+  var s=S.snap;S.retakeCh--;
+  S.cash=s.cash;S.roundGain=s.roundGain;S.roundMult=s.roundMult;S.shieldCh=s.shieldCh;S.perm.mult=s.permMult;S.stats=s.stats;S.spins=s.spins+1;S.spinNo=s.spinNo;S.phase='play';S.snap=null;
+  $('result').innerHTML='<div class="rtitle">재수강</div><div class="note">방금 응모를 물렀어요. 다시 돌려 보세요!</div>';
+  render();
+}
+
+/* ===================== round end / shop ===================== */
+function endRound(){
+  if(S.phase!=='end')return;
+  var rate=interestRate(), interest=Math.round(S.bank*rate);
+  S.bank+=interest;S.coupons+=S.pend;
+  S.lastInterest=interest;S.lastRate=rate;
+  S.offers=drawOffers();S.refreshN=0;S.shopOpen=true;
+  render();showShop();
+}
+function drawOffers(){return ITEMS.filter(function(i){return !has(i.id)&&S.unlocked.indexOf(i.id)>=0}).sort(function(){return Math.random()-.5}).slice(0,4).map(function(i){return {id:i.id,sold:false}})}
+function refreshFee(){return Math.max(10,Math.round(target(S.sem)*0.04/10)*10)*(S.refreshN+1)}
+function slotPrice(){return 3+S.slotUp}
+function canEarly(){return S.bank>=reqNow()&&!S.extra&&S.round<ROUNDS}
+function showShop(msg){
+  var last=S.round===ROUNDS||S.extra, req=reqNow();
+  var h='<h3>'+roundLabel()+(S.extra?'':' 마감')+'</h3>';
+  h+='<div class="kv"><span>이번 달 번 돈</span><b>+'+fmt(S.roundGain)+'만</b>'+(S.spent?'<span>응모비</span><b>−'+fmt(S.spent)+'만</b>':'')+'<span>통장 이자 ('+Math.round(S.lastRate*100)+'%)</span><b>+'+fmt(S.lastInterest)+'만</b><span>지갑 현금</span><b>'+fmt(S.cash)+'만</b><span>통장</span><b>'+fmt(S.bank)+' / '+fmt(req)+'만</b></div>';
+  h+='<div class="pills2"><span class="coupon">🎟️ 쿠폰 '+S.coupons+'장</span></div>';
+  h+='<div class="row2"><button class="btn alt" data-atm="all"'+(S.cash>0?'':' disabled')+'>🏧 전액 입금</button><button class="btn alt" data-atm="half"'+(S.cash>1?'':' disabled')+'>🏧 절반 입금</button></div>';
+  if(last&&S.bank<req)h+='<p class="warn">이번이 이 학기의 마지막 달이에요. 통장에 '+fmt(req-S.bank)+'만원이 더 있어야 정산할 수 있어요.</p>';
+  else h+='<p>지갑 현금은 팀플 3개에 털릴 수 있어요. 통장에 넣으면 안전하고 이자도 붙어요.</p>';
+  if(msg)h+='<p class="warn">'+msg+'</p>';
+  h+='<h4>학생회관 상점 · 쿠폰으로 아이템 구매 (슬롯 '+S.items.length+'/'+S.slots+')</h4>'+(S.unlocked.length<ITEMS.length?'<p style="font-size:12px">🔒 아직 잠긴 아이템 '+(ITEMS.length-S.unlocked.length)+'개 · 제적될 때마다 새 아이템이 열려요.</p>':'')+'<div class="offers">';
+  h+=S.offers.map(function(o,idx){var it=itemById(o.id);var can=!o.sold&&S.coupons>=it.p&&!slotsFull();
+    return '<div class="offer'+(o.sold?' sold':'')+'"><span class="ic">'+it.ic+'</span><span class="tx"><b>'+it.n+'</b><span class="d">'+it.d+'</span></span><button class="buy" data-buy="'+idx+'"'+(can?'':' disabled')+'>'+(o.sold?'구매 완료':'🎟️ '+it.p)+'</button></div>'}).join('');
+  var sp=slotPrice(), canSlot=S.slots<MAX_SLOTS&&S.coupons>=sp;
+  h+='<div class="offer special"><span class="ic">🗄️</span><span class="tx"><b>아이템 슬롯 +1</b><span class="d">보유할 수 있는 아이템이 늘어나요. (현재 '+S.slots+'칸, 최대 '+MAX_SLOTS+'칸)</span></span><button class="buy" data-act="slot"'+(canSlot?'':' disabled')+'>'+(S.slots>=MAX_SLOTS?'최대':'🎟️ '+sp)+'</button></div></div>';
+  var rf=refreshFee();
+  h+='<button class="btn alt" data-act="reroll"'+(S.cash>=rf?'':' disabled')+'>상점 새로고침 (지갑 현금 '+fmt(rf)+'만원)</button>';
+  if(S.items.length){
+    h+='<h4>내 아이템 · 팔거나 버려서 자리를 비울 수 있어요</h4><div class="offers">'+S.items.map(function(id,idx){var it=itemById(id);var sv=sellValue(id);
+      return '<div class="offer"><span class="ic">'+it.ic+'</span><span class="tx"><b>'+it.n+'</b><span class="d">'+it.d+'</span></span><button class="buy sell" data-sell="'+idx+'">'+(sv>0?'팔기 🎟️ +'+sv:'버리기')+'</button></div>'}).join('')+'</div>';
+  }
+  if(canEarly()){
+    var left=ROUNDS-S.round, bc=left, bcash=left*Math.round(target(S.sem)*0.1);
+    h+='<button class="btn settle" data-act="early">지금 미리 납부하고 남은 '+left+'개월 보너스 받기<small>쿠폰 +'+bc+'장 · 현금 +'+fmt(bcash)+'만원</small></button>';
+  }
+  h+='<button class="btn'+(last?' settle':'')+'" data-act="'+(last?'settle':'next')+'">'+(last?semName(S.sem)+' 정산하기':monthOf(S.round+1)+'월로 넘어가기')+'</button>';
+  modal(h);
+}
+function buyOffer(idx){
+  var o=S.offers[idx];if(!o||o.sold)return;var it=itemById(o.id);
+  if(S.coupons<it.p)return showShop('쿠폰이 부족해요.');
+  if(slotsFull())return showShop('아이템 슬롯이 가득 찼어요. 아래에서 하나를 팔거나 슬롯을 늘리세요.');
+  S.coupons-=it.p;S.items.push(o.id);o.sold=true;onGain(o.id);render();showShop();
+}
+function onGain(id){
+  if(id==='shield')S.shieldCh=Math.max(S.shieldCh,1);
+  if(id==='retake')S.retakeCh=Math.max(S.retakeCh,2);
+  if(id==='energy'&&S.phase==='play'&&!S.energyCh&&!S.energyArmed)S.energyCh=1;
+}
+function sellItem(idx){
+  var id=S.items[idx];if(!id)return;var sv=sellValue(id);
+  S.items.splice(idx,1);S.coupons+=sv;
+  if(id==='shield')S.shieldCh=0;if(id==='retake')S.retakeCh=0;if(id==='energy'){S.energyCh=0;S.energyArmed=false}
+  render();
+  if(S.shopOpen&&$('modal').classList.contains('show'))showShop();
+}
+function buySlot(){
+  var sp=slotPrice();if(S.slots>=MAX_SLOTS||S.coupons<sp)return;
+  S.coupons-=sp;S.slots++;S.slotUp++;render();showShop();
+}
+function nextRound(){
+  S.shopOpen=false;S.round++;S.phase='choose';S.roundGain=0;S.spent=0;S.snap=null;
+  closeModal();roundIntro();say('idle');render();
+}
+function earlySettle(){
+  var left=ROUNDS-S.round;
+  S.coupons+=left;S.cash+=left*Math.round(target(S.sem)*0.1);
+  S.shopOpen=false;closeModal();settle(true);
+}
+
+/* ===================== settle / semester ===================== */
+function settle(early){
+  S.shopOpen=false;
+  var req=reqNow();
+  if(S.bank>=req)return payDebt(req);
+  if(S.cash>0&&S.cash+S.bank>=req){
+    modal('<h3>통장이 모자라요</h3><p>통장에 '+fmt(S.bank)+'만원이 있고 목표는 '+fmt(req)+'만원이에요. 지갑 현금을 입금하면 정산할 수 있어요.</p><button class="btn" data-act="depsettle">지갑 전액 입금하고 정산</button>');
+    return;
+  }
+  if(has('ankh')){
+    S.items.splice(S.items.indexOf('ankh'),1);S.extra=true;S.phase='choose';S.roundGain=0;S.spent=0;S.snap=null;
+    render();
+    modal('<h3>🙏 교수님 선처</h3><p>목표까지 '+fmt(req-S.bank)+'만원이 모자라지만, 교수님이 연체 유예 1개월을 주셨어요. 이번이 마지막이에요.</p><button class="btn" data-act="extra">유예 1개월 받기</button>');
+    return;
+  }
+  fail(req);
+}
+function payDebt(req){
+  S.bank-=req;S.repaid+=Math.min(target(S.sem),LOAN_TOTAL-S.repaid>0?target(S.sem):0);S.done=S.sem;render();
+  var left=Math.max(0,LOAN_TOTAL-S.repaid);
+  if(!S.endless&&S.sem===SEMS){win();return}
+  var pool=CALLS.slice().sort(function(){return Math.random()-.5}).slice(0,3);
+  S.callPool=pool;
+  var h='<h3>'+semName(S.sem)+' 정산 완료</h3><div class="kv"><span>이번 학기 상환</span><b>'+fmt(req)+'만원</b><span>남은 통장</span><b>'+fmt(S.bank)+'만원</b><span>지갑 현금</span><b>'+fmt(S.cash)+'만원</b><span>대출 잔액</span><b>'+(S.endless?'박사 과정':fmt(left)+'만원')+'</b></div>';
+  h+='<p>☎️ 전화가 걸려 왔어요. 하나만 고를 수 있어요.</p><div class="offers">'+pool.map(function(c,i){return '<div class="offer"><span class="ic">'+c.ic+'</span><span class="tx"><b>'+c.n+'</b><span class="d">'+c.d+'</span></span><button class="buy" data-call="'+i+'">선택</button></div>'}).join('')+'</div>';
+  modal(h);
+}
+function pickCall(i){var c=S.callPool&&S.callPool[i];if(!c)return;c.fn();nextSem()}
+function nextSem(){
+  S.sem++;S.round=1;S.extra=false;S.phase='choose';S.roundGain=0;S.spent=0;S.snap=null;S.refreshN=0;S.roundMult=1;
+  S.shieldCh=has('shield')?1:0;S.retakeCh=has('retake')?2:0;
+  if(has('grant'))S.cash+=GRANT;
+  for(var i=0;i<COLS;i++){reelSyms[i]=[rnd(SYMS),rnd(SYMS),rnd(SYMS)];drawStrip(i,reelSyms[i])}
+  closeModal();roundIntro();
+  if(has('grant'))$('result').innerHTML+='<div class="note">장학재단 인맥으로 지갑에 '+GRANT+'만원을 받았어요.</div>';
+  say('idle');render();
+}
+
+/* ===================== render ===================== */
+function render(){
+  var req=reqNow(), i;
+  var tr='';
+  if(S.endless){tr='<div class="sem">🎓 '+semName(S.sem)+'</div>'}
+  else{for(i=1;i<=SEMS;i++)tr+='<div class="sem'+(i<S.sem?' done':i===S.sem?' now':'')+'">'+(i<S.sem?'✓ ':'')+SEM_SHORT[i-1][0]+'<small>'+SEM_SHORT[i-1][1]+'</small></div>'}
+  $('track').className='track'+(S.endless?' endless':'');$('track').innerHTML=tr;
+  $('sCash').innerHTML=fmt(S.cash)+'<em>만</em>';
+  $('sBank').innerHTML=fmt(S.bank)+'<em>만</em>';
+  $('sCpn').innerHTML=S.coupons+'<em>장</em>';
+  $('atmAll').disabled=spinning||S.cash<=0;$('atmHalf').disabled=spinning||S.cash<2;
+  var need0=Math.max(0,req-S.bank), pct=Math.min(100,Math.round(S.bank/req*100));
+  $('barI').style.width=pct+'%';$('bar').className='bar'+(S.bank>=req?' ok':'');
+  $('bReq').innerHTML=fmt(req)+'<em>만</em>';$('bBank').innerHTML=fmt(S.bank)+'<em>만</em>';
+  $('bNeed').innerHTML=fmt(need0)+'<em>만</em>';$('bShort').className='short'+(need0<=0?' ok':'');
+  var lt=$('letter'), mo=lastMonth(), stage=S.extra?4:Math.min(3,S.round), lc='letter s'+stage, ltxt;
+  if(need0<=0&&!S.extra){lc='letter ok';ltxt='<div class="lt">✅ 납부 준비 완료</div>통장에 낼 돈이 모였어요. 정산하면 대출 <b>'+fmt(req)+'만원</b>이 상환돼요.'}
+  else if(S.extra){ltxt='<div class="lt">⚖️ 최후 통첩 · 연체 유예 1개월</div>이번 달 안에 <b>'+fmt(need0)+'만원</b>이 통장에 없으면 제적 처리됩니다.'}
+  else if(stage===1){ltxt='<div class="lt">📩 학자금 상환 안내문</div>이번 학기 상환금 <b>'+fmt(req)+'만원</b>을 '+mo+'월 말까지 <b>통장</b>에 준비해 주세요.'}
+  else if(stage===2){ltxt='<div class="lt">📞 상환 독촉 전화</div>"아직 <b>'+fmt(need0)+'만원</b>이 부족합니다. '+mo+'월 말이 납부 기한이에요."'}
+  else{ltxt='<div class="lt">🚨 마지막 독촉장 · 이번 달이 납부 마감</div><b>'+fmt(need0)+'만원</b>이 더 필요해요. 못 채우면 제적됩니다.'}
+  lt.className=lc;lt.innerHTML=ltxt;
+  var dp=$('depo');dp.disabled=spinning||S.cash<=0;
+  dp.textContent='🏧 지갑 '+fmt(S.cash)+'만원 통장에 입금하기'+(need0>0?' (부족분 '+fmt(Math.max(0,need0-S.cash))+'만원으로 줄어요)':'');
+  var gw=$('goalWarn');
+  if(S.bank>=req){gw.className='goal-warn ok';gw.textContent=S.round<ROUNDS&&!S.extra?'목표 달성! 이번 달 마감 때 미리 납부하면 보너스를 받아요.':'목표는 채웠어요. 정산하면 학기가 끝나요.'}
+  else{gw.className='goal-warn';gw.textContent=(S.extra?'마지막 기회예요. ':'')+'지갑이 아니라 통장에 입금된 돈만 상환돼요. 모자라면 제적됩니다.'}
+  var loan=Math.max(0,LOAN_TOTAL-S.repaid);
+  $('goalLoan').textContent=S.endless?'대출은 모두 갚았어요. 박사 과정 기록을 이어가요.':'학자금 대출 잔액 '+fmt(loan)+'만원 · 지금까지 상환 '+fmt(S.repaid)+'만원';
+  var rd='';for(i=1;i<=ROUNDS;i++){var st=S.extra?'done':(i<S.round?'done':i===S.round?'now':'');rd+='<i class="'+st+'">'+monthOf(i)+'월</i>'}
+  if(S.extra)rd+='<i class="extra">유예</i>';
+  $('rdots').innerHTML=rd;
+  var rtxt=S.extra?'연체 유예 (마지막 기회)':monthOf(S.round)+'월 · 이번 학기 '+S.round+'/'+ROUNDS+'개월째';
+  var sub=S.phase==='choose'?'이번 달 응모 횟수를 먼저 고르세요':S.phase==='play'?'슬롯을 돌려 장학금을 응모하세요':'이번 달 응모가 끝났어요';
+  $('rdL').innerHTML=semName(S.sem)+' · '+rtxt+'<small>'+sub+'</small>';
+  $('leftN').innerHTML=(S.phase==='choose'?'–':S.spins)+'<span>'+(S.phase==='choose'?'':'회')+'</span>';
+  $('left').className='left'+(S.phase!=='play'?' zero':'');
+  /* machine header */
+  var lk=luckBase()+(S.energyArmed?4:0);
+  $('badges').innerHTML='<span class="badge'+(lk>0?' hot':'')+'">🍀 행운 '+lk+'</span>'+(S.roundMult>1?'<span class="badge hot">🍄 가치 ×2</span>':'')+(S.perm.mult>1?'<span class="badge">배수 ×'+(Math.round(S.perm.mult*100)/100)+'</span>':'');
+  $('fastBtn').className='fastbtn'+(S.fast?' on':'');
+  /* controls: 항상 슬롯 바로 아래, 같은 자리 */
+  var ctl=$('controls'), fee=feeNow();
+  if(S.phase==='choose'){
+    ctl.className='controls two';
+    ctl.innerHTML='<button class="btn" data-go="3">신중하게 '+maxSpins(3)+'회 응모<small>쿠폰 +2장 · 비용 없음</small></button>'
+      +'<button class="btn" data-go="7"'+(S.cash>=fee?'':' disabled')+'>과감하게 '+maxSpins(7)+'회 응모<small>쿠폰 +1장 · 지갑에서 '+fmt(fee)+'만원'+(S.cash>=fee?'':' (현금 부족)')+'</small></button>';
+  }else if(S.phase==='play'){
+    ctl.className='controls';
+    ctl.innerHTML='<button class="btn" data-go="spin"'+(spinning?' disabled':'')+'>'+(spinning?'결과 나오는 중…':'슬롯 돌리기<small>남은 응모 '+S.spins+'회</small>')+'</button>';
+  }else{
+    ctl.className='controls';
+    ctl.innerHTML='<button class="btn" data-go="end">이번 달 마감하기<small>이자를 받고 상점에서 쿠폰을 써요</small></button>';
+  }
+  /* abilities */
+  var ab='';
+  if(has('energy'))ab+='<button data-go="energy" class="'+(S.energyArmed?'on':'')+'"'+((spinning||S.phase!=='play'||(S.energyCh<=0&&!S.energyArmed)||S.energyArmed)?' disabled':'')+'>🥤 에너지 드링크 ×'+S.energyCh+(S.energyArmed?' (적용 중)':'')+'</button>';
+  if(has('retake'))ab+='<button data-go="retake"'+((spinning||S.retakeCh<=0||!S.snap)?' disabled':'')+'>📝 재수강 ×'+S.retakeCh+'</button>';
+  $('abil').innerHTML=ab||'<div class="none">능력 아이템을 사면 여기에 버튼이 생겨요</div>';
+  /* shelf */
+  $('slotN').textContent=S.items.length+'/'+S.slots;
+  $('shelf').innerHTML=S.items.length?S.items.map(function(id,idx){var it=itemById(id);return '<button class="it" data-item="'+idx+'" title="'+it.d+'"><span>'+it.ic+'</span>'+it.n+'</button>'}).join(''):'<span class="empty">아직 아이템이 없어요. 달이 끝나면 상점에서 살 수 있어요.</span>';
+  /* tables */
+  var w=weights(), tw=0;SYMS.forEach(function(k){tw+=w[k]});
+  var sr='<tr><th>그림</th><th>확률</th><th>1칸 가치</th></tr>';
+  SYMS.slice().reverse().forEach(function(k){sr+='<tr><td>'+SYM[k].e+' '+SYM[k].n+'</td><td>'+(w[k]/tw*100).toFixed(1)+'%</td><td>'+fmt(val(k))+'만</td></tr>'});
+  $('symtable').innerHTML=sr;
+  $('pattable').innerHTML='<tr><th>패턴</th><th>칸 수</th><th>배수</th></tr>'
+   +'<tr><td>가로 3연속</td><td>3</td><td>×'+mH(3)+'</td></tr><tr><td>가로 4연속</td><td>4</td><td>×'+mH(4)+'</td></tr><tr><td>가로 5연속</td><td>5</td><td>×'+mH(5)+'</td></tr>'
+   +'<tr><td>세로 3줄</td><td>3</td><td>×'+mV()+'</td></tr><tr><td>대각선</td><td>3</td><td>×'+mD()+'</td></tr><tr><td>V자·역V자·지그재그</td><td>5</td><td>×'+mS()+'</td></tr><tr><td>올킬 (15칸 모두 같은 그림)</td><td>15</td><td>×'+MJACK+'</td></tr>';
+  $('unl').textContent='🔓 해금한 아이템 '+S.unlocked.length+'/'+ITEMS.length+' · 제적될 때마다 3개씩 새로 열려요.';
+  var f2=has('waive')?0.4:1;f2*=S.perm.team;
+  $('ptip').innerHTML='점수 = 그림 1칸 가치 × 칸 수 × 패턴 배수. 한 번에 여러 패턴이 겹치면 모두 더해요.<br>👥 팀플은 이어 붙는 그림이 아니라 방해 요소예요. 한 번에 3개가 나올 확률은 약 '+(DANGER.triple*f2*100).toFixed(1)+'%이고, 나오면 <b>통장에 넣지 않은 지갑 현금이 전부 사라져요.</b> 1~2개는 칸만 차지해요.';
+}
+
+/* ===================== modal ===================== */
+function modal(html,dark){var m=$('modal');$('mcard').innerHTML=html;m.className='modal show'+(dark?' dark':'');m.scrollTop=0}
+function closeModal(){$('modal').className='modal'}
+function itemInfo(idx){
+  var id=S.items[idx];if(!id)return;var it=itemById(id), sv=sellValue(id);
+  modal('<h3>'+it.ic+' '+it.n+'</h3><p>'+it.d+'</p><button class="btn alt" data-sell="'+idx+'" data-close="1">'+(sv>0?'팔기 (쿠폰 +'+sv+'장)':'버리기')+'</button><button class="btn alt" data-act="close">닫기</button>');
+}
+function nameRow(){var nm='';try{nm=localStorage.getItem('hl_slot_name')||''}catch(e){}return '<div class="name-row"><input id="nm" maxlength="8" placeholder="닉네임 (8자)" value="'+nm.replace(/[<>&"]/g,'')+'"><button class="btn alt" data-act="save">기록</button></div>'}
+function summary(){return '<div class="kv"><span>마친 학기</span><b>'+S.done+'</b><span>누적 장학금</span><b>'+fmt(S.stats.earned)+'만원</b><span>한 번에 최고</span><b>'+fmt(S.stats.best)+'만원</b><span>팀플 3개를 만난 횟수</span><b>'+S.stats.teamHit+'번</b></div>'}
+function win(){
+  modal('<h3>🎓 졸업을 축하합니다</h3><p>학자금 대출 '+fmt(LOAN_TOTAL)+'만원을 3학년 가을학기까지 모두 갚았어요. 박사 과정으로 이어가면 목표 금액이 계속 올라갑니다.</p>'+summary()+nameRow()+'<button class="btn" data-act="phd">박사 과정 도전 (무한)</button><button class="btn alt" data-act="restart">처음부터 다시</button>');
+}
+function fail(req){
+  var miss=req-S.bank, pctM=Math.max(0,Math.round(S.bank/req*100)), newNames='';
+  if(!S.endless&&!S.failCounted){
+    S.failCounted=true;var n0=failCount();
+    var nx=UNLOCK_NEXT.slice(n0*UNLOCK_STEP,(n0+1)*UNLOCK_STEP).map(function(id){return itemById(id).ic+' '+itemById(id).n});
+    try{localStorage.setItem('hl_slot_fails',String(n0+1))}catch(e){}
+    if(nx.length)newNames=nx.join(', ');
+  }
+  modal('<div class="dline" style="animation-delay:.2s">'+semName(S.sem)+' 정산일이 지났습니다.</div>'
+   +'<div class="dline red" style="animation-delay:1s">철컥.</div>'
+   +'<div class="dline flick red" style="animation-delay:1.6s">열람실 문이 잠겼습니다.</div>'
+   +'<div class="dline" style="animation-delay:2.2s">미납 '+fmt(miss)+'만원. 상환 전까지 나갈 수 없습니다.</div>'
+   +'<div class="stamp">제 적</div>'
+   +'<div style="opacity:0;animation:fadein .6s 3s forwards;display:flex;flex-direction:column;gap:10px"><p>목표의 <b>'+pctM+'%</b>까지 모았어요 (부족 '+fmt(miss)+'만원).'+(pctM>=60?' 조금만 더 했으면 됐어요!':'')+'</p>'+(newNames?'<p>🔓 다음 입학부터 새 아이템이 열려요:<br><b>'+newNames+'</b></p>':'')+summary()+nameRow()+'<button class="btn" data-act="restart">다시 입학하기</button></div>',true);
+  var b=$('board');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+}
+
+/* ===================== ranking (local only in the prototype) ===================== */
+function loadRank(){try{return JSON.parse(localStorage.getItem('hl_slot_rank')||'[]')}catch(e){return []}}
+function saveRank(name){
+  if(S.saved)return;S.saved=true;
+  var list=loadRank();list.push({n:name||'익명',s:S.done,e:S.stats.earned});
+  list.sort(function(a,b){return b.s-a.s||b.e-a.e});list=list.slice(0,5);
+  try{localStorage.setItem('hl_slot_rank',JSON.stringify(list));localStorage.setItem('hl_slot_name',name)}catch(e){}
+  renderRank();
+}
+function renderRank(){
+  var list=loadRank();
+  var rows='<tr><th>#</th><th>닉네임</th><th>마친 학기</th><th>누적 장학금</th></tr>';
+  if(!list.length)rows+='<tr><td colspan="4" style="color:#777;text-align:center;padding:14px 0">아직 기록이 없어요. 첫 번째 졸업생이 되어 보세요.</td></tr>';
+  list.forEach(function(r,i){rows+='<tr><td>'+(i+1)+'</td><td>'+String(r.n).replace(/[<>&]/g,'')+'</td><td>'+r.s+'학기</td><td>'+fmt(r.e)+'만</td></tr>'});
+  $('rank').innerHTML=rows;
+}
+
+/* ===================== events ===================== */
+$('board').addEventListener('click',function(e){
+  var t=e.target.closest('[data-go],[data-atm],[data-item]');if(!t||t.disabled)return;
+  if(t.dataset.atm){deposit(t.dataset.atm);return}
+  if(t.dataset.item!==undefined){if(!spinning)itemInfo(+t.dataset.item);return}
+  var g=t.dataset.go;
+  if(g==='3')chooseSpins(3);else if(g==='7')chooseSpins(7);
+  else if(g==='spin')doSpin();
+  else if(g==='fast'){S.fast=!S.fast;render()}
+  else if(g==='end')endRound();
+  else if(g==='energy')useEnergy();
+  else if(g==='retake')useRetake();
+});
+$('modal').addEventListener('click',function(e){
+  var t=e.target.closest('[data-buy],[data-sell],[data-call],[data-atm],[data-act]');if(!t||t.disabled)return;
+  if(t.dataset.atm){deposit(t.dataset.atm);return}
+  if(t.dataset.buy!==undefined){buyOffer(+t.dataset.buy);return}
+  if(t.dataset.sell!==undefined){sellItem(+t.dataset.sell);if(t.dataset.close)closeModal();return}
+  if(t.dataset.call!==undefined){pickCall(+t.dataset.call);return}
+  var a=t.dataset.act;
+  if(a==='save'){var inp=$('nm');saveRank((inp&&inp.value||'').trim());t.disabled=true;t.textContent='저장됨'}
+  else if(a==='restart'){closeModal();newGame()}
+  else if(a==='phd'){closeModal();S.endless=true;S.perm.target*=1;nextSem()}
+  else if(a==='reroll'){var f=refreshFee();if(S.cash>=f){S.cash-=f;S.refreshN++;S.offers=drawOffers();render();showShop()}}
+  else if(a==='slot')buySlot();
+  else if(a==='next')nextRound();
+  else if(a==='settle'){closeModal();settle()}
+  else if(a==='early')earlySettle();
+  else if(a==='depsettle'){var amt=S.cash;S.cash=0;S.bank+=amt;render();closeModal();settle()}
+  else if(a==='extra'){closeModal();roundIntro();render()}
+  else if(a==='close')closeModal();
+});
+document.addEventListener('keydown',function(e){
+  if((e.key===' '||e.key==='Enter')&&e.target===document.body&&!$('modal').classList.contains('show')){
+    e.preventDefault();var b=document.querySelector('#controls [data-go="spin"],#controls [data-go="end"]');if(b&&!b.disabled)b.click();
+  }
+});
+
+newGame();renderRank();
+})();
+</script>
+</body>
+</html>
