@@ -226,7 +226,7 @@ export function NambukGame() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/hoegilab/nb-hero.webp" alt="1860년대 신문 삽화풍의 남북 양군 야영지" className="-mx-5 -mt-5 aspect-[16/8] w-[calc(100%+2.5rem)] max-w-none rounded-t-[12px] border-b-2 border-ink object-cover object-center" />
         <div>
-          <h3 className="text-[18px] font-black">넙죽이 남북전쟁</h3>
+          <h3 className="text-[18px] font-black">남북전쟁</h3>
           <p className="text-[13px] leading-snug text-inkMuted">옛날 DOS 게임 「남북전쟁」을 떠올리며 만든 한 판. 지도에서 땅을 차지하고, 맞붙으면 실시간으로 싸워요. 상대는 컴퓨터예요.</p>
         </div>
         <div>

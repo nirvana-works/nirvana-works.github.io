@@ -1,6 +1,6 @@
 import { ADJ, BY_ID, INDIAN_ZONE, MEXICAN_ZONE, RAILS, REGIONS, SIDE_NAME, TURN_LIMIT, type Side } from './data';
 
-// 넙죽이 남북전쟁: 지도 위 턴제 규칙, 봇, 돌발 상황. 화면과 상관없는 순수 계산만 둔다.
+// 남북전쟁: 지도 위 턴제 규칙, 봇, 돌발 상황. 화면과 상관없는 순수 계산만 둔다.
 
 export interface Units {
   i: number; // 보병
