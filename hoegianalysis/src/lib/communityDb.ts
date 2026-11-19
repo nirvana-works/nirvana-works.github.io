@@ -4,12 +4,44 @@ import { SEEDS } from './scheduleSeed';
 // Hoegilab 커뮤니티용 테이블. 기존 출석·정산 테이블은 건드리지 않고 새 테이블만 추가한다
 let initPromise: Promise<void> | null = null;
 
+// 스키마(테이블·컬럼)를 바꿀 때마다 이 값을 바꿔 주세요. 같은 값이 이미 기록돼 있으면 서버가 새로 켜질 때
+// 수십 번의 테이블 확인을 건너뛰고 한 번만 확인한다 (원격 DB가 느릴 때 첫 방문이 오류 나던 문제를 줄이기 위해)
+const SCHEMA_VERSION = '2026-11-19-chess-rooms';
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 export function initCommunityDb(): Promise<void> {
-  initPromise ??= runInit().catch((err) => {
+  initPromise ??= ensureSchema().catch((err) => {
     initPromise = null; // 실패하면 다음 요청에서 재시도
     throw err;
   });
   return initPromise;
+}
+
+async function ensureSchema(): Promise<void> {
+  const db = getDb();
+  try {
+    const r = await db.execute({ sql: "SELECT value FROM community_meta WHERE key = 'schema_version'", args: [] });
+    if (r.rows[0]?.value === SCHEMA_VERSION) return; // 이미 이 버전으로 만들어져 있다
+  } catch {
+    // community_meta 가 아직 없으면 처음이니 아래에서 전부 만든다
+  }
+  // 첫 방문 때 일시적으로 실패해도 오류 화면이 뜨지 않도록 몇 번 더 시도한다
+  let last: unknown;
+  for (let i = 0; i < 3; i++) {
+    try {
+      await runInit();
+      await db.execute({
+        sql: "INSERT INTO community_meta (key, value) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        args: [SCHEMA_VERSION],
+      });
+      return;
+    } catch (err) {
+      last = err;
+      await sleep(400 * (i + 1));
+    }
+  }
+  throw last;
 }
 
 async function runInit(): Promise<void> {
