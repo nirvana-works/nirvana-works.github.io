@@ -10,7 +10,16 @@ export const FACE_COLORS: Record<FaceColor, { bg: string; fg: string }> = {
 export const CUBE_BODY = '#2B50E6';
 
 // 12×12 픽셀 그림. 3×3 스티커에 4×4칸씩 나뉘어 들어간다 ('#' = 칠함)
-const PIXELS: Record<Exclude<FaceArt, 'nupjuk'>, string[]> = {
+// 픽셀 그림 대신 이미지를 쓰는 면
+const IMAGE_ART: Partial<Record<FaceArt, string>> = {
+  nupjuk: '/hoegilab/nupjuk-face.png',
+  professor: '/hoegilab/professor-face.webp', // 교수 소개 프로필 사진을 정사각형으로 자른 것
+};
+
+// 사진은 픽셀처럼 각지게 키우지 않고 부드럽게 그린다
+export const isPhotoArt = (art: FaceArt) => art === 'professor';
+
+const PIXELS: Record<Exclude<FaceArt, 'nupjuk' | 'professor'>, string[]> = {
   megaphone: [
     '............',
     '..........#.',
@@ -93,6 +102,6 @@ function pixelSvgUrl(rows: string[], color: string): string {
 
 // 면 전체에 걸칠 그림 (CSS background-image 값)
 export function faceArtUrl(art: FaceArt, color: FaceColor): string {
-  if (art === 'nupjuk') return 'url("/hoegilab/nupjuk-face.png")';
+  if (art === 'nupjuk' || art === 'professor') return `url("${IMAGE_ART[art]}")`;
   return pixelSvgUrl(PIXELS[art], FACE_COLORS[color].fg);
 }

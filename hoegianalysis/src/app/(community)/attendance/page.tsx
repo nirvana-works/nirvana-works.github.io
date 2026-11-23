@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaceHeader } from '@/components/community/FaceHeader';
+import { SubHeader } from '@/components/community/SubHeader';
 import { getAttendanceBoard, POINTS_PER_ROUND, roundKey } from '@/lib/attendanceBoard';
 
 export const metadata = { title: '출석 성적표' };
@@ -30,7 +30,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: {
 
   return (
     <div className="flex flex-col gap-6">
-      <FaceHeader href="/attendance" />
+      <SubHeader title="출석 성적표" blurb="날짜별 출석부. 개근은 숨길 수 없습니다" backHref="/portal" backLabel="학사포탈" />
 
       {terms.length > 1 && (
         <nav aria-label="학기" className="flex flex-wrap gap-2">

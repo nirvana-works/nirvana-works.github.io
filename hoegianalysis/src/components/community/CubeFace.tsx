@@ -1,4 +1,4 @@
-import { CUBE_BODY, FACE_COLORS, faceArtUrl } from './cubeArt';
+import { CUBE_BODY, FACE_COLORS, faceArtUrl, isPhotoArt } from './cubeArt';
 import type { Menu } from './sections';
 
 // 큐브 한 면: 파란 몸체 위 3×3 스티커. 그림 하나를 아홉 칸에 나눠 붙인다
@@ -27,7 +27,7 @@ export function CubeFace({ menu, size, className = '' }: { menu: Menu; size: num
           style={{
             background: `${art} ${(i % 3) * 50}% ${Math.floor(i / 3) * 50}% / 300% 300% no-repeat, ${bg}`,
             borderRadius: radius,
-            imageRendering: 'pixelated',
+            imageRendering: isPhotoArt(menu.art) ? 'auto' : 'pixelated',
           }}
         />
       ))}

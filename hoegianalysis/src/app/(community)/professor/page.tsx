@@ -20,7 +20,7 @@ export default function ProfessorPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <SubHeader title="교수 소개" blurb="회기분석을 이끄는 교수님을 소개합니다" backHref="/portal" backLabel="학사포탈" />
+      <SubHeader title="교수 소개" blurb="회기분석을 이끄는 교수님을 소개합니다" backHref="/office" backLabel="교수님의 공간" />
 
       {/* 프로필 카드: 사진 + 이름 + 연락처 + 연구 분야 */}
       <article className="overflow-hidden rounded-[14px] border-2 border-ink bg-white">

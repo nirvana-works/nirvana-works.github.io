@@ -5,7 +5,7 @@ import { COURSES } from '@/lib/courses/winter2026';
 
 export const metadata = { title: '학사포탈' };
 
-// 학사포탈: 교수 소개, 개설과목 같은 학사 정보 페이지로 들어가는 문
+// 학사포탈: 출석 성적표, 개설과목 같은 학사 정보 페이지로 들어가는 문
 export default function PortalPage() {
   const counts: Record<string, string> = { '/courses': `${COURSES.length}개 과목` };
 
@@ -23,6 +23,15 @@ export default function PortalPage() {
               {p.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.image} alt="" aria-hidden draggable={false} className="h-[84px] w-[84px] shrink-0 rounded-[10px] border-2 border-ink bg-[#EEF0F4] object-cover object-top" />
+              ) : p.href === '/attendance' ? (
+                // 출석 성적표: 붉은 출석 도장이 찍힌 출석부 타일
+                <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 grid-cols-3 place-items-center gap-1 rounded-[10px] border-2 border-ink bg-white p-2.5">
+                  {[0, 1, 1, 1, 0, 1, 1, 1, 1].map((on, k) => (
+                    <span key={k} className={`h-4 w-4 rounded-full border-2 ${on ? 'border-seal' : 'border-ink/15'}`}>
+                      {on ? <span className="m-[2px] block h-2 w-2 rounded-full bg-seal" /> : null}
+                    </span>
+                  ))}
+                </div>
               ) : (
                 // 모토 페이지: 포스터의 파랑 바탕에 문구를 그대로 옮긴 타일
                 <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-cube text-center text-[19px] font-black leading-[1.05] tracking-[-0.03em] text-white">
