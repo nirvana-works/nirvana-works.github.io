@@ -13,7 +13,7 @@ export async function hashPassword(password: string): Promise<string> {
   return `${PREFIX}${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const [saltHex, hashHex] = stored.slice(PREFIX.length).split('$');
   if (!saltHex || !hashHex) return false;
   const expected = Buffer.from(hashHex, 'hex');

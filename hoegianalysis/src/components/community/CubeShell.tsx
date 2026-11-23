@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { MemberBadge } from '@/components/member/MemberBadge';
 import { CubeFace } from './CubeFace';
 import { MENUS } from './sections';
 
@@ -145,6 +146,7 @@ export function CubeShell() {
             Hoegilab.
           </Link>
           <span aria-hidden className="mt-4 block h-[2px] w-[72px] bg-ink" />
+          <MemberBadge />
         </div>
         {/* 오른쪽 위 꺾쇠 칸: 다른 화면에선 작은 큐브가 들어와 앉고, 누르면 홈으로 돌아가며 다시 커진다 */}
         <Link

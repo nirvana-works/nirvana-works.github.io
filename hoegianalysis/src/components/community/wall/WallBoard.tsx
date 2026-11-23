@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { deviceId } from '@/lib/deviceId';
 import type { WallPost } from '@/lib/wallPosts';
 import { AdminLogin } from '../AdminLogin';
-import { fieldClass, stickerButtonClass } from '../formStyles';
+import { stickerButtonClass } from '../formStyles';
 import { WALL, WallBackdrop } from './WallBackdrop';
 import { RestoreWall } from './RestoreWall';
 import { BOTTOM_ZONE, PER_SHEET, TOP_PAD, inkRect, inkShadow, placeGraffiti, resolveFreeSpot, sheetHeight, type Rect } from './graffiti';
@@ -427,20 +427,19 @@ function ComposeDialog({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 지난번 별명 기억
+  // 낙서는 회원 별명으로 남는다
   useEffect(() => {
-    try {
-      setNickname(localStorage.getItem('hl_nick') ?? '');
-    } catch {
-      // 저장소를 못 쓰는 브라우저면 매번 입력
-    }
+    fetch('/api/member/me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d: { member: { nickname: string } | null }) => setNickname(d.member?.nickname ?? ''))
+      .catch(() => setNickname(''));
   }, []);
 
   const count = (s: string) => [...s].length;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nickname.trim()) return setError('별명을 입력하세요.');
+    if (!nickname) return setError('별명을 불러오지 못했어요. 새로고침 후 다시 써 주세요.');
     if (!content.trim()) return setError('낙서할 내용을 입력하세요.');
 
     setLoading(true);
@@ -450,7 +449,6 @@ function ComposeDialog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nickname,
           content,
           deviceId: deviceId(),
           ...(spotRef.current ? resolveSpot(spotRef.current, content.trim(), nickname.trim()) : null),
@@ -460,11 +458,6 @@ function ComposeDialog({
       if (!res.ok || !data.post) {
         setError(data.error ?? '낙서를 남기지 못했어요.');
         return;
-      }
-      try {
-        localStorage.setItem('hl_nick', nickname.trim());
-      } catch {
-        // 무시
       }
       setContent('');
       dialogRef.current?.close();
@@ -495,28 +488,10 @@ function ComposeDialog({
           </button>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline justify-between">
-            <label htmlFor="wall-nick" className="text-[14px] font-bold">
-              별명
-            </label>
-            <span className="text-[12px] text-inkMuted">
-              {count(nickname)}/{LIMITS.nickname}
-            </span>
-          </div>
-          <input
-            id="wall-nick"
-            value={nickname}
-            maxLength={LIMITS.nickname}
-            onChange={(e) => {
-              setNickname(e.target.value);
-              setError('');
-            }}
-            placeholder="넙죽이"
-            className={fieldClass}
-          />
-          <p className="text-[12px] text-inkMuted">실명 대신 별명을 써 주세요.</p>
-        </div>
+        <p className="text-[14px]">
+          <span className="font-bold">{nickname || '별명 불러오는 중…'}</span>
+          <span className="text-inkMuted"> 이름으로 남아요</span>
+        </p>
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between">

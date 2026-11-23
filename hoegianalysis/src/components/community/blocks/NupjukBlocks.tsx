@@ -33,7 +33,6 @@ type Mood = 'idle' | 'cheer' | 'wow' | 'worry' | 'over' | 'best';
 const LOCK_MS = 500; // 바닥에 닿은 뒤 굳기까지 여유
 const MAX_RESETS = 12; // 돌리고 밀면서 버틸 수 있는 횟수
 const BEST_KEY = 'hl_blocks_best';
-const NICK_KEY = 'hl_nick';
 
 interface ScoreRow {
   id: string;
@@ -249,11 +248,11 @@ export function NupjukBlocks() {
   }, []);
   useEffect(() => {
     loadScores();
-    try {
-      setNick(localStorage.getItem(NICK_KEY) ?? '');
-    } catch {
-      // 저장소를 못 쓰면 매번 입력
-    }
+    // 점수는 회원 별명으로 남는다
+    fetch('/api/member/me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d: { member: { nickname: string } | null }) => setNick(d.member?.nickname ?? ''))
+      .catch(() => setNick(''));
   }, [loadScores]);
 
   const postScore = async () => {
@@ -265,7 +264,7 @@ export function NupjukBlocks() {
       const res = await fetch('/api/blocks/scores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, score: hud.score, lines: hud.lines, level: hud.level, deviceId: deviceId() }),
+        body: JSON.stringify({ score: hud.score, lines: hud.lines, level: hud.level, deviceId: deviceId() }),
       });
       const d = await res.json();
       if (!res.ok) {
@@ -273,11 +272,6 @@ export function NupjukBlocks() {
       } else {
         setPosted({ id: d.id, rank: d.rank });
         setScores(d.scores);
-        try {
-          localStorage.setItem(NICK_KEY, name);
-        } catch {
-          // 저장 실패는 무시
-        }
       }
     } catch {
       setPostErr('네트워크가 불안정해요. 다시 시도해 주세요.');
@@ -745,19 +739,10 @@ export function NupjukBlocks() {
                         <p className="font-pen text-[22px] leading-tight text-sticker">{posted.rank <= 10 ? `${posted.rank}등으로 올랐어요!` : `${posted.rank}등으로 기록했어요`}</p>
                       ) : (
                         <div className="flex w-full max-w-[220px] flex-col gap-1.5">
-                          <div className="flex gap-1.5">
-                            <input
-                              value={nick}
-                              onChange={(e) => setNick(e.target.value)}
-                              onKeyDown={(e) => {
-                                // 한글 조합 중 Enter는 조합 확정용이라 기록으로 보내지 않는다
-                                if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) postScore();
-                              }}
-                              placeholder="이름 (10자까지)"
-                              maxLength={10}
-                              aria-label="점수판에 남길 이름"
-                              className="min-w-0 flex-1 rounded-[8px] border-2 border-white/60 bg-transparent px-2 py-1 text-[15px] text-white placeholder:text-white/50"
-                            />
+                          <div className="flex items-center gap-1.5">
+                            <span className="min-w-0 flex-1 truncate rounded-[8px] border-2 border-white/60 px-2 py-1 text-[15px] text-white" title="등록된 별명으로 기록돼요">
+                              {nick || '별명 불러오는 중…'}
+                            </span>
                             <button type="button" onClick={postScore} disabled={posting || !nick.trim()} className="shrink-0 rounded-[8px] border-2 border-ink bg-white px-2.5 font-pen text-[18px] leading-none text-ink disabled:opacity-50">
                               {posting ? '…' : '기록'}
                             </button>

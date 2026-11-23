@@ -6,7 +6,7 @@ let initPromise: Promise<void> | null = null;
 
 // 스키마(테이블·컬럼)를 바꿀 때마다 이 값을 바꿔 주세요. 같은 값이 이미 기록돼 있으면 서버가 새로 켜질 때
 // 수십 번의 테이블 확인을 건너뛰고 한 번만 확인한다 (원격 DB가 느릴 때 첫 방문이 오류 나던 문제를 줄이기 위해)
-const SCHEMA_VERSION = '2026-11-19-chess-rooms';
+const SCHEMA_VERSION = '2026-11-23-members-message';
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -251,6 +251,34 @@ async function runInit(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_blocks_scores_score ON blocks_scores(score DESC);
 
+    -- 회원: 가입하면 pending, 운영자가 승인하면 active. 비밀번호는 scrypt 해시만 저장
+    CREATE TABLE IF NOT EXISTS members (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      cohort TEXT NOT NULL,
+      nickname TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      failed_logins INTEGER NOT NULL DEFAULT 0,
+      locked_until INTEGER,
+      created_at TEXT NOT NULL,
+      approved_at TEXT,
+      last_login_at TEXT,
+      message TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_members_status ON members(status, created_at);
+
+    -- 로그인 상태: 쿠키에는 임의 토큰, 여기엔 그 해시만. 쓰는 동안 만료가 30일씩 늘어난다
+    CREATE TABLE IF NOT EXISTS login_sessions (
+      token_hash TEXT PRIMARY KEY,
+      member_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      last_seen_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_login_sessions_member ON login_sessions(member_id);
+
     -- 기본 데이터를 넣었는지 같은 한 번짜리 기록
     CREATE TABLE IF NOT EXISTS community_meta (
       key TEXT PRIMARY KEY,
@@ -287,6 +315,11 @@ async function runInit(): Promise<void> {
   if (!pokerNames.has('start_chips')) {
     await db.execute('ALTER TABLE poker_games ADD COLUMN start_chips INTEGER NOT NULL DEFAULT 20');
   }
+
+  // 회원가입 때 남기는 '교수님께 한마디'
+  const memberColumns = await db.execute('PRAGMA table_info(members)');
+  const memberNames = new Set(memberColumns.rows.map((r) => (r as unknown as { name: string }).name));
+  if (!memberNames.has('message')) await db.execute('ALTER TABLE members ADD COLUMN message TEXT');
 
   for (const seed of SEEDS) await seedSchedule(seed.key, seed.events);
 }

@@ -1,7 +1,7 @@
 import { getDb } from './db';
 import { initCommunityDb } from './communityDb';
 
-// 넙죽이 블록 점수판. 로그인 없이 이름만 적고, 같은 기기는 20초에 한 번만 남길 수 있다
+// 넙죽이 블록 점수판. 회원 별명으로 남기고, 같은 기기는 20초에 한 번만 남길 수 있다
 export interface BlockScore {
   id: string;
   name: string;
@@ -39,7 +39,7 @@ export function validateScore(body: unknown): ParsedScore {
   const b = (body ?? {}) as Record<string, unknown>;
   const name = typeof b.name === 'string' ? b.name.trim().replace(/\s+/g, ' ') : '';
   if (!name) return { ok: false, error: '이름을 적어 주세요.' };
-  if (name.length > 10) return { ok: false, error: '이름은 10자까지예요.' };
+  if ([...name].length > 12) return { ok: false, error: '이름은 12자까지예요.' };
   const num = (v: unknown, max: number) => (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= max ? v : null);
   const score = num(b.score, MAX_SCORE);
   const lines = num(b.lines, 100000);
