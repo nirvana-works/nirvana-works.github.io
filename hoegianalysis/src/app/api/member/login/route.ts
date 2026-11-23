@@ -1,5 +1,6 @@
 // 회원 로그인(POST) / 로그아웃(DELETE)
 import { NextRequest, NextResponse } from 'next/server';
+import { ADMIN_COOKIE, adminCookieOptions, adminToken, isAdminEmail } from '@/lib/adminAuth';
 import { login, logout, MEMBER_COOKIE, memberCookieOptions } from '@/lib/members';
 
 export async function POST(request: NextRequest) {
@@ -9,6 +10,8 @@ export async function POST(request: NextRequest) {
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
     const res = NextResponse.json({ ok: true });
     res.cookies.set(MEMBER_COOKIE, result.token, memberCookieOptions);
+    // 운영자 메일(ADMIN_EMAILS)이면 운영자 로그인도 같이
+    if (isAdminEmail(result.email)) res.cookies.set(ADMIN_COOKIE, adminToken(), adminCookieOptions);
     return res;
   } catch (error) {
     console.error('POST /api/member/login error:', error);
@@ -24,5 +27,6 @@ export async function DELETE(request: NextRequest) {
   }
   const res = NextResponse.json({ ok: true });
   res.cookies.delete(MEMBER_COOKIE);
+  res.cookies.delete(ADMIN_COOKIE); // 회원 로그아웃하면 운영자 권한도 끈다
   return res;
 }

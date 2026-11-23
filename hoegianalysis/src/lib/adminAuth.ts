@@ -20,6 +20,24 @@ export function checkAdminPassword(input: string): boolean {
   return timingSafeEqual(tokenFor(input), tokenFor(password));
 }
 
+// 운영자로 쓸 회원 메일 (환경변수 ADMIN_EMAILS, 쉼표로 여러 개). 이 회원이 로그인하면 운영자 권한도 함께 켜진다
+export function isAdminEmail(email: string): boolean {
+  if (!process.env.ADMIN_PASSWORD) return false; // 운영자 쿠키가 이 비밀번호에서 만들어진다
+  const list = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
+export const adminCookieOptions = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+  maxAge: ADMIN_COOKIE_MAX_AGE,
+};
+
 export function adminToken(): string {
   return tokenFor(process.env.ADMIN_PASSWORD ?? '').toString('hex');
 }

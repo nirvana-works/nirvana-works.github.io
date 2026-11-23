@@ -88,7 +88,7 @@ export async function createMember(v: SignupInput): Promise<{ ok: true } | { ok:
 
 // ---------- 로그인 ----------
 
-type LoginResult = { ok: true; token: string } | { ok: false; error: string; status: number };
+type LoginResult = { ok: true; token: string; email: string } | { ok: false; error: string; status: number };
 
 export async function login(emailInput: unknown, passwordInput: unknown): Promise<LoginResult> {
   const email = normalizeEmail(emailInput);
@@ -141,7 +141,7 @@ export async function login(emailInput: unknown, passwordInput: unknown): Promis
     ],
     'write',
   );
-  return { ok: true, token };
+  return { ok: true, token, email };
 }
 
 export const memberCookieOptions = {
