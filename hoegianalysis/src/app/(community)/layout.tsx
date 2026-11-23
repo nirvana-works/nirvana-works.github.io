@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Gothic_A1, Poppins } from 'next/font/google';
 import { BirthdayCelebration } from '@/components/community/BirthdayCelebration';
 import { CubeShell } from '@/components/community/CubeShell';
+import Link from 'next/link';
+import { InstallBanner } from '@/components/pwa/InstallBanner';
 import './community.css';
 
 // 한글은 고딕 한 가족으로 제목부터 본문까지
@@ -33,13 +35,17 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t-2 border-ink py-6 font-latin text-[13px] text-inkMuted">
           {/* 회식 '차수(round)'에 빗댄 저작권 문구 */}
           <p>© {new Date().getFullYear()} Hoegilab. All rounds reserved.</p>
-          <div>
+          <div className="flex items-baseline gap-4">
+            <Link href="/install" className="font-sign font-bold text-ink underline underline-offset-2">
+              앱으로 설치
+            </Link>
             <p>
               Designed &amp; built by <span className="font-semibold text-ink">JH</span>
             </p>
           </div>
         </div>
       </footer>
+      <InstallBanner />
     </div>
   );
 }
