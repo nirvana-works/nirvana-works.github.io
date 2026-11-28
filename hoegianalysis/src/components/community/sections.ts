@@ -7,6 +7,7 @@ export const PORTAL_PAGES = [
   { href: '/attendance', name: '출석 성적표', en: 'Report Card', blurb: '날짜별 출석부. 개근은 숨길 수 없습니다', image: null },
   { href: '/courses', name: '겨울학기 개설과목', en: 'Winter 2026', blurb: '필터로 찾고, 친구들이 듣는 과목과 수업 리뷰도 봅니다', image: '/hoegilab/course-nup-2.webp' },
   { href: '/we-can', name: '회기분석 모토', en: 'Our Motto', blurb: 'We can do it. We can make everything we imagine.', image: null },
+  { href: '/lectures/cashflow', name: '직장인의 현금흐름 파이프라인 설계', en: 'Lecture', blurb: '강의 자료 · 소형 오피스텔 레버리지 포트폴리오 구축 사례 (2018–2026)', image: null },
 ] as const;
 
 // 교수님의 공간 안의 세부 페이지
