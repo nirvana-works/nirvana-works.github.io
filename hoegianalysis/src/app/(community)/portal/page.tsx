@@ -2,25 +2,23 @@ import Link from 'next/link';
 import { FaceHeader } from '@/components/community/FaceHeader';
 import { PORTAL_PAGES } from '@/components/community/sections';
 import { COURSES } from '@/lib/courses/winter2026';
-import { CASHFLOW_SLIDES } from '@/components/community/lecture/cashflowDeck';
 
 export const metadata = { title: '학사포탈' };
 
 // 학사포탈: 출석 성적표, 개설과목 같은 학사 정보 페이지로 들어가는 문
 export default function PortalPage() {
-  const counts: Record<string, string> = { '/courses': `${COURSES.length}개 과목`, '/lectures/cashflow': `${CASHFLOW_SLIDES.length}장` };
+  const counts: Record<string, string> = { '/courses': `${COURSES.length}개 과목` };
 
   return (
     <div className="flex flex-col gap-6">
       <FaceHeader href="/portal" />
 
       <ul className="flex flex-col gap-4">
-        {PORTAL_PAGES.map((p, i) => (
-          <li key={p.href}>
-            <Link
-              href={p.href}
-              className="group flex items-center gap-4 rounded-[14px] border-2 border-ink bg-white p-3 shadow-[0_4px_0_#000] transition-transform active:translate-y-[2px] active:shadow-[0_2px_0_#000] hover:bg-[#FFF6D6]"
-            >
+        {PORTAL_PAGES.map((p, i) => {
+          // 추후 공개 항목은 목록에만 보이고 눌러도 열리지 않는다
+          const soon = 'soon' in p && p.soon;
+          const inner = (
+            <>
               {p.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.image} alt="" aria-hidden draggable={false} className="h-[84px] w-[84px] shrink-0 rounded-[10px] border-2 border-ink bg-[#EEF0F4] object-cover object-top" />
@@ -39,12 +37,10 @@ export default function PortalPage() {
                     </span>
                   </span>
                 </div>
-              ) : p.href === '/lectures/cashflow' ? (
-                // 강의 자료: 16:9 슬라이드 한 장을 닮은 타일
-                <div aria-hidden className="relative grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-sticker">
-                  <span className="absolute left-1.5 top-1.5 rounded-[4px] border-2 border-ink bg-white px-1 font-latin text-[9px] font-semibold leading-tight">16:9</span>
-                  <span className="text-[38px] leading-none">🐄</span>
-                  <span className="absolute bottom-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full border-2 border-ink bg-cube text-[9px] text-white">▶</span>
+              ) : p.href === '/portfolio' ? (
+                // 포트폴리오: 관심사·연구 과제를 묶어 두는 서류철
+                <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-sticker">
+                  <span className="text-[40px] leading-none">📁</span>
                 </div>
               ) : (
                 // 모토 페이지: 포스터의 파랑 바탕에 문구를 그대로 옮긴 타일
@@ -67,13 +63,31 @@ export default function PortalPage() {
               {/* 오른쪽 열: 개수 배지(있으면)와 화살표 */}
               <div className="flex shrink-0 flex-col items-end justify-center gap-2">
                 {counts[p.href] && <p className="rounded-full border-2 border-ink bg-cube px-2.5 py-0.5 text-[12px] font-black text-white">{counts[p.href]}</p>}
-                <span aria-hidden className="text-[26px] font-black leading-none transition-transform group-hover:translate-x-1">
-                  ›
-                </span>
+                {soon ? (
+                  <p className="rounded-full border-2 border-ink bg-sticker px-2.5 py-0.5 text-[12px] font-black">추후 공개</p>
+                ) : (
+                  <span aria-hidden className="text-[26px] font-black leading-none transition-transform group-hover:translate-x-1">
+                    ›
+                  </span>
+                )}
               </div>
-            </Link>
-          </li>
-        ))}
+            </>
+          );
+          const box = 'group flex items-center gap-4 rounded-[14px] border-2 border-ink p-3';
+          return (
+            <li key={p.href}>
+              {soon ? (
+                <div aria-disabled="true" className={`${box} border-dashed bg-white/60`}>
+                  {inner}
+                </div>
+              ) : (
+                <Link href={p.href} className={`${box} bg-white shadow-[0_4px_0_#000] transition-transform hover:bg-[#FFF6D6] active:translate-y-[2px] active:shadow-[0_2px_0_#000]`}>
+                  {inner}
+                </Link>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <p className="rounded-[10px] border-2 border-dashed border-ink/40 px-4 py-3 text-center text-[13px] text-inkMuted">앞으로 학사 정보 페이지가 여기에 하나씩 늘어납니다.</p>

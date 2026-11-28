@@ -3,17 +3,17 @@ import { SubHeader } from '@/components/community/SubHeader';
 import { CASHFLOW_DECK, CASHFLOW_SLIDES } from '@/components/community/lecture/cashflowDeck';
 import { SlideCanvas } from '@/components/community/lecture/SlideCanvas';
 
-export const metadata = { title: '강의 자료 · 현금흐름 파이프라인' };
+export const metadata = { title: '포트폴리오' };
 
 const PRESENT_HREF = '/present/cashflow';
 
-// 학사포탈 게시물: 강의 자료 한 편. 위에서 발표 모드로 들어가고, 아래에서 16장을 차례로 훑어본다
+// 포트폴리오 게시물: 강의 자료 한 편. 위에서 발표 모드로 들어가고, 아래에서 16장을 차례로 훑어본다
 export default function CashflowLecturePage() {
   const total = CASHFLOW_SLIDES.length;
 
   return (
     <div className="flex flex-col gap-6">
-      <SubHeader title={CASHFLOW_DECK.title} blurb={CASHFLOW_DECK.subtitle} backHref="/portal" backLabel="학사포탈" />
+      <SubHeader title={CASHFLOW_DECK.title} blurb={CASHFLOW_DECK.subtitle} backHref="/portfolio" backLabel="포트폴리오" />
 
       {/* 게시물 정보 + 발표 모드 입구 */}
       <section className="rounded-[14px] border-2 border-ink bg-white p-4 shadow-[0_4px_0_#000]">

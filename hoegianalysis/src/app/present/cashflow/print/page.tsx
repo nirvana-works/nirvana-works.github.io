@@ -1,7 +1,7 @@
 import { CASHFLOW_DECK, CASHFLOW_SLIDES } from '@/components/community/lecture/cashflowDeck';
 import { SlideCanvas, SLIDE_H, SLIDE_W } from '@/components/community/lecture/SlideCanvas';
 
-export const metadata = { title: '인쇄 · 직장인의 현금흐름 파이프라인 설계 · Hoegilab' };
+export const metadata = { title: '포트폴리오 · Hoegilab' };
 
 // PDF용: 16장을 1600×900 한 장씩 이어 붙인다. 브라우저 인쇄(또는 headless Chrome --print-to-pdf)로 16:9 PDF가 된다
 export default function CashflowPrintPage() {
