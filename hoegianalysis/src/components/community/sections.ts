@@ -7,13 +7,12 @@ export const PORTAL_PAGES = [
   { href: '/attendance', name: '출석 성적표', en: 'Report Card', blurb: '날짜별 출석부. 개근은 숨길 수 없습니다', image: null },
   { href: '/courses', name: '겨울학기 개설과목', en: 'Winter 2026', blurb: '필터로 찾고, 친구들이 듣는 과목과 수업 리뷰도 봅니다', image: '/hoegilab/course-nup-2.webp' },
   { href: '/we-can', name: '회기분석 모토', en: 'Our Motto', blurb: 'We can do it. We can make everything we imagine.', image: null },
-  { href: '/portfolio', name: '포트폴리오', en: 'Portfolio', blurb: '관심사와 연구 과제를 하나씩 쌓아 두는 곳', image: null },
 ] as const;
 
-// 교수님의 공간 안의 세부 페이지
+// 교수님의 공간 안의 세부 페이지. 가입 승인(/office/approvals)은 목록에 두지 않고 운영자에게만 구석 링크로 보인다
 export const OFFICE_PAGES = [
   { href: '/professor', name: '교수 소개', en: 'Professor', blurb: '회기분석을 이끄는 교수님을 소개합니다', image: '/hoegilab/professor.webp' },
-  { href: '/office/approvals', name: '가입 승인', en: 'Approvals', blurb: '회기랩 가입 신청을 확인하고 승인합니다. 운영자만 들어갈 수 있어요', image: null },
+  { href: '/portfolio', name: '포트폴리오', en: 'Portfolio', blurb: '관심사와 연구 과제를 하나씩 쌓아 두는 곳', image: null },
 ] as const;
 
 export const MENUS = [
@@ -21,7 +20,7 @@ export const MENUS = [
   { href: '/schedule', short: '일정', name: '학교 일정', en: 'Calendar', blurb: '축제, 시험, 방학. 학교 행사 달력', color: 'blue', art: 'calendar' },
   { href: '/wall', short: '낙서', name: '낙서 벽', en: 'Graffiti Wall', blurb: '아무 말 한 줄. 140자 넘으면 반려', color: 'white', art: 'pencil' },
   { href: '/games', short: '놀이', name: '놀이터', en: 'Playground', blurb: '폰으로 같이 노는 회기랩 놀이터. 첫 놀이는 마피아', color: 'yellow', art: 'gamepad' },
-  { href: '/office', short: '교수님', name: '교수님의 공간', en: "Professor's Room", blurb: '교수님 소개와 회기랩 가입 승인', color: 'blue', art: 'professor', children: OFFICE_PAGES },
+  { href: '/office', short: '교수님', name: '교수님의 공간', en: "Professor's Room", blurb: '교수님 소개와 포트폴리오', color: 'blue', art: 'professor', children: OFFICE_PAGES },
   { href: '/portal', short: '학사', name: '학사포탈', en: 'Academic Portal', blurb: '출석 성적표, 개설과목 같은 학사 정보를 모아 둔 곳', color: 'white', art: 'nupjuk', children: PORTAL_PAGES },
 ] as const satisfies readonly {
   href: string;

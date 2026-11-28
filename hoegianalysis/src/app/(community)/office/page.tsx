@@ -7,7 +7,7 @@ import { listMembers } from '@/lib/members';
 export const metadata = { title: '교수님의 공간' };
 export const dynamic = 'force-dynamic';
 
-// 교수님의 공간: 교수 소개, 가입 승인으로 들어가는 문
+// 교수님의 공간: 교수 소개, 포트폴리오로 들어가는 문. 가입 승인은 운영자에게만 오른쪽 아래 작은 링크로
 export default async function OfficePage() {
   // 운영자에게만 승인 대기 인원을 보여준다
   const admin = isAdmin();
@@ -28,10 +28,9 @@ export default async function OfficePage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.image} alt="" aria-hidden draggable={false} className="h-[84px] w-[84px] shrink-0 rounded-[10px] border-2 border-ink bg-[#EEF0F4] object-cover object-top" />
               ) : (
-                // 가입 승인: 도장 찍힌 신청서 타일
-                <div aria-hidden className="relative grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-sticker">
-                  <span className="text-[36px] leading-none">📝</span>
-                  <span className="absolute bottom-1.5 right-1.5 grid h-7 w-7 -rotate-12 place-items-center rounded-full border-2 border-seal bg-white text-[10px] font-black text-seal">승인</span>
+                // 포트폴리오: 관심사·연구 과제를 묶어 두는 서류철
+                <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-sticker">
+                  <span className="text-[40px] leading-none">📁</span>
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -43,10 +42,6 @@ export default async function OfficePage() {
                 <p className="mt-1 text-[13px] leading-snug text-inkMuted">{p.blurb}</p>
               </div>
               <div className="flex shrink-0 flex-col items-end justify-center gap-2">
-                {p.href === '/office/approvals' && pending > 0 && (
-                  <p className="rounded-full border-2 border-ink bg-seal px-2.5 py-0.5 text-[12px] font-black text-white">대기 {pending}</p>
-                )}
-                {p.href === '/office/approvals' && !admin && <p className="text-[16px]" aria-label="운영자 전용">🔒</p>}
                 <span aria-hidden className="text-[26px] font-black leading-none transition-transform group-hover:translate-x-1">
                   ›
                 </span>
@@ -55,6 +50,14 @@ export default async function OfficePage() {
           </li>
         ))}
       </ul>
+
+      {admin && (
+        <Link href="/office/approvals" className="inline-flex min-h-[44px] items-center gap-1.5 self-end text-[13px] font-bold text-inkMuted hover:text-ink">
+          가입 승인
+          {pending > 0 && <span className="rounded-full border-2 border-ink bg-seal px-2 py-[1px] text-[11px] font-black text-white">대기 {pending}</span>}
+          <span aria-hidden>›</span>
+        </Link>
+      )}
     </div>
   );
 }

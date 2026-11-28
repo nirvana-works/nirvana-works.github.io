@@ -32,7 +32,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SubHeader title="포트폴리오" blurb="관심사와 연구 과제를 하나씩 쌓아 두는 곳" backHref="/portal" backLabel="학사포탈" />
+      <SubHeader title="포트폴리오" blurb="관심사와 연구 과제를 하나씩 쌓아 두는 곳" backHref="/office" backLabel="교수님의 공간" />
       {preview ? (
         <Link href="/portfolio/cashflow" className={`${box} border-dashed bg-white/60 transition-transform hover:bg-[#FFF6D6] active:translate-y-[2px]`}>
           {inner}

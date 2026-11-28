@@ -37,11 +37,7 @@ export default function PortalPage() {
                     </span>
                   </span>
                 </div>
-              ) : p.href === '/portfolio' ? (
-                // 포트폴리오: 관심사·연구 과제를 묶어 두는 서류철
-                <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-sticker">
-                  <span className="text-[40px] leading-none">📁</span>
-                </div>
+
               ) : (
                 // 모토 페이지: 포스터의 파랑 바탕에 문구를 그대로 옮긴 타일
                 <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 place-items-center rounded-[10px] border-2 border-ink bg-cube text-center text-[19px] font-black leading-[1.05] tracking-[-0.03em] text-white">
