@@ -29,6 +29,9 @@ module.exports = {
         pen: ["var(--font-pen)", "cursive"],
         // 화투점 붓글씨
         brush: ["var(--font-brush)", "serif"],
+        // 디자인 시안 1 · 네오 브루탈리즘 (영문 Archivo, 한글은 뒤 글꼴로 떨어진다)
+        nbDisplay: ["var(--font-nb-display)", "var(--font-nb-ko-display)", "sans-serif"],
+        nbBody: ["var(--font-nb-body)", "var(--font-nb-ko-body)", "sans-serif"],
       },
     },
   },

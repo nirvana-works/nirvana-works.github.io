@@ -33,6 +33,48 @@ export default function PortfolioPage() {
   return (
     <div className="flex flex-col gap-6">
       <SubHeader title="포트폴리오" blurb="관심사와 연구 과제를 하나씩 쌓아 두는 곳" backHref="/office" backLabel="교수님의 공간" />
+      <Link
+        href="/portfolio/designs"
+        className={`${box} bg-white shadow-[0_4px_0_#000] transition-transform hover:bg-[#FFF6D6] active:translate-y-[2px] active:shadow-[0_2px_0_#000]`}
+      >
+        <div aria-hidden className="grid h-[84px] w-[84px] shrink-0 grid-cols-2 overflow-hidden rounded-[10px] border-2 border-ink">
+          {['#F59BC3', '#F77B2E', '#55C3B5', '#F9D648'].map((c) => (
+            <span key={c} style={{ background: c }} />
+          ))}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-latin text-[12px] font-semibold tracking-[0.15em] text-inkMuted">DESIGN DRAFTS</p>
+          <h2 className="mt-1 text-[19px] font-black leading-tight">디자인 시안 보관함</h2>
+          <p className="mt-1 text-[13px] leading-snug text-inkMuted">다른 스타일을 견본으로 만들어 두고 필요할 때 꺼내 씁니다</p>
+        </div>
+        <span aria-hidden className="text-[26px] font-black leading-none transition-transform group-hover:translate-x-1">
+          ›
+        </span>
+      </Link>
+      {/* 바이브 코딩 발표. 표지 사진은 퀴즈의 답(카파시)이라 썸네일로 쓰지 않는다 */}
+      <Link
+        href="/vibe"
+        className={`${box} bg-white shadow-[0_4px_0_#000] transition-transform hover:bg-[#FFF6D6] active:translate-y-[2px] active:shadow-[0_2px_0_#000]`}
+      >
+        <div aria-hidden className="flex h-[84px] w-[84px] shrink-0 flex-col overflow-hidden rounded-[10px] border-2 border-ink bg-white">
+          <div className="flex items-center gap-1 border-b-2 border-ink bg-[#EEF0F4] px-1.5 py-1">
+            <span className="h-2 w-2 rounded-full border border-ink bg-seal" />
+            <span className="h-2 w-2 rounded-full border border-ink bg-sticker" />
+            <span className="h-2 w-2 rounded-full border border-ink bg-[#2fbf6a]" />
+          </div>
+          <div className="grid flex-1 place-items-center bg-cube font-latin text-[22px] font-black leading-none text-white">
+            {'>_'}
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-latin text-[12px] font-semibold tracking-[0.15em] text-inkMuted">TALK · VIBE CODING</p>
+          <h2 className="mt-1 text-[19px] font-black leading-tight">바이브 코딩은 무엇일까?</h2>
+          <p className="mt-1 text-[13px] leading-snug text-inkMuted">이 사이트를 AI에게 말로 시켜 만든 이야기와 그 말을 처음 꺼낸 사람</p>
+        </div>
+        <span aria-hidden className="text-[26px] font-black leading-none transition-transform group-hover:translate-x-1">
+          ›
+        </span>
+      </Link>
       {preview ? (
         <Link href="/portfolio/cashflow" className={`${box} border-dashed bg-white/60 transition-transform hover:bg-[#FFF6D6] active:translate-y-[2px]`}>
           {inner}
